@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.agents.provisioning.local;
 
-import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.functions.AgentProvisioningExecutionPlugin;
@@ -110,16 +109,6 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         context.put(Grid.class, grid.getGrid());
         context.put(GridClient.class, grid.getGridClient());
         context.put(AgentProvisioningDriver.class, driver);
-
-        // Last, and deliberately so: the script engines only concern the keywords of two languages, while an
-        // execution without the driver in its context fails on every keyword, with a "no agent type available"
-        // which points at everything except the actual cause.
-        Configuration engineConfiguration = context.getConfiguration();
-        if (engineConfiguration == null) {
-            engineConfiguration = new Configuration();
-            context.setConfiguration(engineConfiguration);
-        }
-        LocalAgentProvisioning.declareScriptEngineLibraries(engineConfiguration, workspace);
     }
 
     /**

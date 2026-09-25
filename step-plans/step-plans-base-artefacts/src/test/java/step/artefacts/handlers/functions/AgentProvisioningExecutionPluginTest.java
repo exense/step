@@ -80,6 +80,11 @@ public class AgentProvisioningExecutionPluginTest {
         }
     }
 
+    /**
+     * The contract of {@link AgentProvisioningDriver#getTokenProvisioningStatus} allows null, for a request the driver
+     * no longer knows. The drivers of Step keep their request until it is deprovisioned, but a driver dropping it
+     * once the provisioning is over must not fail an execution whose agents were provisioned.
+     */
     @Test
     public void provisionsWithoutPersistingWhenTheDriverReturnsNoStatus() {
         RecordingDriver driver = new NoStatusDriver(null);
@@ -95,6 +100,10 @@ public class AgentProvisioningExecutionPluginTest {
         }
     }
 
+    /**
+     * The same, for a driver dropping its request when the provisioning fails: the error reported is the one of the
+     * provisioning, not one raised while persisting its status.
+     */
     @Test
     public void reportsTheProvisioningErrorWhenTheDriverReturnsNoStatus() {
         RecordingDriver driver = new NoStatusDriver(new ProvisioningException("Unable to start the agents"));
@@ -107,16 +116,41 @@ public class AgentProvisioningExecutionPluginTest {
         }
     }
 
+    /**
+     * The keyword requires the default agent type, which none of the agent pools of the driver provides
+     */
     @Test
-    public void reportsTheCriteriaWithoutMatchWithTheMessageOfTheDriver() {
+    public void reportsTheCriteriaWithoutMatch() {
         RecordingDriver driver = new RecordingDriver(Map.of("$agenttype", "unknown"));
 
         try (ExecutionEngine executionEngine = newExecutionEngine(driver, new AgentProvisioningStatusAccessor(new InMemoryCollection<>()))) {
             PlanRunnerResult result = executionEngine.execute(plan());
 
             assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
-            assertEquals("Unmatched: [{$agenttype=default}]", result.getErrorSummary());
+            assertEquals("Some keywords of this plan cannot be executed: no agent pool matches their token selection"
+                + " criteria {$agenttype=default}. Check the agent pools available for the agent provisioning, and the"
+                + " token selection criteria of these keywords.", result.getErrorSummary());
             assertNull(driver.request);
+        }
+    }
+
+    /**
+     * A driver can phrase the error in its own terms: the local one names the agent types missing on this machine
+     */
+    @Test
+    public void reportsTheCriteriaWithoutMatchWithTheMessageOfTheDriver() {
+        RecordingDriver driver = new RecordingDriver(Map.of("$agenttype", "unknown")) {
+            @Override
+            public String getUnmatchedCriteriaMessage(Set<Map<String, Interest>> criteriaWithoutMatch) {
+                return "No agent of type default on this machine";
+            }
+        };
+
+        try (ExecutionEngine executionEngine = newExecutionEngine(driver, new AgentProvisioningStatusAccessor(new InMemoryCollection<>()))) {
+            PlanRunnerResult result = executionEngine.execute(plan());
+
+            assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
+            assertEquals("No agent of type default on this machine", result.getErrorSummary());
         }
     }
 
@@ -311,11 +345,6 @@ public class AgentProvisioningExecutionPluginTest {
             configuredAgentPools = agentProvisioningConfiguration.getAgentPoolRequirementSpecs();
             forecastedAgentPools = forecasted;
             return RESOLVED_AGENT_POOLS;
-        }
-
-        @Override
-        public String getUnmatchedCriteriaMessage(Set<Map<String, Interest>> criteriaWithoutMatch) {
-            return "Unmatched: " + criteriaWithoutMatch;
         }
 
         @Override

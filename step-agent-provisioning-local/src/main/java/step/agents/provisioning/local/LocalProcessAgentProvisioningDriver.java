@@ -247,6 +247,15 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         return new LocalTokenSelectionCriteriaFilter();
     }
 
+    /**
+     * @return a directory of the local agent workspace: the agents are started from this application, whose class path
+     * they do not share
+     */
+    @Override
+    public Path getLocalLibrariesDirectory() {
+        return workspace.getInstalledLibrariesDirectory();
+    }
+
     @Override
     public String initializeTokenProvisioningRequest(AgentProvisioningRequest request) {
         ProvisioningSession session = new ProvisioningSession(request);

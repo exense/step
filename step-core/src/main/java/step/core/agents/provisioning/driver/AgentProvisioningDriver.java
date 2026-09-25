@@ -26,10 +26,12 @@ import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.grid.tokenpool.Interest;
 
 import java.io.Closeable;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public interface AgentProvisioningDriver extends Closeable {
 
@@ -115,7 +117,10 @@ public interface AgentProvisioningDriver extends Closeable {
      * have no matching agent pool
      */
     default String getUnmatchedCriteriaMessage(Set<Map<String, Interest>> criteriaWithoutMatch) {
-        return "No matching agent pool found for selection criteria: " + criteriaWithoutMatch;
+        String criteria = criteriaWithoutMatch.stream().map(Object::toString).collect(Collectors.joining(", "));
+        return "Some keywords of this plan cannot be executed: no agent pool matches their token selection criteria "
+            + criteria + ". Check the agent pools available for the agent provisioning, and the token selection"
+            + " criteria of these keywords.";
     }
 
     /**
@@ -123,6 +128,16 @@ public interface AgentProvisioningDriver extends Closeable {
      * driver, or null if the criteria are used as defined. Called once per execution.
      */
     default TokenSelectionCriteriaFilter createTokenSelectionCriteriaFilter() {
+        return null;
+    }
+
+    /**
+     * @return the directory of this machine in which libraries sent to the agents of this driver can be installed, kept
+     * across runs, or null if the agents do not run from this application, which is the default. A non-null value is
+     * what makes the libraries this application runs on, such as the script engines, be sent to the agents. Each set
+     * of libraries is installed in a directory of its own below it.
+     */
+    default Path getLocalLibrariesDirectory() {
         return null;
     }
 

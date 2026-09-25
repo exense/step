@@ -18,11 +18,6 @@
  ******************************************************************************/
 package step.agents.provisioning.local;
 
-import ch.exense.commons.app.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,8 +26,6 @@ import java.util.Objects;
  * own grid, and the Step IDE, which attaches to the grid it already runs.
  */
 public final class LocalAgentProvisioning {
-
-    private static final Logger logger = LoggerFactory.getLogger(LocalAgentProvisioning.class);
 
     private LocalAgentProvisioning() {
     }
@@ -49,39 +42,5 @@ public final class LocalAgentProvisioning {
             new JavaLocalAgentProvider(configuration, workspace),
             new NodeLocalAgentProvider(configuration, workspace),
             new DotNetLocalAgentProvider(configuration)));
-    }
-
-    /**
-     * Points {@code plugins.<language>.libs} at the script engine libraries, the way the step.properties of a
-     * controller does. Without them a Groovy or JavaScript keyword reaches the agent and fails there with "Unable to
-     * find script engine": the engine lives in this application, and the agent runs in its own process with its own
-     * class path.
-     * <p>
-     * A value already configured wins, so that an agent can be sent a different Groovy than the one this application
-     * runs on.
-     */
-    public static void declareScriptEngineLibraries(Configuration configuration, LocalAgentWorkspace workspace) {
-        Objects.requireNonNull(configuration, "configuration must not be null");
-        Objects.requireNonNull(workspace, "workspace must not be null");
-        ScriptEngineLibraries libraries = new ScriptEngineLibraries(workspace);
-        for (ScriptEngineLibraries.ScriptEngine engine : List.of(ScriptEngineLibraries.GROOVY, ScriptEngineLibraries.JAVASCRIPT)) {
-            String property = "plugins." + engine.language() + ".libs";
-            if (configuration.getProperty(property, null) != null) {
-                continue;
-            }
-            try {
-                Path directory = libraries.resolve(engine);
-                if (directory != null) {
-                    configuration.putProperty(property, directory.toString());
-                }
-            } catch (Exception e) {
-                // Not worth aborting the execution: only the keywords of that language are affected, and they fail
-                // with an error of their own naming the missing engine. Every exception is caught, not only the
-                // expected one: resolving the engines reads how the application itself is packaged, and the way that
-                // fails is not ours to predict.
-                logger.warn("The {} keywords will not be executable: unable to provide the script engine to the agents.",
-                    engine.language(), e);
-            }
-        }
     }
 }

@@ -39,10 +39,6 @@ public class LocalAgentProvisioningControllerPlugin extends AbstractControllerPl
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
-        if (context.get(AgentProvisioningDriver.class) != null) {
-            logger.info("An agent provisioning driver is already configured. The local agent provisioning is disabled.");
-            return;
-        }
         LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration();
         LocalAgentWorkspace workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
 
@@ -60,8 +56,6 @@ public class LocalAgentProvisioningControllerPlugin extends AbstractControllerPl
         agentProvisioningStatus.createOrUpdateIndex("executionId");
         agentProvisioningStatusAccessor = new AgentProvisioningStatusAccessor(agentProvisioningStatus);
         context.put(AgentProvisioningStatusAccessor.class, agentProvisioningStatusAccessor);
-
-        LocalAgentProvisioning.declareScriptEngineLibraries(context.getConfiguration(), workspace);
     }
 
     @Override

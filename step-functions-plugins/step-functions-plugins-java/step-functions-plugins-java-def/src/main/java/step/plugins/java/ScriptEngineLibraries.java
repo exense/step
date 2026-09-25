@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.agents.provisioning.local;
+package step.plugins.java;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.Constants;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +47,7 @@ import java.util.zip.ZipFile;
  * These keywords run through {@code javax.script}, and their engine has to be on the class path of the <b>agent</b>.
  * A Step controller ships the engines in {@code ext/groovy} and {@code ext/javascript} and points
  * {@code plugins.<language>.libs} at them, which is what makes them travel to the agent as the keyword's plugin
- * libraries. An application starting agents of its own, the CLI in particular, has no such directory, and this class
+ * libraries. An application starting agents of its own, the CLI and the IDE, has no such directory, and this class
  * builds the equivalent. A configured {@code plugins.<language>.libs} always wins, so a caller which does ship the
  * engines keeps shipping its own.
  * <p>
@@ -63,7 +62,7 @@ import java.util.zip.ZipFile;
  * are gives the agent exactly what this application runs on. It is also why a single merged jar is rejected outright
  * rather than filtered: see {@link #locationOf}.
  */
-public class ScriptEngineLibraries {
+public final class ScriptEngineLibraries {
 
     private static final Logger logger = LoggerFactory.getLogger(ScriptEngineLibraries.class);
 
@@ -101,26 +100,26 @@ public class ScriptEngineLibraries {
             "org.objectweb.asm.tree.ClassNode",                                 // asm-tree
             "org.objectweb.asm.tree.analysis.Analyzer"));                       // asm-analysis
 
-    private final LocalAgentWorkspace workspace;
-
-    public ScriptEngineLibraries(LocalAgentWorkspace workspace) {
-        this.workspace = Objects.requireNonNull(workspace, "workspace must not be null");
+    private ScriptEngineLibraries() {
     }
 
     /**
+     * @param directory where the libraries of this engine are installed, kept across runs: libraries already installed
+     *                  there are reused when they are the ones this application runs on
      * @return the directory holding the libraries of this engine, to be used as {@code plugins.<language>.libs}, or
      * {@code null} if the engine is not part of this application. Returning null leaves the property unset, which is
      * exactly what happens on a controller without the engine: the keyword then fails on the agent with "no script
      * engine", which says more than a missing directory would.
      */
-    public Path resolve(ScriptEngine engine) throws LocalAgentException {
+    public static Path resolve(ScriptEngine engine, Path directory) throws IOException {
+        Objects.requireNonNull(engine, "engine must not be null");
+        Objects.requireNonNull(directory, "directory must not be null");
         Map<String, URL> libraries = librariesOf(engine);
         if (libraries.isEmpty()) {
             logger.debug("The {} script engine is not part of this application", engine.language());
             return null;
         }
 
-        Path directory = workspace.getInstalledLibrariesDirectory(engine.language(), Constants.STEP_VERSION_STRING);
         if (Files.isDirectory(directory)) {
             if (holdsAllOf(directory, libraries.values())) {
                 logger.debug("Using the {} libraries already extracted in {}", engine.language(), directory);
@@ -141,7 +140,7 @@ public class ScriptEngineLibraries {
             Files.createDirectories(directory.getParent());
             temporaryDirectory = Files.createTempDirectory(directory.getParent(), directory.getFileName() + ".part");
         } catch (IOException e) {
-            throw new LocalAgentException("Error while creating the directory of the " + engine.language() + " libraries", e);
+            throw new IOException("Error while creating the directory of the " + engine.language() + " libraries", e);
         }
         try {
             logger.info("Extracting the {} libraries to {}...", engine.language(), directory);
@@ -159,10 +158,7 @@ public class ScriptEngineLibraries {
                 // Another process running concurrently won the move, its libraries are as good as ours
                 return directory;
             }
-            throw new LocalAgentException("Error while extracting the " + engine.language() + " libraries", e);
-        } catch (LocalAgentException e) {
-            deleteQuietly(temporaryDirectory);
-            throw e;
+            throw new IOException("Error while extracting the " + engine.language() + " libraries", e);
         }
         return directory;
     }
@@ -171,7 +167,7 @@ public class ScriptEngineLibraries {
      * @return the libraries the engine is made of, keyed by location so that the markers of one library resolve to it
      * only once. Empty if the engine is not on the class path at all.
      */
-    private static Map<String, URL> librariesOf(ScriptEngine engine) throws LocalAgentException {
+    private static Map<String, URL> librariesOf(ScriptEngine engine) throws IOException {
         if (loadClass(engine.factoryClass()) == null) {
             return Map.of();
         }
@@ -193,20 +189,20 @@ public class ScriptEngineLibraries {
 
     /**
      * @return the location of the library providing the given class
-     * @throws LocalAgentException if it cannot be located, or if it is the application itself. The latter is the case
+     * @throws IOException if it cannot be located, or if it is the application itself. The latter is the case
      *                             when the application is packaged as a single merged jar: the libraries no longer
      *                             exist as such in it, and copying that jar would send the whole application to the
      *                             agent. Rebuilding a library out of a merged jar is what this class used to do, and
      *                             what it deliberately no longer does.
      */
-    private static URL locationOf(Class<?> clazz) throws LocalAgentException {
+    private static URL locationOf(Class<?> clazz) throws IOException {
         URL location = codeSourceOf(clazz);
         if (location == null) {
-            throw new LocalAgentException("Unable to locate the library providing " + clazz.getName());
+            throw new IOException("Unable to locate the library providing " + clazz.getName());
         }
         URL own = codeSourceOf(ScriptEngineLibraries.class);
         if (own != null && own.toString().equals(location.toString())) {
-            throw new LocalAgentException("The script engines cannot be provided to the agents: " + clazz.getName()
+            throw new IOException("The script engines cannot be provided to the agents: " + clazz.getName()
                 + " is packaged in " + location + ", the application itself. The libraries of an engine have to remain"
                 + " separate jars, which is not the case in a single merged jar. Configure plugins.<language>.libs to"
                 + " point at the engines instead.");
@@ -233,7 +229,7 @@ public class ScriptEngineLibraries {
      * (Spring Boot's {@code BOOT-INF/lib}).
      */
     // Package private for the sake of the tests, which cover both layouts without a packaged application
-    static void copyLibrary(URL location, Path targetDirectory) throws IOException, LocalAgentException {
+    static void copyLibrary(URL location, Path targetDirectory) throws IOException {
         Path target = targetDirectory.resolve(libraryFileName(location));
         if ("file".equals(location.getProtocol())) {
             Files.copy(fileLibrary(location), target, StandardCopyOption.REPLACE_EXISTING);
@@ -246,7 +242,7 @@ public class ScriptEngineLibraries {
      * @return whether the directory holds every one of these libraries, which is what makes an extraction of a
      * previous run reusable
      */
-    private static boolean holdsAllOf(Path directory, Iterable<URL> libraries) throws LocalAgentException {
+    private static boolean holdsAllOf(Path directory, Iterable<URL> libraries) throws IOException {
         for (URL library : libraries) {
             if (!Files.isRegularFile(directory.resolve(libraryFileName(library)))) {
                 return false;
@@ -259,7 +255,7 @@ public class ScriptEngineLibraries {
      * @return the name the library is copied under, which is the name it has: an engine locates its modules by their
      * own means, and a renamed jar is one more thing to explain when something does not load.
      */
-    private static String libraryFileName(URL location) throws LocalAgentException {
+    private static String libraryFileName(URL location) throws IOException {
         if ("file".equals(location.getProtocol())) {
             return fileLibrary(location).getFileName().toString();
         }
@@ -267,14 +263,14 @@ public class ScriptEngineLibraries {
             String entryName = nestedEntryName(location);
             return entryName.substring(entryName.lastIndexOf('/') + 1);
         }
-        throw new LocalAgentException("Unable to read the library " + location + ": unsupported location.");
+        throw new IOException("Unable to read the library " + location + ": unsupported location.");
     }
 
-    private static Path fileLibrary(URL location) throws LocalAgentException {
+    private static Path fileLibrary(URL location) throws IOException {
         try {
             return Path.of(location.toURI());
         } catch (URISyntaxException | IllegalArgumentException | FileSystemNotFoundException e) {
-            throw new LocalAgentException("Unable to read the library " + location, e);
+            throw new IOException("Unable to read the library " + location, e);
         }
     }
 
@@ -287,13 +283,13 @@ public class ScriptEngineLibraries {
      * that file system reports a read which ends on the last bytes of an entry as 0 bytes read, which leaves whoever
      * copies from it with an empty file.
      */
-    private static void copyNestedLibrary(URL location, Path target) throws IOException, LocalAgentException {
+    private static void copyNestedLibrary(URL location, Path target) throws IOException {
         Path archive = nestedArchive(location);
         String entryName = nestedEntryName(location);
         try (ZipFile jar = new ZipFile(archive.toFile())) {
             ZipEntry entry = jar.getEntry(entryName);
             if (entry == null) {
-                throw new LocalAgentException("Unable to read the library " + location + ": " + entryName
+                throw new IOException("Unable to read the library " + location + ": " + entryName
                     + " is not in " + archive + ".");
             }
             try (InputStream content = jar.getInputStream(entry)) {
@@ -302,17 +298,17 @@ public class ScriptEngineLibraries {
         }
     }
 
-    private static Path nestedArchive(URL location) throws LocalAgentException {
+    private static Path nestedArchive(URL location) throws IOException {
         try {
             // The loader builds the location of the archive from the path of its file URI, hence rebuilding that URI
             // rather than reading the path as it is: it holds a leading slash on Windows, and is URI encoded
             return Path.of(URI.create("file://" + nestedParts(location, true)[0]));
         } catch (RuntimeException e) {
-            throw new LocalAgentException("Unable to read the library " + location, e);
+            throw new IOException("Unable to read the library " + location, e);
         }
     }
 
-    private static String nestedEntryName(URL location) throws LocalAgentException {
+    private static String nestedEntryName(URL location) throws IOException {
         return nestedParts(location, false)[1];
     }
 
@@ -322,10 +318,10 @@ public class ScriptEngineLibraries {
      * {@code BOOT-INF/lib/library.jar} of {@code /path/app.jar}.
      * @param raw whether the parts are returned as the location holds them, rather than URI decoded
      */
-    private static String[] nestedParts(URL location, boolean raw) throws LocalAgentException {
+    private static String[] nestedParts(URL location, boolean raw) throws IOException {
         String url = location.toString();
         if (!url.startsWith(NESTED_LOCATION_PREFIX)) {
-            throw new LocalAgentException("Unable to read the library " + location + ": not a nested library location.");
+            throw new IOException("Unable to read the library " + location + ": not a nested library location.");
         }
         URI nested;
         try {
@@ -333,7 +329,7 @@ public class ScriptEngineLibraries {
         } catch (URISyntaxException e) {
             // The loader encodes the archive of a location, but not the name of the entry in it: a library whose name
             // holds a character a URI cannot carry ends up here
-            throw new LocalAgentException("Unable to read the library " + location, e);
+            throw new IOException("Unable to read the library " + location, e);
         }
         String nestedLocation = raw ? nested.getRawSchemeSpecificPart() : nested.getSchemeSpecificPart();
         // The trailing "!/" of the location, which points at the root of the library rather than into it
@@ -343,7 +339,7 @@ public class ScriptEngineLibraries {
         }
         int separator = nestedLocation.lastIndexOf("/!");
         if (separator < 0) {
-            throw new LocalAgentException("Unable to read the library " + location + ": no nested library in it.");
+            throw new IOException("Unable to read the library " + location + ": no nested library in it.");
         }
         return new String[]{nestedLocation.substring(0, separator), nestedLocation.substring(separator + 2)};
     }
