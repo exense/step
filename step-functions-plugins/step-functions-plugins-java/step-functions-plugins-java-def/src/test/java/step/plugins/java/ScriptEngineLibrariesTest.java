@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.agents.provisioning.local;
+package step.plugins.java;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -93,7 +93,7 @@ public class ScriptEngineLibrariesTest {
         Path target = folder.newFolder("libraries").toPath();
 
         URL missing = nestedUrl(application, "BOOT-INF/lib/nashorn-core-15.4.jar");
-        LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
+        IOException exception = Assert.assertThrows(IOException.class,
             () -> ScriptEngineLibraries.copyLibrary(missing, target));
         Assert.assertTrue(exception.getMessage(), exception.getMessage().contains("nashorn-core-15.4.jar"));
     }
@@ -103,9 +103,7 @@ public class ScriptEngineLibrariesTest {
      */
     @Test
     public void extractsTheEngineItRunsOn() throws Exception {
-        ScriptEngineLibraries libraries = new ScriptEngineLibraries(new LocalAgentWorkspace(folder.getRoot().toPath()));
-
-        Path directory = libraries.resolve(ScriptEngineLibraries.GROOVY);
+        Path directory = ScriptEngineLibraries.resolve(ScriptEngineLibraries.GROOVY, folder.getRoot().toPath().resolve("groovy"));
 
         Assert.assertNotNull("Groovy is on the class path of this test", directory);
         Assert.assertTrue("Should hold the groovy jars: " + names(directory),
@@ -119,9 +117,8 @@ public class ScriptEngineLibrariesTest {
      */
     @Test
     public void replacesLibrariesLeftByAnotherExtraction() throws Exception {
-        LocalAgentWorkspace workspace = new LocalAgentWorkspace(folder.getRoot().toPath());
-        ScriptEngineLibraries libraries = new ScriptEngineLibraries(workspace);
-        Path directory = libraries.resolve(ScriptEngineLibraries.GROOVY);
+        Path target = folder.getRoot().toPath().resolve("groovy");
+        Path directory = ScriptEngineLibraries.resolve(ScriptEngineLibraries.GROOVY, target);
         List<String> extracted = names(directory);
         // What a previous version of this class left behind: one jar it had built itself
         for (String name : extracted) {
@@ -129,7 +126,7 @@ public class ScriptEngineLibrariesTest {
         }
         library(directory.resolve("groovy-libraries.jar"), "what a previous version extracted");
 
-        Assert.assertEquals(directory, libraries.resolve(ScriptEngineLibraries.GROOVY));
+        Assert.assertEquals(directory, ScriptEngineLibraries.resolve(ScriptEngineLibraries.GROOVY, target));
         Assert.assertEquals(extracted, names(directory));
     }
 
@@ -137,7 +134,7 @@ public class ScriptEngineLibrariesTest {
     public void reportsALocationItCannotRead() throws Exception {
         Path target = folder.newFolder("libraries").toPath();
 
-        LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
+        IOException exception = Assert.assertThrows(IOException.class,
             () -> ScriptEngineLibraries.copyLibrary(new URL("http://a.host/groovy.jar"), target));
         Assert.assertTrue(exception.getMessage(), exception.getMessage().contains("groovy.jar"));
     }
@@ -152,7 +149,7 @@ public class ScriptEngineLibrariesTest {
         Path target = folder.newFolder("libraries").toPath();
         URL illegal = nestedUrl(folder.getRoot().toPath().resolve("step.jar"), "BOOT-INF/lib/my lib.jar");
 
-        LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
+        IOException exception = Assert.assertThrows(IOException.class,
             () -> ScriptEngineLibraries.copyLibrary(illegal, target));
         Assert.assertTrue(exception.getMessage(), exception.getMessage().contains("my lib.jar"));
     }

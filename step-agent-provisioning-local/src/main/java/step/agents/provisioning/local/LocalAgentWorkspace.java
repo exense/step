@@ -129,14 +129,12 @@ public class LocalAgentWorkspace {
     }
 
     /**
-     * The directory a set of libraries sent to the agents is installed in, kept across runs for the same reason as
-     * the agents themselves.
+     * The directory the libraries sent to the agents are installed in, kept across runs for the same reason as the
+     * agents themselves.
      *
-     * @param name    a name identifying the library set, e.g. {@code groovy}
-     * @param version the version they were extracted from, so that a CLI upgrade does not reuse stale libraries
      * @return the directory, which is <b>not</b> created by this method
      */
-    public Path getInstalledLibrariesDirectory(String name, String version) {
-        return root.resolve(INSTALLED_LIBRARIES_DIRECTORY_NAME).resolve(name).resolve(version);
+    public Path getInstalledLibrariesDirectory() {
+        return root.resolve(INSTALLED_LIBRARIES_DIRECTORY_NAME);
     }
 }
