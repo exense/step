@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
@@ -47,6 +48,7 @@ import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -67,6 +69,9 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     public static final Long DEFAULT_MAVEN_CLEANUP_FREQUENCY = 60L;
     private static final Integer DEFAULT_MAX_VERSIONS_PER_AP = 0; //quota disabled
     private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
+    // Sub-folders of the resource directory holding the temporary resources of isolated executions and AP staging
+    public static final String ISOLATED_RESOURCES_FOLDER = "temp_isolated_ap";
+    public static final String STAGING_RESOURCES_FOLDER = "temp_staging_ap";
     protected AutomationPackageLocks automationPackageLocks;
     private AutomationPackageAccessor packageAccessor;
 
@@ -152,7 +157,25 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 maxVersionPerPackage,
                 context.get(ObjectHookRegistry.class)
             );
+
+            File resourcesDir = new File(ResourceManagerControllerPlugin.getResourceDir(context.getConfiguration()));
+            File isolatedResourcesRoot = new File(resourcesDir, ISOLATED_RESOURCES_FOLDER);
+            File stagingResourcesRoot = new File(resourcesDir, STAGING_RESOURCES_FOLDER);
+            // no execution or deployment is running at startup, remaining files are leftovers of a previous controller run
+            deleteTemporaryFolder(isolatedResourcesRoot);
+            deleteTemporaryFolder(stagingResourcesRoot);
+            packageManager.setIsolatedResourcesRoot(isolatedResourcesRoot);
+            packageManager.setStagingResourcesRoot(stagingResourcesRoot);
+
             context.put(AutomationPackageManager.class, packageManager);
+        }
+    }
+
+    private static void deleteTemporaryFolder(File folder) {
+        try {
+            FileUtils.deleteDirectory(folder);
+        } catch (IOException e) {
+            log.warn("Unable to delete the temporary folder {}", folder.getAbsolutePath(), e);
         }
     }
 

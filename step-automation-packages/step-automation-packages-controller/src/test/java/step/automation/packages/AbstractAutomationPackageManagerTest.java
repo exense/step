@@ -81,6 +81,7 @@ public abstract class AbstractAutomationPackageManagerTest {
     protected AutomationPackageAccessorImpl automationPackageAccessor;
     protected LocalResourceManagerImpl resourceManager;
 
+    protected FunctionTypeRegistry functionTypeRegistry;
     protected FunctionManagerImpl functionManager;
     protected FunctionAccessorImpl functionAccessor;
     protected PlanAccessorImpl planAccessor;
@@ -114,7 +115,7 @@ public abstract class AbstractAutomationPackageManagerTest {
 
         Configuration configuration = AbstractAutomationPackageManagerTest.createTestConfiguration();
         this.resourceManager = new TestResourceManagerImpl();
-        FunctionTypeRegistry functionTypeRegistry = AbstractAutomationPackageManagerTest.prepareTestFunctionTypeRegistry(configuration, resourceManager);
+        this.functionTypeRegistry = AbstractAutomationPackageManagerTest.prepareTestFunctionTypeRegistry(configuration, resourceManager);
 
         this.functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
         this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>(false));

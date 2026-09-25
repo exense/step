@@ -126,7 +126,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         ImportResult result = new ImportResult();
         try {
             try {
-                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate(), context.getExecutionParameters().getUserID());
+                ctx = getOrRestorePackageExecutionContext(context.getExecutionId(), repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate(), context.getExecutionParameters().getUserID());
                 //If context is shared across multiple executions, it was created externally and will be closed by the creator,
                 // otherwise it should be closed once the executions ends from the execution context
                 if (!ctx.isShared()) {
@@ -311,11 +311,14 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
+    /**
+     * @param executionId the id of the execution requesting the context, {@code null} if not requested by an execution
+     */
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(String executionId, Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
-        PackageExecutionContext current = contextId == null ? null : sharedPackageExecutionContexts.get(contextId);
+        PackageExecutionContext current = getSharedPackageExecutionContext(contextId, executionId);
         if (current == null) {
             if (contextId == null) {
                 contextId = new ObjectId().toString();
@@ -333,6 +336,19 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         } else {
             return current;
         }
+    }
+
+    /**
+     * @return the shared context registered for this context id if the execution is one of the executions started
+     * with it, {@code null} otherwise. Other executions with the same context id (i.e. re-executions) must not use it
+     * as it was created from another execution context
+     */
+    protected PackageExecutionContext getSharedPackageExecutionContext(String contextId, String executionId) {
+        PackageExecutionContext current = contextId == null ? null : sharedPackageExecutionContexts.get(contextId);
+        if (current instanceof IsolatedPackageExecutionContext && ((IsolatedPackageExecutionContext) current).isExecutionAllowed(executionId)) {
+            return current;
+        }
+        return null;
     }
 
     protected AutomationPackageFile restorePackageFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
@@ -392,9 +408,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return false;
     }
 
-    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate,
-                                                                         String contextId, AutomationPackageFile apFile, boolean shared,
-                                                                         AutomationPackageFile keywordLibraryFile, String actorUser) {
+    public IsolatedPackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate,
+                                                                                 String contextId, AutomationPackageFile apFile, boolean shared,
+                                                                                 AutomationPackageFile keywordLibraryFile, String actorUser) {
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
             new ObjectId(contextId), functionTypeRegistry,
@@ -421,7 +437,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }
 
-        PackageExecutionContext res = new IsolatedPackageExecutionContext(contextId, inMemoryPackageManager, shared);
+        IsolatedPackageExecutionContext res = new IsolatedPackageExecutionContext(contextId, inMemoryPackageManager, shared);
         if (shared) {
             sharedPackageExecutionContexts.put(contextId, res);
         }
@@ -546,6 +562,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         private final String contextId;
         private final AutomationPackageManager inMemoryManager;
         private final boolean shared;
+        // ids of the executions allowed to use this context when it is shared
+        private final Set<String> allowedExecutionIds = new HashSet<>();
 
         public IsolatedPackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean shared) {
             this.contextId = contextId;
@@ -566,6 +584,18 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         @Override
         public boolean isShared() {
             return shared;
+        }
+
+        /**
+         * Allows the given execution to use this shared context. The creator must synchronize on this context while
+         * starting the execution and allowing it, as the execution may request the context before its id is known
+         */
+        public synchronized void allowExecution(String executionId) {
+            allowedExecutionIds.add(Objects.requireNonNull(executionId));
+        }
+
+        public synchronized boolean isExecutionAllowed(String executionId) {
+            return executionId != null && allowedExecutionIds.contains(executionId);
         }
 
         @Override
