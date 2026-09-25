@@ -251,7 +251,7 @@ public class IdeCommands {
         @Override
         protected void afterBackendStart() throws Exception {
             if (initGroup == null || !initGroup.initialize) {
-                getState().useExistingAutomationPackageDirectory(apDirectory);
+                getState().useExistingAutomationPackageDirectory(apDirectory, false);
             } else {
                 getState().useNewAutomationPackageDirectory(apDirectory, initGroup.name);
             }

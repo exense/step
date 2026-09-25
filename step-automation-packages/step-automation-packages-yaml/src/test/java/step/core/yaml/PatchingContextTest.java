@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
 public class PatchingContextTest {
 
     private static final String EXPECTED_UNMODIFIED = """
-        schemaVersion: 1.0.0
+        version: 1.3.0
         name: "complete-package"
         fragments:
           - "importPlans.yml"
@@ -100,7 +100,7 @@ public class PatchingContextTest {
         """;
 
     private static final String EXPECTED_REMOVED_1 = """
-        schemaVersion: 1.0.0
+        version: 1.3.0
         name: "complete-package"
         fragments:
           - "importKeywords.yml"
@@ -147,7 +147,7 @@ public class PatchingContextTest {
         """;
 
     private static final String EXPECTED_REMOVED_2_MODIFIED = """
-        schemaVersion: 1.0.0
+        version: 1.3.0
         name: "complete-package"
         fragments:
           - "importKeywords.yml"
@@ -210,7 +210,7 @@ public class PatchingContextTest {
             current = ensureValid(patchingContext.getCurrentYaml());
 
             Assert.assertEquals("""
-                schemaVersion: 1.0.0
+                version: 1.3.0
                 name: "complete-package"
                 fragments:
                   - "importKeywords.yml"

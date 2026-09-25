@@ -30,6 +30,8 @@ import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerial
 import step.core.yaml.NamedPatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.model.NamedYamlArtefact;
 
 import java.util.List;
@@ -42,8 +44,6 @@ public class YamlPlan extends PatchableYamlModelBase implements NamedPatchableYa
 
     private String name;
 
-    private NamedYamlArtefact root;
-
     @JsonSerialize(using = AgentProvisioningConfigurationSerializer.class)
     @JsonDeserialize(using = AgentProvisioningConfigurationDeserializer.class)
     private AgentProvisioningConfiguration agents;
@@ -52,6 +52,9 @@ public class YamlPlan extends PatchableYamlModelBase implements NamedPatchableYa
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, Object> metadata;
+
+    @YamlFieldOrder(YamlFieldPriority.CHILDREN)
+    private NamedYamlArtefact root;
 
     @JsonCreator
     public YamlPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE) PatchingContext context) {

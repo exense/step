@@ -221,7 +221,7 @@ public class AutomationPackageDescriptorReader {
         // has to be removed
         migratedDocument.remove(AbstractIdentifiableObject.ID);
 
-        return yamlObjectMapper.writeValueAsString(migratedDocument);
+        return "---\n" + yamlObjectMapper.writeValueAsString(migratedDocument);
     }
 
     /**

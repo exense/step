@@ -48,7 +48,7 @@ public class PatchableYamlListDeserializer extends CollectionDeserializer {
             JsonLocation startLocation = patchingParser.getLastLocationForToken(JsonToken.FIELD_NAME);
             Collection<Object> entity = delegate.deserialize(p, ctxt, new ArrayList<>());
             PatchableYamlList<Object> patchableYamlList = new PatchableYamlList<>(entity, patchingParser.getPatchingContext(), patchingParser.currentName());
-            patchableYamlList.onParsed(startLocation, patchingParser.getLastDistinctLocation());
+            patchableYamlList.onParsed(startLocation, patchingParser);
             //patchableYamlList.getPatchingContext().claimChunk(, patchableYamlList);
             return patchableYamlList;
         }

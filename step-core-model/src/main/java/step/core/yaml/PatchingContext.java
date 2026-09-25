@@ -7,8 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
 
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -63,10 +67,26 @@ public class PatchingContext {
         return initialLines.subList(bounds.startLineNumber - 1, bounds.endLineNumber);
     }
 
-    public record ChunkBounds(int startLineNumber, int endLineNumber) implements Comparable<ChunkBounds> {
+    public boolean chunkClaimed(PatchableYamlModel entity) {
+        return getChunkBounds(entity).isPresent();
+    }
+
+
+    public record ChunkBounds(int startLineNumber, int endLineNumber, Portion portion) implements Comparable<ChunkBounds> {
+
+        public enum Portion {
+            HEAD,
+            BODY
+        }
+
         private static final Comparator<ChunkBounds> COMPARATOR = Comparator
             .comparingInt(ChunkBounds::startLineNumber) // lower startLine first
             .thenComparing(Comparator.comparingInt(ChunkBounds::endLineNumber).reversed()); // larger endLine (i.e. larger chunk) first
+        private static final Comparator<ChunkBounds> COMPARATOR_WITH_PORTION = Comparator
+            .comparing(ChunkBounds::portion) // first portion
+            .thenComparing(
+                Comparator.comparingInt(ChunkBounds::startLineNumber) // then startLine first
+                    .thenComparing(Comparator.comparingInt(ChunkBounds::endLineNumber).reversed())); // larger endLine (i.e. larger chunk) first
 
         @Override
         public int compareTo(ChunkBounds that) {
@@ -108,18 +128,21 @@ public class PatchingContext {
         List<ChunkBounds> unclaimedBounds = new ArrayList<>();
         // claimedBounds is sorted, we need to fill the gaps
         int startLineNumber = 1;
+        ChunkBounds.Portion portion = ChunkBounds.Portion.HEAD;
         for (ChunkBounds bound : allBounds) {
             if (bound.startLineNumber > startLineNumber) {
-                unclaimedBounds.add(new ChunkBounds(startLineNumber, bound.startLineNumber - 1));
+                unclaimedBounds.add(new ChunkBounds(startLineNumber, bound.startLineNumber - 1, portion));
             }
             startLineNumber = bound.endLineNumber + 1;
+            portion = bound.portion;
         }
         allBounds.addAll(unclaimedBounds);
         unclaimedBounds.clear(); // not needed anymore, might as well free it
         allBounds.sort(ChunkBounds.COMPARATOR);
         if (!allBounds.isEmpty() && allBounds.getLast().endLineNumber < initialLines.size()) {
-            allBounds.add(new ChunkBounds(allBounds.getLast().endLineNumber + 1, initialLines.size()));
+            allBounds.add(new ChunkBounds(allBounds.getLast().endLineNumber + 1, initialLines.size(), ChunkBounds.Portion.BODY));
         }
+        allBounds.sort(ChunkBounds.COMPARATOR_WITH_PORTION);
         return allBounds;
     }
 
@@ -229,40 +252,23 @@ public class PatchingContext {
     public ChunkBounds claimChunk(JsonLocation startLocation, JsonLocation endLocation, PatchableYamlModel entity) {
         int startLineNumber = startLocation.getLineNr();
         int endLineNumber = endLocation.getLineNr();
-        String startLine = initialLines.get(startLineNumber - 1);
-        if (startLocation.getColumnNr() >= startLine.length()) {
-            // sometimes the start is at the correct line, sometimes it's at the end (in fact, AFTER the end) of some previous line
-            PatchableYamlModel.StartingLineDeterminationStrategy strategy = entity.getStartingLineDeterminationStrategy();
-            logger.debug("{}: entity of {} seems to start at end of line {} (columnNr={}, lineLength={}), determining correct entity start line (strategy={})", sourceLocation,
-                entity.getClass(), startLocation.getLineNr(), startLocation.getColumnNr(), startLine.length(), strategy);
-            if (strategy == PatchableYamlModel.StartingLineDeterminationStrategy.NEXT_CONTENT_LINE) {
-                boolean found = false;
-                for (int l = startLineNumber; l < initialLines.size(); l++) {
-                    String candidate = initialLines.get(l).trim();
-                    if (!candidate.isEmpty() && !candidate.startsWith("#")) {
-                        startLineNumber = l + 1;
-                        logger.debug("Using first non-empty, non-comment line (lineNumber={}, line content={})", startLineNumber, candidate);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    logger.debug("Unable to determine correct start line for entity, keeping original line number!");
-                }
-            }
-        }
-        ChunkBounds bounds = new ChunkBounds(startLineNumber, endLineNumber);
+        ChunkBounds bounds = new ChunkBounds(startLineNumber, endLineNumber, ChunkBounds.Portion.BODY);
         chunks.put(bounds, entity);
         return bounds;
     }
 
+
     public ChunkBounds appendAndClaim(PatchableYamlModel entity, String chunk) {
+        return appendAndClaim(entity, chunk, ChunkBounds.Portion.BODY);
+    }
+
+    public ChunkBounds appendAndClaim(PatchableYamlModel entity, String chunk, ChunkBounds.Portion portion) {
         List<String> lines = chunk.lines().toList();
         // yes, initialLines won't be so "initial" anymore ;-)
         initialLines.addAll(lines);
         int endLine = initialLines.size();
         int startLine = endLine - lines.size() + 1;
-        ChunkBounds bounds = new ChunkBounds(startLine, endLine);
+        ChunkBounds bounds = new ChunkBounds(startLine, endLine, portion);
         chunks.put(bounds, entity);
         return bounds;
     }

@@ -44,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 
 public class AutomationPackageCollectionTestBase {
 
-    private final JavaAutomationPackageReader reader;
+    protected final JavaAutomationPackageReader reader;
 
     // To use a different source directory, override in subclass constructor
     protected final File sourceDirectory;
@@ -75,13 +75,14 @@ public class AutomationPackageCollectionTestBase {
         resourcesDirectory = Files.createTempDirectory("automationPackageCollectionTestResources").toFile();
         FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
         resourceManager = new LocalResourceManagerImpl(resourcesDirectory);
-        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager);
+        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);
     }
+
 
     @After
     public void tearDown() throws IOException, AutomationPackageReadingException {
         // Attempt to re-read the just written Automation package from scratch
-        reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager);
+        reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);
         FileUtils.deleteDirectory(destinationDirectory);
         FileUtils.deleteDirectory(resourcesDirectory);
     }

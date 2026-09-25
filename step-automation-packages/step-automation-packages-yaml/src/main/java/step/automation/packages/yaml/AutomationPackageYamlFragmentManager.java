@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -209,46 +210,56 @@ public class AutomationPackageYamlFragmentManager {
 
     private <T extends PatchableYamlModel> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T oldEntity, T newEntity, String fieldName) {
         entityList.replaceItem(oldEntity, newEntity);
-        Path oldRelativePath = determineRelativePathFor(oldEntity, fieldName);
-        Path newRelativePath = determineRelativePathFor(newEntity, fieldName);
 
-        // Path did not change - skip entire move logic
-        if (!oldRelativePath.equals(newRelativePath)) {
-            Path oldAbsolutePath = apRoot.resolve(oldRelativePath);
 
-             /*  oldRelativePath is the path which would have been given to old version of the entity
-                 by the fragment manager. If it matches the fragment path, this means that
-                 the fragment path was intended to follow the naming convention based on the configuration
-                 (i.e. PER_OBJECT naming)
+        if (oldEntity instanceof NamedPatchableYamlModel namedOldEntity && newEntity instanceof NamedPatchableYamlModel namedNewEntity) {
 
-                 if the paths don't match, then simply skip the renaming. This silently allows for:
-                  - legacy fragments which don't follow the naming convention
-                  - FRAGMENT type naming (fixed fragment for object types such as Parameters)
-              */
-            if (oldAbsolutePath.equals(fragment.getFragmentPath())) {
-                Path newAbsolutePath = apRoot.resolve(newRelativePath);
+            // Names did not change - skip entire move logic
+            if (!Objects.equals(namedNewEntity.getName(), namedOldEntity.getName())) {
 
-                try {
-                    FileUtils.moveFile(oldAbsolutePath.toFile(), newAbsolutePath.toFile());
-                    fragment.setFragmentPath(newAbsolutePath);
-                } catch (IOException e) {
-                    throw new AutomationPackageConcurrentEditException(
-                        String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", oldAbsolutePath, newAbsolutePath));
-                }
+                Path oldRelativePath = determineRelativePathFor(oldEntity, fieldName);
+                Path newRelativePath = determineRelativePathFor(newEntity, fieldName);
 
-                AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
-                    .orElse(descriptorYaml);
+                // Path did not change - skip entire move logic
+                if (!oldRelativePath.equals(newRelativePath)) {
+                    Path oldAbsolutePath = apRoot.resolve(oldRelativePath);
 
-                String newReference = determineFragmentReferenceString(newEntity, fieldName, true);
-                String oldReference = resourcePathMatchingResolver.getFragmentReferenceString(oldRelativePath);
+                     /*  oldRelativePath is the path which would have been given to old version of the entity
+                         by the fragment manager. If it matches the fragment path, this means that
+                         the fragment path was intended to follow the naming convention based on the configuration
+                         (i.e. PER_OBJECT naming)
 
-                // If the old reference is explicitly present in the YAML list, replace it with the new one.
-                if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
-                    referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
-                    referencingFragment.writeToDisk();
+                         if the paths don't match, then simply skip the renaming. This silently allows for:
+                          - legacy fragments which don't follow the naming convention
+                          - FRAGMENT type naming (fixed fragment for object types such as Parameters)
+                      */
+                    if (oldAbsolutePath.equals(fragment.getFragmentPath())) {
+                        Path newAbsolutePath = apRoot.resolve(newRelativePath);
+
+                        try {
+                            FileUtils.moveFile(oldAbsolutePath.toFile(), newAbsolutePath.toFile());
+                            fragment.setFragmentPath(newAbsolutePath);
+                        } catch (IOException e) {
+                            throw new AutomationPackageConcurrentEditException(
+                                String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", oldAbsolutePath, newAbsolutePath));
+                        }
+
+                        AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
+                            .orElse(descriptorYaml);
+
+                        String newReference = determineFragmentReferenceString(newEntity, fieldName, true);
+                        String oldReference = resourcePathMatchingResolver.getFragmentReferenceString(oldRelativePath);
+
+                        // If the old reference is explicitly present in the YAML list, replace it with the new one.
+                        if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
+                            referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
+                            referencingFragment.writeToDisk();
+                        }
+                    }
                 }
             }
         }
+
         fragment.writeToDisk();
     }
 
@@ -383,5 +394,11 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     private record FragmentLocation(NewObjectFragmentMode mode, String relativeFragmentPath) {
+    }
+
+    public void saveAllEntities() {
+        for (AbstractOrganizableObject entity : patchableMap.keySet()) {
+            save(entity);
+        }
     }
 }

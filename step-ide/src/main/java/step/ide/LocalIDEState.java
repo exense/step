@@ -38,6 +38,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+import static step.core.Constants.STEP_YAML_SCHEMA_VERSION_STRING;
+
 public class LocalIDEState implements ExecutionDiversion {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
     private static final LocalIDEState instance = new LocalIDEState();
@@ -78,18 +80,18 @@ public class LocalIDEState implements ExecutionDiversion {
         logger.debug("Setting resource manager to {}", resourceManager);
     }
 
-    public void useExistingAutomationPackageDirectory(Path apDir) throws Exception {
+    public void useExistingAutomationPackageDirectory(Path apDir, Boolean upgrade) throws Exception {
         validateExistingAutomationPackageDirectory(apDir);
-        useAutomationPackageDirectory(apDir);
+        useAutomationPackageDirectory(apDir, upgrade);
     }
 
     public void useNewAutomationPackageDirectory(Path apDir, String apName) throws Exception {
         initializeAPDirectory(apDir, apName);
-        useAutomationPackageDirectory(apDir);
+        useAutomationPackageDirectory(apDir, false);
     }
 
-    private void useAutomationPackageDirectory(Path apDir) throws Exception {
-        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager);
+    private void useAutomationPackageDirectory(Path apDir, Boolean upgrade) throws Exception {
+        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager, upgrade);
         Properties properties = new Properties();
 
         int variant = 1;
@@ -197,7 +199,7 @@ public class LocalIDEState implements ExecutionDiversion {
         }
 
         String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
-        String content = "schemaVersion: 1.0.0\nname: \"" + yamlName + "\"\n";
+        String content = "version: \"" + STEP_YAML_SCHEMA_VERSION_STRING + "\"\nname: \"" + yamlName + "\"\n";
         Files.writeString(descriptor, content);
     }
 

@@ -27,9 +27,10 @@ import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.core.Version;
 import step.core.plans.Plan;
-import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.YamlMetadata;
+import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.functions.Function;
 import step.plans.automation.YamlPlainTextPlan;
@@ -55,6 +56,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static step.core.Constants.STEP_YAML_SCHEMA_VERSION;
+import static step.core.Constants.STEP_YAML_SCHEMA_VERSION_STRING;
 
 /**
  * Designed to read the automation package content from some source (for instance, from jar archive).
@@ -146,7 +150,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     private String resolveName(AutomationPackageDescriptorYaml descriptor, T archive) throws AutomationPackageReadingException {
         String finalName;
         if (descriptor != null) {
-            finalName = descriptor.getName();
+            finalName = descriptor.getName().getValue();
         } else {
             finalName = Objects.requireNonNullElse(archive.getAutomationPackageName(), "local-automation-package");
         }
@@ -189,11 +193,22 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
-    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive, ResourceManager resourceManager) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive, ResourceManager resourceManager, Boolean upgrade) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorUrl = archive.getDescriptorYamlUrl();
         try (InputStream inputStream = descriptorUrl.openStream()) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
+
+            Version schemaVersion = descriptor.getVersion().getValue() == null
+                ? null : new Version(descriptor.getVersion().getValue());
+
+            if (!upgrade) {
+                if (schemaVersion == null) {
+                    throw new NoAutomationPackageSchemaVersionSetException();
+                } else if (schemaVersion.getMajor() != STEP_YAML_SCHEMA_VERSION.getMajor() || schemaVersion.getMinor() != STEP_YAML_SCHEMA_VERSION.getMinor()) {
+                    throw new LegacyAutomationPackageSchemaVersionSetException();
+                }
+            }
 
             try {
                 Path descriptorPath = Path.of(descriptorUrl.toURI());
@@ -205,6 +220,11 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 automationPackage.setStatus(AutomationPackageStatus.EDITING);
                 StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
                 AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
+
+                if (schemaVersion == null || schemaVersion.getMajor() != STEP_YAML_SCHEMA_VERSION.getMajor() || schemaVersion.getMinor() != STEP_YAML_SCHEMA_VERSION.getMinor()) {
+                    descriptor.setVersionString(STEP_YAML_SCHEMA_VERSION_STRING);
+                    fragmentManager.saveAllEntities();
+                }
                 // Transform resource references to AP resources as during AP deployment. Only required for plans  as
                 // keywords plugins map their own resource references while the fragments are read;
                 AutomationPackagePlansAttributesApplier.applySpecialAttributesToPlans(stagingContext,
@@ -220,21 +240,21 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     }
 
     private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments) throws AutomationPackageReadingException {
-        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragments, fragment instanceof AutomationPackageDescriptorYaml ? ((AutomationPackageDescriptorYaml) fragment).getVersion() : null);
+        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragments, fragment instanceof AutomationPackageDescriptorYaml ? ((AutomationPackageDescriptorYaml) fragment).getVersion().getValue() : null);
     }
 
 
-        /**
-         *
-         * @param targetPackage Target Automation package content to be filled by fragment read entities
-         * @param fragment      Fragment to read
-         * @param archive       Automation package archive
-         * @param fragments     Set of all automation package fragments collected during  recursive reading of fragments.
-         * @param packageVersion the schema version declared by the automation package descriptor. Fragments usually
-         *                       declare no version of their own and inherit this one, which is what decides whether the
-         *                       migrations of the automation package format apply to them
-         * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
-         */
+    /**
+     *
+     * @param targetPackage  Target Automation package content to be filled by fragment read entities
+     * @param fragment       Fragment to read
+     * @param archive        Automation package archive
+     * @param fragments      Set of all automation package fragments collected during  recursive reading of fragments.
+     * @param packageVersion the schema version declared by the automation package descriptor. Fragments usually
+     *                       declare no version of their own and inherit this one, which is what decides whether the
+     *                       migrations of the automation package format apply to them
+     * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
+     */
     private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments, String packageVersion) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
