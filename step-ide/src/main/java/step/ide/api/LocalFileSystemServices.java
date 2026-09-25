@@ -1,5 +1,6 @@
 package step.ide.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -9,6 +10,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.ApFileNames;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.filebrowser.DirectoryListing;
@@ -204,6 +206,74 @@ public class LocalFileSystemServices extends AbstractStepServices {
         } catch (IOException e) {
             logger.error("Failed to create directory: {}", targetDir, e);
             throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to create directory: " + e.getMessage(), e);
+        }
+    }
+
+    public record ProposeDirectoryResponse(String directory, List<String> warnings, List<String> errors) {
+    }
+
+    @Operation(description = "Takes an existing parent directory and desired AP name, and returns the proposed corresponding directory name, along with potential warnings or errors.")
+    @GET
+    @jakarta.ws.rs.Path("proposeAPDirectory")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ProposeDirectoryResponse proposeAPDirectory(@QueryParam("existingParentDirectory") String existingParentDirectory, @QueryParam("apName") String apName) {
+        if (existingParentDirectory == null || existingParentDirectory.isBlank()) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "existingParentDirectory must not be empty");
+        }
+        if (apName == null || apName.isBlank()) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "apName must not be empty");
+        }
+
+        Path parentDirectory;
+        try {
+            parentDirectory = Paths.get(existingParentDirectory);
+        } catch (InvalidPathException e) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid parent directory path: " + e.getMessage());
+        }
+        if (!Files.exists(parentDirectory)) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Parent directory does not exist: " + existingParentDirectory);
+        }
+        if (!Files.isDirectory(parentDirectory)) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Specified parent path is not a directory: " + existingParentDirectory);
+        }
+
+        // ApFileNames.sanitize drops leading and trailing dots, so '.' and '..' are rejected here as well
+        String directoryName;
+        try {
+            directoryName = ApFileNames.sanitize(apName);
+        } catch (IllegalArgumentException e) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid automation package name: " + e.getMessage());
+        }
+
+        List<String> warnings = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        if (!directoryName.equals(apName)) {
+            warnings.add("Directory name was sanitized from '" + apName + "' to '" + directoryName + "'");
+        }
+
+        Path targetDirectory = parentDirectory.resolve(directoryName).toAbsolutePath();
+        if (Files.exists(targetDirectory)) {
+            if (!Files.isDirectory(targetDirectory)) {
+                errors.add("Target path already exists but is a file, not a directory: " + targetDirectory);
+            } else {
+                try {
+                    if (isDirectoryEmpty(targetDirectory)) {
+                        warnings.add("Directory already exists and is empty: " + targetDirectory);
+                    } else {
+                        warnings.add("Directory already exists and contains content: " + targetDirectory);
+                    }
+                } catch (IOException e) {
+                    throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to read directory: " + e.getMessage(), e);
+                }
+            }
+        }
+
+        return new ProposeDirectoryResponse(targetDirectory.toString(), warnings, errors);
+    }
+
+    private static boolean isDirectoryEmpty(Path directory) throws IOException {
+        try (var entries = Files.list(directory)) {
+            return entries.findFirst().isEmpty();
         }
     }
 }
