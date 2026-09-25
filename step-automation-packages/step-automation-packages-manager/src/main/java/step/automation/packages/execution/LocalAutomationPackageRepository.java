@@ -77,7 +77,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
         if (isWrapPlansIntoTestSet(repositoryParameters)) {
             PackageExecutionContext ctx = null;
             try {
-                ctx = getOrRestorePackageExecutionContext(repositoryParameters, null, objectPredicate, actorUser);
+                ctx = getOrRestorePackageExecutionContext(null, repositoryParameters, null, objectPredicate, actorUser);
                 //If wrap we return all plans of the AP
                 List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
                     .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
@@ -103,11 +103,11 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     @Override
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(String executionId, Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
-        PackageExecutionContext current = contextId == null ? null : sharedPackageExecutionContexts.get(contextId);
+        PackageExecutionContext current = getSharedPackageExecutionContext(contextId, executionId);
         if (current == null) {
             if (contextId == null) {
                 contextId = new ObjectId().toString();
