@@ -45,7 +45,6 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
     @Override
     public void init() {
         super.init();
-        handlerPackageVersion = registerResource(getClass().getClassLoader(), "step-functions-composite-handler.jar", false, false);
     }
 
     @Override

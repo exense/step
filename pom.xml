@@ -558,6 +558,9 @@
             <goals>
               <goal>jar-no-fork</goal>
             </goals>
+            <configuration>
+              <excludeResources>true</excludeResources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
