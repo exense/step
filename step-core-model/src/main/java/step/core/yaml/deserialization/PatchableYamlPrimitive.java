@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.databind.JsonNode;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 
@@ -31,32 +32,41 @@ import java.util.Objects;
 
 public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
     @JsonIgnore
-    private T value;
+    protected T value;
+
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public PatchableYamlPrimitive(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext context, T value) {
         super(context);
         this.value = value;
-        Objects.requireNonNull(value);
     }
 
     @Override
     public String toString() {
-        return value.toString();
+        return value != null ? value.toString() : "";
     }
 
-    @JsonValue
     public T getValue() {
         return value;
     }
 
+    @JsonValue
+    public JsonNode getJsonValue() {
+        return getPatchingContext().getMapper().valueToTree(value);
+    }
+
     public void setValue(T value) {
         this.value = value;
+        setModified();
+
+        PatchingContext context = getPatchingContext();
+        if (!context.chunkClaimed(this)) {
+            context.appendAndClaim(this, getCurrentYaml(""), PatchingContext.ChunkBounds.Portion.HEAD);
+        }
     }
 
     @Override
-    public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
-        // FIXME: Yes, we use startLocation twice here. This is a workaround for a known bug, see SED-4847
+    public void onParsed(JsonLocation startLocation, PatchingParserDelegate parserDelegate) {
         getPatchingContext().claimChunk(startLocation, startLocation, this);
     }
 

@@ -35,6 +35,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+import static step.core.Constants.STEP_YAML_SCHEMA_VERSION_STRING;
+
 public class LocalIDEState implements ExecutionDiversion {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
     private static final LocalIDEState instance = new LocalIDEState();
@@ -79,21 +81,21 @@ public class LocalIDEState implements ExecutionDiversion {
         logger.debug("Setting resource manager to {}", resourceManager);
     }
 
-    public void useExistingAutomationPackageDirectory(Path apDir) throws Exception {
+    public void useExistingAutomationPackageDirectory(Path apDir, boolean upgrade) throws Exception {
         validateExistingAutomationPackageDirectory(apDir);
-        useAutomationPackageDirectory(apDir);
+        useAutomationPackageDirectory(apDir, upgrade);
     }
 
     public void useNewAutomationPackageDirectory(Path apDir, String apName) throws Exception {
         initializeAPDirectory(apDir, apName);
-        useAutomationPackageDirectory(apDir);
+        useAutomationPackageDirectory(apDir, false);
     }
 
-    private void useAutomationPackageDirectory(Path apDir) throws Exception {
+    private void useAutomationPackageDirectory(Path apDir, boolean upgrade) throws Exception {
         AutomationPackageReaderRegistry readerRegistry = Objects.requireNonNull(automationPackageReaderRegistry,
             "No automation package reader registry set, the IDE backend is not started");
         JavaAutomationPackageReader reader = (JavaAutomationPackageReader) readerRegistry.<JavaAutomationPackageArchive>getReaderByType(JavaAutomationPackageArchive.TYPE);
-        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager);
+        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager, upgrade);
         Properties properties = new Properties();
 
         int variant = 1;
@@ -201,7 +203,7 @@ public class LocalIDEState implements ExecutionDiversion {
         }
 
         String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
-        String content = "schemaVersion: 1.0.0\nname: \"" + yamlName + "\"\n";
+        String content = "version: \"" + STEP_YAML_SCHEMA_VERSION_STRING + "\"\nname: \"" + yamlName + "\"\n";
         Files.writeString(descriptor, content);
     }
 

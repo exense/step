@@ -39,7 +39,7 @@ public class LocalIDEServices extends AbstractStepServices {
     @POST
     @Path("ap/use-existing")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void useExistingAP(@QueryParam("directory") String directory) {
+    public void useExistingAP(@QueryParam("directory") String directory, @QueryParam("upgrade") boolean upgrade) {
         if (directory == null || directory.isBlank()) {
             throw error("directory must not be empty", Response.Status.BAD_REQUEST);
         }
@@ -62,7 +62,7 @@ public class LocalIDEServices extends AbstractStepServices {
             throw error(e.getMessage(), Response.Status.BAD_REQUEST);
         }
         try {
-            ideState.useExistingAutomationPackageDirectory(apPath);
+            ideState.useExistingAutomationPackageDirectory(apPath, upgrade);
         } catch (Exception e) {
             // Catch anything else (e.g., actual IO read errors during setup) as 500 Internal Error
             logger.error("Unable to use existing AP directory: {}", directory, e);

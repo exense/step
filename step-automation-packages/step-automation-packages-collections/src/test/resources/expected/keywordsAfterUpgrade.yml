@@ -1,0 +1,29 @@
+---
+keywords:
+  - JMeter:
+      name: "JMeter keyword from automation package"
+      callTimeout: 1000
+      useCustomTemplate: true
+      description: "JMeter keyword 1"
+      jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
+  - Composite:
+      name: "Composite keyword from AP"
+      plan:
+        root:
+          testCase:
+            children:
+              - echo:
+                  text: "Just echo with some fake dynamic Value $${test}"
+              - return:
+                  output:
+                    - output1: "value"
+                    - output2:
+                        expression: "'some thing dynamic'"
+  - GeneralScript:
+      name: "GeneralScript keyword from AP"
+      scriptFile: "jsProject/jsSample.js"
+      librariesFile: "lib/fakeLib.jar"
+      scriptLanguage: "javascript"
+  - Node:
+      name: "NodeAutomation"
+      jsfile: "nodeProject/nodeSample.ts"

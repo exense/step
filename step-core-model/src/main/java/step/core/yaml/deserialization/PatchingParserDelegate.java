@@ -49,8 +49,7 @@ public class PatchingParserDelegate extends JsonParserDelegate {
         if (!preLocation.equals(currentLocation())) {
             lastDistinctLocation = preLocation;
         }
-        locationForToken.put(token, preLocation);
-
+        locationForToken.put(token, currentLocation());
         return token;
     }
 
