@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
 import org.everit.json.schema.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,20 +43,28 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
+import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.scanner.AnnotationScanner;
 import step.migration.MigrationManager;
+import step.migration.MigrationTask;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
+import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
+import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
+import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import static step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask.AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME;
+import static step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask.YAML_PLANS_COLLECTION_NAME;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -63,6 +72,8 @@ import java.util.Properties;
 public class AutomationPackageDescriptorReader {
 
     protected static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
+
+    private static final String PLANS = "plans";
 
     protected final ObjectMapper yamlObjectMapper;
 
@@ -77,7 +88,6 @@ public class AutomationPackageDescriptorReader {
     public AutomationPackageDescriptorReader(String jsonSchemaPath, AutomationPackageSerializationRegistry serializationRegistry) {
         this.serializationRegistry = serializationRegistry;
         // TODO: we need to find a way to resolve the actual json schema (controller config) depending on running server instance (EE or OS)
-        // TODO: also we have to resolve the json version for plans according to the automation package version!
         this.planReader = new YamlPlanReader(YamlPlanVersions.ACTUAL_VERSION, false, null);
         this.yamlObjectMapper = createYamlObjectMapper();
         this.migrationManager = initMigrationManager();
@@ -117,10 +127,23 @@ public class AutomationPackageDescriptorReader {
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageName, String inheritedVersion) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
-            String version = null;
+            Document yamlDocument = yamlObjectMapper.readValue(yamlDescriptorString, Document.class);
+
+            // A fragment declaring no version of its own follows the one of the package importing it
+            String version = yamlDocument == null ? null : yamlDocument.getString(AutomationPackageDescriptorYaml.VERSION_FIELD_NAME);
+            if (version == null) {
+                version = inheritedVersion;
+            }
+
+            // The file is migrated before doing the schema validation since we can only validate against the current version
+            Document migratedDocument = migrateIfRequired(yamlDocument, version);
+            if (migratedDocument != null) {
+                yamlDescriptorString = yamlObjectMapper.writeValueAsString(migratedDocument);
+            }
+
             if (jsonSchema != null) {
                 try {
-                    version = JsonSchemaValidator.validate(jsonSchema, yamlObjectMapper.readTree(yamlDescriptorString).toString());
+                    JsonSchemaValidator.validate(jsonSchema, yamlObjectMapper.readTree(yamlDescriptorString).toString());
                 } catch (Exception ex) {
                     // add error details
                     String message = ex.getMessage();
@@ -131,14 +154,7 @@ public class AutomationPackageDescriptorReader {
                 }
             }
 
-            if (version == null) {
-                // A fragment declaring no version of its own follows the one of the package importing it
-                version = inheritedVersion;
-            }
-
-            yamlDescriptorString = migrateIfRequired(yamlDescriptorString, version);
-
-            T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(yamlDescriptorString, targetClass);
+            T res = yamlObjectMapper.readValue(yamlDescriptorString, targetClass);
 
             logAfterRead(packageName, res);
             return res;
@@ -166,54 +182,84 @@ public class AutomationPackageDescriptorReader {
     }
 
     /**
-     * Applies the migrations of the automation package format to a descriptor or fragment declaring an older schema
-     * version. This is a generic method that applies to all entities. Plans can also be migrated by the yaml plan reader specificallDy.
+     * Applies the migrations to a descriptor or fragment declaring an older schema version: the migrations of the
+     * automation package descriptor (except plans) apply tasks annotated with {@link AutomationPackageMigration}, and
+     * the migrations of the yaml plan  applies tasks annotated with {@link YamlPlanMigration}. YamlPlanMigration
+     * are managed separately  because they are also applied when creating a plan from a YAML source via {@link UpgradableYamlPlanDeserializer}
      *
-     * @param yamlFile the yaml content read from the file
-     * @param version  the schema version declared by the file. A null version means that no migration is required,
-     *                 which is also the case of the files not declaring any version at all
-     * @return the migrated yaml content, or the content unchanged when no migration applies
+     * @param yamlDocument the content read from the file
+     * @param version      the schema version declared by the file. A null version means that the file is written
+     *                     against the current schema, which is also the case of the files not declaring any version
+     * @return the migrated content, or null when no migration applies
      */
-    protected String migrateIfRequired(String yamlFile, String version) throws IOException {
-        if (version == null) {
-            return yamlFile;
+    protected Document migrateIfRequired(Document yamlDocument, String version) {
+        if (yamlDocument == null || version == null) {
+            return null;
         }
         Version fileVersion = new Version(version);
         if (fileVersion.compareTo(YamlAutomationPackageVersions.ACTUAL_VERSION) == 0) {
-            return yamlFile;
+            return null;
         }
 
         log.info("Migrating automation package file from version {} to {}", version, YamlAutomationPackageVersions.ACTUAL_VERSION);
 
+        // The plans are migrated as standalone yaml plans, so that the migrations of the yaml plan format apply to them
         CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
-        Collection<Document> tempCollection = tempCollectionFactory.getCollection(AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME, Document.class);
-        Document savedDocument = tempCollection.save(yamlObjectMapper.readValue(yamlFile, Document.class));
+        Collection<Document> descriptorsCollection = tempCollectionFactory.getCollection(AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME, Document.class);
+        Collection<Document> plansCollection = tempCollectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
+
+        List<DocumentObject> plans = yamlDocument.getArray(PLANS);
+        yamlDocument.remove(PLANS);
+        List<ObjectId> planIds = new ArrayList<>();
+        if (plans != null) {
+            for (DocumentObject plan : plans) {
+                planIds.add(plansCollection.save(new Document(plan)).getId());
+            }
+        }
+        ObjectId descriptorId = descriptorsCollection.save(yamlDocument).getId();
 
         migrationManager.migrate(tempCollectionFactory, fileVersion, YamlAutomationPackageVersions.ACTUAL_VERSION);
 
-        Document migratedDocument = tempCollection.find(Filters.id(savedDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
-        // The declared version is deliberately left untouched: it is what the imported fragments inherit, and the
-        // migrated content isn't validated again. Only the id, generated when saving into the temporary collection,
-        // has to be removed
-        migratedDocument.remove(AbstractIdentifiableObject.ID);
+        // The declared version is deliberately left untouched: it is what the imported fragments inherit. Only the ids,
+        // generated when saving into the temporary collections, have to be removed
+        Document migratedDocument = findAndRemoveId(descriptorsCollection, descriptorId);
+        if (plans != null) {
+            List<Document> migratedPlans = new ArrayList<>();
+            for (ObjectId planId : planIds) {
+                migratedPlans.add(findAndRemoveId(plansCollection, planId));
+            }
+            migratedDocument.put(PLANS, migratedPlans);
+        }
+        return migratedDocument;
+    }
 
-        return yamlObjectMapper.writeValueAsString(migratedDocument);
+    private static Document findAndRemoveId(Collection<Document> collection, ObjectId id) {
+        Document document = collection.find(Filters.id(id), null, null, null, 0).findFirst().orElseThrow();
+        document.remove(AbstractIdentifiableObject.ID);
+        return document;
     }
 
     /**
-     * Initializes the migration manager with the migrations of the automation package format
+     * Initializes the migration manager with the migrations of the automation package format and of the yaml plan
+     * format, the latter applying to the plans of the automation packages
      */
     protected MigrationManager initMigrationManager() {
         MigrationManager migrationManager = new MigrationManager();
-        try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(AutomationPackageMigration.LOCATION, Thread.currentThread().getContextClassLoader())) {
-            for (Class<?> migration : annotationScanner.getClassesWithAnnotation(AutomationPackageMigration.class)) {
-                if (!AbstractAutomationPackageMigrationTask.class.isAssignableFrom(migration)) {
-                    throw new IllegalArgumentException("Class " + migration + " doesn't extend the " + AbstractAutomationPackageMigrationTask.class);
+        registerMigrations(migrationManager, AutomationPackageMigration.LOCATION, AutomationPackageMigration.class, AbstractAutomationPackageMigrationTask.class);
+        registerMigrations(migrationManager, YamlPlanMigration.LOCATION, YamlPlanMigration.class, AbstractYamlPlanMigrationTask.class);
+        return migrationManager;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void registerMigrations(MigrationManager migrationManager, String location, Class<? extends Annotation> annotation, Class<? extends MigrationTask> taskClass) {
+        try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(location, Thread.currentThread().getContextClassLoader())) {
+            for (Class<?> migration : annotationScanner.getClassesWithAnnotation(annotation)) {
+                if (!taskClass.isAssignableFrom(migration)) {
+                    throw new IllegalArgumentException("Class " + migration + " doesn't extend the " + taskClass);
                 }
-                migrationManager.register((Class<? extends AbstractAutomationPackageMigrationTask>) migration);
+                migrationManager.register((Class<? extends MigrationTask>) migration);
             }
         }
-        return migrationManager;
     }
 
     protected String readJsonSchema(String jsonSchemaPath) {
@@ -237,8 +283,8 @@ public class AutomationPackageDescriptorReader {
         // configure custom deserializers
         SimpleModule module = new SimpleModule();
 
-        // register deserializers to read yaml plans
-        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
+        // register deserializers to read yaml plans. The plans are migrated along with the file, before being read
+        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, false);
 
         // add annotated jackson deserializers
         StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlMapper, List.of(stepYamlDeserializer -> {
