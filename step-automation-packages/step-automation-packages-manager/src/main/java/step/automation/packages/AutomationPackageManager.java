@@ -111,7 +111,7 @@ public class AutomationPackageManager {
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
      * context please use the separate in-memory automation package manager created via
-     * {@link AutomationPackageManager#createIsolated(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
+     * {@link AutomationPackageManager#createIsolated(ObjectId, String, FunctionTypeRegistry, FunctionAccessor)}
      */
     private AutomationPackageManager(AutomationPackageOperationMode operationMode,
                                      AutomationPackageAccessor automationPackageAccessor,
@@ -199,16 +199,19 @@ public class AutomationPackageManager {
      * Creates the automation package manager for isolated (not persisted) execution. Based on in-memory accessors
      * for plans and keywords.
      *
-     * @param isolatedContextId    the unique id of isolated context (isolated execution)
-     * @param functionTypeRegistry the function type registry
-     * @param mainFunctionAccessor the main (persisted) accessor for keywords. it is used in read-only mode to lookup
-     *                             existing keywords and override (reuse their ids) them in in-memory layer to avoid
-     *                             keywords with duplicated names
+     * @param isolatedContextId     the unique id of isolated context (isolated execution)
+     * @param sharedContextId       the id of the isolated execution context instance using this manager, distinguishing
+     *                              the managers created for the same context
+     * @param functionTypeRegistry  the function type registry
+     * @param mainFunctionAccessor  the main (persisted) accessor for keywords. it is used in read-only mode to lookup
+     *                              existing keywords and override (reuse their ids) them in in-memory layer to avoid
+     *                              keywords with duplicated names
      * @param isolatedResourcesRoot the parent folder of the isolated resource folder ({@code null} for the working directory)
      * @param stagingResourcesRoot  the parent folder of the staging resource folders ({@code null} for the working directory)
      * @return the automation manager with in-memory accessors for plans and keywords
      */
     public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId,
+                                                                                  String sharedContextId,
                                                                                   FunctionTypeRegistry functionTypeRegistry,
                                                                                   FunctionAccessor mainFunctionAccessor,
                                                                                   AutomationPackageReaderRegistry automationPackageReaderRegistry,
@@ -217,9 +220,8 @@ public class AutomationPackageManager {
                                                                                   File isolatedResourcesRoot,
                                                                                   File stagingResourcesRoot) {
 
-        // Several isolated managers can exist for the same context (i.e. parallel re-executions), each one needs its own
-        // folder as it is deleted on cleanup
-        File resourcesFolder = new File(isolatedResourcesRoot, "resources_" + isolatedContextId.toString() + "_" + new ObjectId());
+        // the folder is deleted on cleanup, each context instance needs its own
+        File resourcesFolder = new File(isolatedResourcesRoot, "resources_" + isolatedContextId.toString() + "_" + Objects.requireNonNull(sharedContextId));
         ResourceManager resourceManager = new LocalResourceManagerImpl(resourcesFolder);
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
@@ -277,14 +279,16 @@ public class AutomationPackageManager {
      * for plans and keywords.
      *
      * @param isolatedContextId    the unique id of isolated context (isolated execution)
+     * @param sharedContextId      the id of the isolated execution context instance using this manager, distinguishing
+     *                             the managers created for the same context (i.e. parallel re-executions)
      * @param functionTypeRegistry the function type registry
      * @param mainFunctionAccessor the main (persisted) accessor for keywords. it is used in read-only mode to lookup
      *                             existing keywords and override (reuse their ids) them in in-memory layer to avoid
      *                             keywords with duplicated names
      * @return the automation manager with in-memory accessors for plans and keywords
      */
-    public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor) {
-        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getAutomationPackageReaderRegistry(),
+    public AutomationPackageManager createIsolated(ObjectId isolatedContextId, String sharedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor) {
+        return createIsolatedAutomationPackageManager(isolatedContextId, sharedContextId, functionTypeRegistry, mainFunctionAccessor, getAutomationPackageReaderRegistry(),
             automationPackageHookRegistry, mavenConfigProvider, isolatedResourcesRoot, stagingResourcesRoot);
     }
 

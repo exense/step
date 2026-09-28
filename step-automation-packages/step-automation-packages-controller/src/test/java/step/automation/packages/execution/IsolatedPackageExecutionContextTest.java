@@ -28,8 +28,13 @@ import step.automation.packages.execution.RepositoryWithAutomationPackageSupport
 import step.automation.packages.execution.RepositoryWithAutomationPackageSupport.IsolatedPackageExecutionContext;
 import step.automation.packages.execution.RepositoryWithAutomationPackageSupport.PackageExecutionContext;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.model.Execution;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.resources.ResourceManager;
 
 import java.io.File;
@@ -78,12 +83,13 @@ public class IsolatedPackageExecutionContextTest extends AbstractAutomationPacka
         List<String> workingDirectoryEntriesBefore = listTemporaryFoldersInWorkingDirectory();
         String contextId = new ObjectId().toString();
 
-        PackageExecutionContext context1 = createContext(contextId, false);
-        PackageExecutionContext context2 = createContext(contextId, false);
+        String sharedContextId1 = new ObjectId().toString();
+        String sharedContextId2 = new ObjectId().toString();
+        PackageExecutionContext context1 = createContext(contextId, sharedContextId1, false);
+        PackageExecutionContext context2 = createContext(contextId, sharedContextId2, false);
 
-        List<File> folders = listFolders(isolatedRoot);
-        assertEquals(2, folders.size());
-        folders.forEach(f -> assertTrue(f.getName().startsWith("resources_" + contextId + "_")));
+        List<String> folders = listFolders(isolatedRoot).stream().map(File::getName).sorted().collect(Collectors.toList());
+        assertEquals(Stream.of(sharedContextId1, sharedContextId2).map(id -> "resources_" + contextId + "_" + id).sorted().collect(Collectors.toList()), folders);
         assertEquals(workingDirectoryEntriesBefore, listTemporaryFoldersInWorkingDirectory());
 
         // closing the first context must not delete the files of the second one
@@ -97,37 +103,25 @@ public class IsolatedPackageExecutionContextTest extends AbstractAutomationPacka
     }
 
     @Test
-    public void sharedContextIsOnlyUsedByAllowedExecutions() throws IOException {
-        // store the AP as the executor does, to support the restore of the re-executions
+    public void sharedContextIsOnlyUsedWithItsSharedContextId() throws IOException {
         ObjectId contextId = new ObjectId();
-        AutomationPackageFile storedApFile;
-        try (InputStream is = new FileInputStream(apFile.getFile())) {
-            storedApFile = repository.getApFileForExecution(is, apFile.getFile().getName(), null, contextId, NO_ENRICHMENT,
-                ALL_OBJECTS, "test", ResourceManager.RESOURCE_TYPE_ISOLATED_AP);
-        }
-        IsolatedPackageExecutionContext sharedContext = repository.createIsolatedPackageExecutionContext(NO_ENRICHMENT, ALL_OBJECTS,
-            contextId.toString(), storedApFile, true, null, "test");
-        String apName = sharedContext.getAutomationPackage().getAttribute(AbstractOrganizableObject.NAME);
-        repository.setApNameForResource(storedApFile.getResource(), apName);
+        String sharedContextId = new ObjectId().toString();
+        IsolatedPackageExecutionContext sharedContext = createStoredSharedContext(contextId, sharedContextId);
+        Map<String, String> repositoryParameters = getRepositoryParameters(contextId, sharedContext);
 
-        String allowedExecutionId = new ObjectId().toString();
-        sharedContext.allowExecution(allowedExecutionId);
-        Map<String, String> repositoryParameters = Map.of(REPOSITORY_PARAM_CONTEXTID, contextId.toString(), AP_NAME, apName);
+        assertSame(sharedContext, repository.getOrRestorePackageExecutionContext(sharedContextId, repositoryParameters, null, ALL_OBJECTS, null));
 
-        assertSame(sharedContext, repository.getOrRestorePackageExecutionContext(allowedExecutionId, repositoryParameters, null, ALL_OBJECTS, null));
-
-        // a re-execution with the same context id gets its own context
-        PackageExecutionContext reExecutionContext = repository.getOrRestorePackageExecutionContext(new ObjectId().toString(), repositoryParameters, null, ALL_OBJECTS, null);
+        // a re-execution with the same context id but without shared context id gets its own context
+        IsolatedPackageExecutionContext reExecutionContext = (IsolatedPackageExecutionContext) repository.getOrRestorePackageExecutionContext(
+            null, repositoryParameters, null, ALL_OBJECTS, null);
         assertNotSame(sharedContext, reExecutionContext);
         assertFalse(reExecutionContext.isShared());
-        PackageExecutionContext otherContext = repository.getOrRestorePackageExecutionContext(null, repositoryParameters, null, ALL_OBJECTS, null);
-        assertNotSame(sharedContext, otherContext);
-        assertEquals(3, listFolders(isolatedRoot).size());
+        assertNotEquals(sharedContextId, reExecutionContext.getSharedContextId());
+        assertTrue(new File(isolatedRoot, "resources_" + contextId + "_" + reExecutionContext.getSharedContextId()).isDirectory());
 
         // the end of the shared context doesn't affect the re-execution
         sharedContext.close();
-        assertNull(repository.sharedPackageExecutionContexts.get(contextId.toString()));
-        otherContext.close();
+        assertNull(repository.sharedPackageExecutionContexts.get(sharedContextId));
         List<File> remainingFolders = listFolders(isolatedRoot);
         assertEquals(1, remainingFolders.size());
         assertTrue(containsJar(remainingFolders.get(0)));
@@ -136,8 +130,56 @@ public class IsolatedPackageExecutionContextTest extends AbstractAutomationPacka
         assertEquals(0, listFolders(isolatedRoot).size());
     }
 
-    private IsolatedPackageExecutionContext createContext(String contextId, boolean shared) {
-        return repository.createIsolatedPackageExecutionContext(null, ALL_OBJECTS, contextId, apFile, shared, null, "test");
+    @Test
+    public void sharedContextIdIsConsumedByTheImport() throws IOException {
+        ObjectId contextId = new ObjectId();
+        String sharedContextId = new ObjectId().toString();
+        IsolatedPackageExecutionContext sharedContext = createStoredSharedContext(contextId, sharedContextId);
+
+        try (ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext()) {
+            executionContext.put(FunctionAccessor.class, new InMemoryFunctionAccessorImpl());
+            executionContext.getExecutionParameters().setSharedContextId(sharedContextId);
+            Execution execution = new Execution();
+            execution.setId(new ObjectId(executionContext.getExecutionId()));
+            execution.setExecutionParameters(executionContext.getExecutionParameters());
+            executionContext.getExecutionAccessor().save(execution);
+
+            repository.importArtefact(executionContext, getRepositoryParameters(contextId, sharedContext));
+
+            // the shared context was used: it is closed by its creator and not with the execution
+            assertNull(executionContext.get(PackageExecutionContext.class));
+            assertNull(executionContext.getExecutionParameters().getSharedContextId());
+            assertNull(executionContext.getExecutionAccessor().get(executionContext.getExecutionId()).getExecutionParameters().getSharedContextId());
+        } finally {
+            sharedContext.close();
+        }
+    }
+
+    /**
+     * Stores the AP as the executor does, to support the restore of the re-executions, and creates the shared context
+     */
+    private IsolatedPackageExecutionContext createStoredSharedContext(ObjectId contextId, String sharedContextId) throws IOException {
+        AutomationPackageFile storedApFile;
+        try (InputStream is = new FileInputStream(apFile.getFile())) {
+            storedApFile = repository.getApFileForExecution(is, apFile.getFile().getName(), null, contextId, NO_ENRICHMENT,
+                ALL_OBJECTS, "test", ResourceManager.RESOURCE_TYPE_ISOLATED_AP);
+        }
+        IsolatedPackageExecutionContext sharedContext = repository.createIsolatedPackageExecutionContext(NO_ENRICHMENT, ALL_OBJECTS,
+            contextId.toString(), sharedContextId, storedApFile, true, null, "test");
+        repository.setApNameForResource(storedApFile.getResource(), getApName(sharedContext));
+        return sharedContext;
+    }
+
+    private static Map<String, String> getRepositoryParameters(ObjectId contextId, PackageExecutionContext context) {
+        return Map.of(REPOSITORY_PARAM_CONTEXTID, contextId.toString(), AP_NAME, getApName(context));
+    }
+
+    private static String getApName(PackageExecutionContext context) {
+        return context.getAutomationPackage().getAttribute(AbstractOrganizableObject.NAME);
+    }
+
+    private IsolatedPackageExecutionContext createContext(String contextId, String sharedContextId, boolean shared) {
+        return repository.createIsolatedPackageExecutionContext(null, ALL_OBJECTS, contextId, sharedContextId, apFile, shared, null, "test");
     }
 
     private static List<File> listFolders(File root) {

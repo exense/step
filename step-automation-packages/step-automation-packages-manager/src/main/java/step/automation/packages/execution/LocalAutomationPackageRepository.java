@@ -103,11 +103,12 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     @Override
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(String executionId, Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(String sharedContextId, Map<String, String> repositoryParameters,
+                                                                          ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
-        PackageExecutionContext current = getSharedPackageExecutionContext(contextId, executionId);
+        PackageExecutionContext current = sharedContextId == null ? null : sharedPackageExecutionContexts.get(sharedContextId);
         if (current == null) {
             if (contextId == null) {
                 contextId = new ObjectId().toString();
