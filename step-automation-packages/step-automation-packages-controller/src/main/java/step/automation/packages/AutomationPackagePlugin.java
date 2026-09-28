@@ -70,10 +70,12 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     private static final Integer DEFAULT_MAX_VERSIONS_PER_AP = 0; //quota disabled
     private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
     // Sub-folders of the resource directory holding the temporary resources of isolated executions and AP staging
-    public static final String ISOLATED_RESOURCES_FOLDER = "temp_isolated_ap";
-    public static final String STAGING_RESOURCES_FOLDER = "temp_staging_ap";
+    private static final String ISOLATED_RESOURCES_FOLDER = "temp_isolated_ap";
+    private static final String STAGING_RESOURCES_FOLDER = "temp_staging_ap";
     protected AutomationPackageLocks automationPackageLocks;
     private AutomationPackageAccessor packageAccessor;
+    private File isolatedResourcesRoot;
+    private File stagingResourcesRoot;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -159,15 +161,24 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             );
 
             File resourcesDir = new File(ResourceManagerControllerPlugin.getResourceDir(context.getConfiguration()));
-            File isolatedResourcesRoot = new File(resourcesDir, ISOLATED_RESOURCES_FOLDER);
-            File stagingResourcesRoot = new File(resourcesDir, STAGING_RESOURCES_FOLDER);
-            // no execution or deployment is running at startup, remaining files are leftovers of a previous controller run
-            deleteTemporaryFolder(isolatedResourcesRoot);
-            deleteTemporaryFolder(stagingResourcesRoot);
+            isolatedResourcesRoot = new File(resourcesDir, ISOLATED_RESOURCES_FOLDER);
+            stagingResourcesRoot = new File(resourcesDir, STAGING_RESOURCES_FOLDER);
+            // no execution or deployment is running at startup, remaining files are leftovers of a previous controller
+            // run that couldn't clean them up (i.e. crash)
+            deleteLeftovers(isolatedResourcesRoot);
+            deleteLeftovers(stagingResourcesRoot);
             packageManager.setIsolatedResourcesRoot(isolatedResourcesRoot);
             packageManager.setStagingResourcesRoot(stagingResourcesRoot);
 
             context.put(AutomationPackageManager.class, packageManager);
+        }
+    }
+
+    private static void deleteLeftovers(File folder) {
+        String[] leftovers = folder.list();
+        if (leftovers != null && leftovers.length > 0) {
+            log.warn("Deleting {} leftover temporary folder(s) of a previous controller run in {}", leftovers.length, folder.getAbsolutePath());
+            deleteTemporaryFolder(folder);
         }
     }
 
@@ -198,6 +209,15 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             }
         } catch (InterruptedException e) {
             log.warn("Interrupted", e);
+        }
+
+        // the executions are terminated before the plugins are stopped and the isolated contexts have been closed by
+        // the executor shutdown above: remaining folders couldn't be cleaned up (i.e. pending asynchronous deployments)
+        if (isolatedResourcesRoot != null) {
+            deleteTemporaryFolder(isolatedResourcesRoot);
+        }
+        if (stagingResourcesRoot != null) {
+            deleteTemporaryFolder(stagingResourcesRoot);
         }
     }
 

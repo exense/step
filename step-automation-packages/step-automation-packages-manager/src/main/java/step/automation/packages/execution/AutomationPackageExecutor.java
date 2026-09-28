@@ -86,7 +86,7 @@ public class AutomationPackageExecutor {
         // throws an exception if ap doesn't exist
         AutomationPackage automationPackage = mainAutomationPackageManager.getAutomatonPackageById(automationPackageId, objectPredicate);
 
-        return runExecutions(automationPackage, LOCAL_AUTOMATION_PACKAGE, null, null, mainAutomationPackageManager, null, parameters, objectEnricher, null);
+        return runExecutions(automationPackage, LOCAL_AUTOMATION_PACKAGE, null, null, parameters, objectEnricher, null);
     }
 
     public List<String> runInIsolation(AutomationPackageFileSource automationPackageFileSource,
@@ -158,8 +158,7 @@ public class AutomationPackageExecutor {
                 repository.setApNameForResource(apFile.getResource(), apName);
             }
 
-            executions = runExecutions(automationPackage, repoId, parameters.getOriginalRepositoryObject(), contextId, executionContext.getAutomationPackageManager(),
-                executionContext, parameters, objectEnricher, additionalRepositoryParameters);
+            executions = runExecutions(automationPackage, repoId, parameters.getOriginalRepositoryObject(), executionContext, parameters, objectEnricher, additionalRepositoryParameters);
         } finally {
             // after all plans are executed we can clean up the context (remove temporary files prepared for isolated execution)
             waitForAllLaunchedExecutions(executions, apFile.getFile().getName(), executionContext);
@@ -182,12 +181,17 @@ public class AutomationPackageExecutor {
         parameters.setOriginalRepositoryObject(new RepositoryObjectReference(MAVEN_REPO_ID, extendedParameters));
     }
 
+    /**
+     * @param sharedExecutionContext the isolated context shared by the executions, {@code null} to run the package
+     *                               deployed in the main automation package manager
+     */
     private List<String> runExecutions(AutomationPackage automationPackage,
                                        String repoId, RepositoryObjectReference originalRepositoryObject,
-                                       ObjectId contextId, AutomationPackageManager apManager,
                                        RepositoryWithAutomationPackageSupport.IsolatedPackageExecutionContext sharedExecutionContext,
                                        AutomationPackageExecutionParameters parameters,
                                        ObjectEnricher objectEnricher, Map<String, String> additionalRepositoryParameters) {
+        AutomationPackageManager apManager = sharedExecutionContext == null ? mainAutomationPackageManager : sharedExecutionContext.getAutomationPackageManager();
+        String contextId = sharedExecutionContext == null ? null : sharedExecutionContext.getContextId();
         List<String> executions = new ArrayList<>();
         List<Plan> applicablePlans = new ArrayList<>();
         PlanFilter planFilter = parameters.getPlanFilter();
@@ -259,7 +263,7 @@ public class AutomationPackageExecutor {
     }
 
     private ExecutionParameters prepareExecutionParams(AutomationPackageExecutionParameters parameters, String apName,
-                                                       String apID, ObjectId contextId, String repoId,
+                                                       String apID, String contextId, String repoId,
                                                        RepositoryObjectReference originalRepositoryObject,
                                                        String includePlans, String defaultDescription, String rootType, ObjectEnricher objectEnricher, Map<String, String> additionalRepositoryParameters) {
         ExecutionParameters params = parameters.toExecutionParameters();
@@ -270,7 +274,7 @@ public class AutomationPackageExecutor {
         repositoryParameters.put(RepositoryWithAutomationPackageSupport.AP_NAME, apName);
         repositoryParameters.put(RepositoryWithAutomationPackageSupport.AP_ID, apID);
         if (contextId != null) {
-            repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
+            repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId);
         }
         if (includePlans != null) {
             repositoryParameters.put(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, includePlans);

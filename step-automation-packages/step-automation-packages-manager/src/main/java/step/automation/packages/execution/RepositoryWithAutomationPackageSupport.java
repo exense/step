@@ -571,6 +571,10 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             this.shared = shared;
         }
 
+        public String getContextId() {
+            return contextId;
+        }
+
         @Override
         public AutomationPackageManager getAutomationPackageManager() {
             return inMemoryManager;
