@@ -18,9 +18,11 @@
  ******************************************************************************/
 package step.automation.packages;
 
-public class LegacyAutomationPackageSchemaVersionSetException extends AutomationPackageReadingException {
-    public LegacyAutomationPackageSchemaVersionSetException() {
-        super("A legacy automation package schema version has been set");
+public class LegacyAutomationPackageSchemaVersionSetException extends AutomationPackageUpgradeRequiredException {
+    public LegacyAutomationPackageSchemaVersionSetException(String declaredVersion, String currentVersion) {
+        super("The automation package declares the schema version " + declaredVersion + ", older than the current one ("
+            + currentVersion + "). It has to be upgraded before it can be opened for editing, which migrates its files to "
+            + "the current schema. Comments in the rewritten files may be lost.");
     }
 
 }

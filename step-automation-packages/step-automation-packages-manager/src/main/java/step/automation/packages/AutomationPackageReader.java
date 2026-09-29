@@ -204,9 +204,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
             if (!upgrade) {
                 if (schemaVersion == null) {
-                    throw new NoAutomationPackageSchemaVersionSetException();
+                    throw new NoAutomationPackageSchemaVersionSetException(STEP_YAML_SCHEMA_VERSION.toString());
                 } else if (STEP_YAML_SCHEMA_VERSION.compareTo(schemaVersion) > 0) {
-                    throw new LegacyAutomationPackageSchemaVersionSetException();
+                    throw new LegacyAutomationPackageSchemaVersionSetException(schemaVersion.toString(), STEP_YAML_SCHEMA_VERSION.toString());
                 }
             }
 

@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageUpgradeRequiredException;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.ide.LocalIDEState;
@@ -63,6 +64,11 @@ public class LocalIDEServices extends AbstractStepServices {
         }
         try {
             ideState.useExistingAutomationPackageDirectory(apPath, upgrade);
+        } catch (AutomationPackageUpgradeRequiredException e) {
+            // Expected for a package of an older schema version: the client asks the user whether to upgrade it and
+            // tells the cases apart by the error name
+            logger.info("The automation package {} has to be upgraded to be opened: {}", directory, e.getMessage());
+            throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), e.getClass().getSimpleName(), e.getMessage());
         } catch (Exception e) {
             // Catch anything else (e.g., actual IO read errors during setup) as 500 Internal Error
             logger.error("Unable to use existing AP directory: {}", directory, e);

@@ -8,6 +8,7 @@ import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.LegacyAutomationPackageSchemaVersionSetException;
 import step.automation.packages.NoAutomationPackageSchemaVersionSetException;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.resources.LocalResourceManagerImpl;
 
 import java.io.File;
@@ -33,9 +34,12 @@ public class AutomationPackageUpgradeTest extends AutomationPackageCollectionTes
 
     @Test
     public void testLoadLegacyUpgradeFalse() {
-        Assert.assertThrows(LegacyAutomationPackageSchemaVersionSetException.class, () ->
+        LegacyAutomationPackageSchemaVersionSetException e = Assert.assertThrows(LegacyAutomationPackageSchemaVersionSetException.class, () ->
             reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false)
         );
+        // The message tells which version the package declares and to which one it has to be upgraded
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("1.0.0"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains(YamlAutomationPackageVersions.ACTUAL_VERSION.toString()));
     }
 
     @Test
@@ -63,10 +67,11 @@ public class AutomationPackageUpgradeTest extends AutomationPackageCollectionTes
     public void testLoadNoVersionUpgradeFalse() {
 
 
-        Assert.assertThrows(NoAutomationPackageSchemaVersionSetException.class, () -> {
+        NoAutomationPackageSchemaVersionSetException e = Assert.assertThrows(NoAutomationPackageSchemaVersionSetException.class, () -> {
             Files.copy(destinationDirectory.toPath().resolve("automation-package-no-version.yml"), destinationDirectory.toPath().resolve("automation-package.yml"), StandardCopyOption.REPLACE_EXISTING);
             reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);
         });
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains(YamlAutomationPackageVersions.ACTUAL_VERSION.toString()));
     }
 
     @Test
