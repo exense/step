@@ -86,7 +86,7 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>ch.exense.step</groupId>
-                  <artifactId>step-agent</artifactId>
+                  <artifactId>step-agent-bundle</artifactId>
                   <version>${project.version}</version>
                   <classifier>jar-with-dependencies</classifier>
                   <type>jar</type>
