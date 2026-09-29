@@ -113,7 +113,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         try {
             if (automationPackageArchive.hasAutomationPackageDescriptor()) {
                 try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
-                    AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getAutomationPackageName());
+                    AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream,
+                        Objects.toString(automationPackageArchive.getDescriptorYamlUrl(), null), automationPackageArchive.getAutomationPackageName());
                     return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, scanAnnotations);
                 }
             } else if (scanAnnotations) {
@@ -197,7 +198,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorUrl = archive.getDescriptorYamlUrl();
         try (InputStream inputStream = descriptorUrl.openStream()) {
-            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
+            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, descriptorUrl.toString(), archive.getOriginalFileName());
 
             Version schemaVersion = descriptor.getVersion().getValue() == null
                 ? null : new Version(descriptor.getVersion().getValue());

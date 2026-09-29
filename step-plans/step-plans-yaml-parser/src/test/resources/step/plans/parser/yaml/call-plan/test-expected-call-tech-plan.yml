@@ -17,7 +17,7 @@ root:
   children:
     - _class: "CallPlan"
       attributes:
-        name: "CallPlan"
+        name: "Plan2"
       dynamicName:
         dynamic: false
         value: ""
@@ -36,7 +36,7 @@ root:
         value: false
       selectionAttributes:
         dynamic: false
-        value: "{\"name\":{\"dynamic\":false,\"value\":\"Plan2\"}}"
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"Plan2\",\"expression\":null,\"expressionType\":null}}"
       input:
         dynamic: false
         value: "{\"inputtest\":{\"dynamic\":false,\"value\":\"some other value\"}}"

@@ -35,6 +35,7 @@ import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -219,4 +220,13 @@ public class AutomationPackageDescriptorReaderTest {
         }
     }
 
+    @Test
+    public void nullDescriptorReadTest() {
+        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageDescriptorReader readerWithoutSchema = new AutomationPackageDescriptorReader(null, serializationRegistry);
+        for (AutomationPackageDescriptorReader r : List.of(reader, readerWithoutSchema)) {
+            InputStream is = new ByteArrayInputStream("~".getBytes(StandardCharsets.UTF_8));
+            assertThrows(AutomationPackageReadingException.class, () -> r.readAutomationPackageDescriptor(is, ""));
+        }
+    }
 }

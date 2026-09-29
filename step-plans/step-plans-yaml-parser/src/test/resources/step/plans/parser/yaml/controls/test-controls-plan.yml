@@ -21,8 +21,7 @@ root:
                 operator: "IS_NULL"
           keyword: "GroovyKeyword"
       - callPlan:
-          selectionAttributes:
-            - name: "SubPlan"
+          plan: "SubPlan"
       - check:
           expression: "true"
       - dataSet:
