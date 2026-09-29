@@ -36,6 +36,9 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Optional;
 
+// a keyword is written back to the descriptor with its untouched fields left out: the schema allows no
+// null values, so writing them would make the package unreadable
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class AbstractYamlFunction<T extends Function> extends AbstractYamlModel implements AutomationPackageContextual<T> {
 
     @YamlFieldCustomCopy

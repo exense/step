@@ -32,8 +32,11 @@ import step.automation.packages.junit.AbstractLocalPlanRunner;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.automation.packages.library.NoAutomationPackageLibraryProvider;
+import step.artefacts.handlers.functions.AgentProvisioningExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.agents.provisioning.driver.AgentProvisioningStatusAccessor;
 import step.core.artefacts.Artefact;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
 import step.core.plans.Plan;
@@ -69,6 +72,7 @@ public class ApLocalExecuteCommandHandler {
              ExecutionEngine executionEngine = ExecutionEngine.builder()
                  .withOperationMode(OperationMode.CLI)
                  .withPlugin(localAgents)
+                 .withPlugin(new AgentProvisioningExecutionPlugin(new AgentProvisioningStatusAccessor(new InMemoryCollection<>())))
                  .withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 

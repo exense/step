@@ -20,6 +20,8 @@ package step.core.dynamicbeans;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.Objects;
+
 public class DynamicValue<T> {
 
     boolean dynamic;
@@ -173,12 +175,24 @@ public class DynamicValue<T> {
         return false;
     }
 
+    /**
+     * Compares what two values hold, not what they evaluate to: an expression which has not been
+     * evaluated yet has no result, and a value holding null has no string form.
+     */
     @Override
     public boolean equals(Object other) {
         if (super.equals(other)) return true;
         if (other instanceof DynamicValue<?> otherDynamicValue) {
-            return toString().equals(otherDynamicValue.toString());
+            return dynamic == otherDynamicValue.dynamic
+                && Objects.equals(value, otherDynamicValue.value)
+                && Objects.equals(expression, otherDynamicValue.expression)
+                && Objects.equals(expressionType, otherDynamicValue.expressionType);
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dynamic, value, expression, expressionType);
     }
 }

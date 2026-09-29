@@ -3,6 +3,7 @@ package step.ide;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackagePlugin;
+import step.automation.packages.AutomationPackageReaderRegistry;
 import step.automation.packages.LocalApResourceProvider;
 import step.automation.packages.LocalAutomationPackageDirectoryProvider;
 import step.core.GlobalContext;
@@ -24,6 +25,7 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
 
         model.setResourceManager((ResourceManagerImpl) context.getResourceManager());
         model.setFileResolver(context.getFileResolver());
+        model.setAutomationPackageReaderRegistry(context.require(AutomationPackageReaderRegistry.class));
         context.put(ExecutionDiversion.class, model);
         // Lets the automation package services browse the package open in the editor under the 'local'
         // id, so that the IDE and a Step server expose the very same ap-resource services.

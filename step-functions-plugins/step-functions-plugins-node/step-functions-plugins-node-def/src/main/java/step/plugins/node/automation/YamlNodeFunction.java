@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plugins.node.automation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import step.automation.packages.AutomationPackageLocalResourceMapper;
 import step.automation.packages.AutomationPackageResourceMapper;
 import step.automation.packages.StagingAutomationPackageContext;
@@ -29,7 +28,6 @@ import step.core.yaml.YamlModel;
 import step.plugins.node.NodeFunction;
 
 @YamlModel(name = "Node")
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlNodeFunction extends AbstractYamlFunction<NodeFunction> {
 
     // An empty value rather than none to support serialization

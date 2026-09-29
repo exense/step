@@ -297,4 +297,71 @@ public class LocalFileSystemServicesTest {
             assertEquals(409, e.getHttpErrorCode());
         }
     }
+
+    @Test
+    public void testProposeAPDirectoryNewDirectory() {
+        LocalFileSystemServices.ProposeDirectoryResponse response = service.proposeAPDirectory(homePath.toString(), "MyPackage");
+
+        assertEquals(homePath.resolve("MyPackage").toAbsolutePath().toString(), response.directory());
+        assertTrue(response.warnings().isEmpty());
+        assertTrue(response.errors().isEmpty());
+    }
+
+    @Test
+    public void testProposeAPDirectorySanitizesName() {
+        LocalFileSystemServices.ProposeDirectoryResponse response = service.proposeAPDirectory(homePath.toString(), "My Package: v1");
+
+        assertEquals(homePath.resolve("My_Package__v1").toAbsolutePath().toString(), response.directory());
+        assertEquals(1, response.warnings().size());
+        assertTrue(response.errors().isEmpty());
+    }
+
+    @Test
+    public void testProposeAPDirectoryExistingDirectories() throws IOException {
+        // "dirA" is an empty directory created in setUp()
+        LocalFileSystemServices.ProposeDirectoryResponse empty = service.proposeAPDirectory(homePath.toString(), "dirA");
+        assertEquals(1, empty.warnings().size());
+        assertTrue(empty.warnings().get(0).contains("is empty"));
+        assertTrue(empty.errors().isEmpty());
+
+        Files.createFile(homePath.resolve("DirB").resolve("content.txt"));
+        LocalFileSystemServices.ProposeDirectoryResponse nonEmpty = service.proposeAPDirectory(homePath.toString(), "DirB");
+        assertEquals(1, nonEmpty.warnings().size());
+        assertTrue(nonEmpty.warnings().get(0).contains("contains content"));
+        assertTrue(nonEmpty.errors().isEmpty());
+    }
+
+    @Test
+    public void testProposeAPDirectoryTargetIsAFile() {
+        // "zebra.txt" is a file created in setUp()
+        LocalFileSystemServices.ProposeDirectoryResponse response = service.proposeAPDirectory(homePath.toString(), "zebra.txt");
+
+        assertTrue(response.warnings().isEmpty());
+        assertEquals(1, response.errors().size());
+    }
+
+    @Test
+    public void testProposeAPDirectoryInvalidArguments() {
+        String[][] invalidArguments = {
+            {null, "MyPackage"},
+            {"  ", "MyPackage"},
+            {homePath.toString(), null},
+            {homePath.toString(), "  "},
+            {"invalid\u0000path", "MyPackage"},
+            {homePath.resolve("ghost_dir").toString(), "MyPackage"},
+            {homePath.resolve("zebra.txt").toString(), "MyPackage"},
+            {homePath.toString(), "."},
+            {homePath.toString(), ".."},
+            {homePath.toString(), "/"}
+        };
+
+        for (String[] arguments : invalidArguments) {
+            try {
+                service.proposeAPDirectory(arguments[0], arguments[1]);
+                fail("Expected ControllerServiceException for arguments: " + Arrays.toString(arguments));
+            } catch (ControllerServiceException e) {
+                assertEquals(400, e.getHttpErrorCode());
+            }
+        }
+    }
 }

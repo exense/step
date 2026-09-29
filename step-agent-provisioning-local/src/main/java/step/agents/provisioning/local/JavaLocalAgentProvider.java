@@ -35,6 +35,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.stream.Stream;
 
@@ -74,8 +75,8 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
     private final AgentConfWriter agentConfWriter = new AgentConfWriter();
 
     public JavaLocalAgentProvider(LocalAgentProvisioningConfiguration configuration, LocalAgentWorkspace workspace) {
-        this.configuration = configuration;
-        this.workspace = workspace;
+        this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
+        this.workspace = Objects.requireNonNull(workspace, "workspace must not be null");
     }
 
     @Override

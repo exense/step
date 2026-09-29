@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
-package step.artefacts.handlers.functions;
+package step.core.agents.provisioning;
 
 import step.grid.tokenpool.Interest;
 
@@ -26,8 +26,9 @@ import java.util.Map;
  * Transforms the token selection criteria of a keyword call before they are used to select a token.
  * <p>
  * An implementation registered in the execution context under this interface is applied by
- * {@link TokenSelectionCriteriaMapBuilder}, and thus to both the token forecasting and the actual token selection,
- * which are the two consumers of these criteria.
+ * {@code TokenSelectionCriteriaMapBuilder}, and thus to both the token forecasting and the actual token selection,
+ * which are the two consumers of these criteria. It is provided by the agent provisioning driver of the execution, see
+ * {@link step.core.agents.provisioning.driver.AgentProvisioningDriver#createTokenSelectionCriteriaFilter()}.
  * <p>
  * This exists for the executions whose agents do not come from a real infrastructure, and for which routing criteria
  * are therefore meaningless: a local execution runs everything on the machine of the user, where the only decision
