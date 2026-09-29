@@ -18,7 +18,10 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import step.artefacts.CallPlan;
 import step.artefacts.Echo;
 import step.artefacts.PerformanceAssert;
 import step.artefacts.Sequence;
@@ -26,10 +29,13 @@ import step.artefacts.Set;
 import step.artefacts.ThreadGroup;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
+import step.plugins.functions.types.automation.YamlCompositeFunction;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -39,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -49,6 +56,32 @@ public class AutomationPackageDescriptorReaderMigrationTest {
 
     private static final String BEFORE_AFTER_OLD_VERSION_DESCRIPTOR =
         "src/test/resources/step/automation/packages/yaml/descriptors/beforeAfterOldVersionDescriptor.yml";
+
+    private static final String COMPOSITES_OLD_VERSION =
+        "keywords:\n" +
+        "  - Composite:\n" +
+        "      name: \"Without plan\"\n" +
+        "  - Composite:\n" +
+        "      name: \"With plan\"\n" +
+        "      plan:\n" +
+        "        root:\n" +
+        "          sequence:\n" +
+        "            children:\n" +
+        "              - callPlan:\n" +
+        "                  selectionAttributes:\n" +
+        "                    - name: \"SubPlan\"\n" +
+        "                    - env: \"T1\"\n" +
+        "              - echo:\n" +
+        "                  text: \"http://${host}\"\n" +
+        "  - Composite:\n" +
+        "      name: \"Last\"\n" +
+        "      plan:\n" +
+        "        root:\n" +
+        "          sequence:\n" +
+        "            children:\n" +
+        "              - callPlan:\n" +
+        "                  selectionAttributes:\n" +
+        "                    - name: \"OtherPlan\"\n";
 
     private final AutomationPackageDescriptorReader reader;
 
@@ -132,6 +165,53 @@ public class AutomationPackageDescriptorReaderMigrationTest {
 
         Echo echo = (Echo) plan.getRoot().getChildren().get(0);
         assertEquals("http://${host}", echo.getText().getValue());
+    }
+
+    /**
+     * The plan of a composite keyword is a yaml plan as well and is migrated along with the plans of the package. The
+     * keywords before and after it, with or without plan, must stay in place
+     */
+    @Test
+    public void testCompositeKeywordPlansAreMigrated() throws Exception {
+        AutomationPackageDescriptorYaml descriptor;
+        try (InputStream is = new ByteArrayInputStream(("version: 1.2.0\n" +
+            "name: \"composites\"\n" +
+            COMPOSITES_OLD_VERSION).getBytes(StandardCharsets.UTF_8))) {
+            descriptor = reader.readAutomationPackageDescriptor(is, "test");
+        }
+        assertMigratedComposites(descriptor.getKeywords());
+    }
+
+    /**
+     * A fragment declaring no version of its own follows the one of its package, including for the plans of its
+     * composite keywords
+     */
+    @Test
+    public void testCompositeKeywordPlansOfFragmentsAreMigrated() throws Exception {
+        AutomationPackageFragmentYaml fragment;
+        try (InputStream is = new ByteArrayInputStream(COMPOSITES_OLD_VERSION.getBytes(StandardCharsets.UTF_8))) {
+            fragment = reader.readAutomationPackageFragment(is, "keywords.yml", "test", "1.2.0");
+        }
+        assertMigratedComposites(fragment.getKeywords());
+    }
+
+    private void assertMigratedComposites(List<YamlAutomationPackageKeyword> keywords) throws Exception {
+        assertEquals(3, keywords.size());
+        assertNull(((YamlCompositeFunction) keywords.get(0).getYamlKeyword()).getPlan());
+
+        Plan plan = compositePlan(keywords.get(1));
+        JsonNode selection = new ObjectMapper().readTree(((CallPlan) plan.getRoot().getChildren().get(0)).getSelectionAttributes().getValue());
+        assertEquals("SubPlan", selection.get("name").get("value").asText());
+        assertEquals("T1", selection.get("env").get("value").asText());
+        // The other yaml plan migrations apply as well, and only once
+        assertEquals("http://$${host}", ((Echo) plan.getRoot().getChildren().get(1)).getText().getValue());
+
+        CallPlan lastCallPlan = (CallPlan) compositePlan(keywords.get(2)).getRoot().getChildren().get(0);
+        assertEquals("OtherPlan", new ObjectMapper().readTree(lastCallPlan.getSelectionAttributes().getValue()).get("name").get("value").asText());
+    }
+
+    private Plan compositePlan(YamlAutomationPackageKeyword keyword) {
+        return reader.getPlanReader().yamlPlanToPlan(((YamlCompositeFunction) keyword.getYamlKeyword()).getPlan());
     }
 
     private Plan readSinglePlan(String yaml) throws AutomationPackageReadingException, IOException {

@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask;
 import step.automation.packages.yaml.migrations.AutomationPackageMigration;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
@@ -49,6 +50,7 @@ import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.scanner.AnnotationScanner;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.YamlModelUtils;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchingParserDelegate;
 import step.migration.MigrationManager;
@@ -59,6 +61,7 @@ import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
+import step.plugins.functions.types.automation.YamlCompositeFunction;
 
 import static step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask.AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME;
 import static step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask.YAML_PLANS_COLLECTION_NAME;
@@ -83,6 +86,9 @@ public class AutomationPackageDescriptorReader {
 
     private final ObjectMapper yamlObjectMapper;
     private static final String PLANS = "plans";
+    private static final String KEYWORDS = AutomationPackageKeyword.KEYWORDS_ENTITY_NAME;
+    private static final String COMPOSITE_KEYWORD = YamlModelUtils.getEntityNameByClass(YamlCompositeFunction.class);
+    private static final String COMPOSITE_PLAN = "plan";
 
     private final YamlPlanReader planReader;
 
@@ -230,7 +236,8 @@ public class AutomationPackageDescriptorReader {
 
         log.info("Migrating automation package file from version {} to {}", version, YamlAutomationPackageVersions.ACTUAL_VERSION);
 
-        // The plans are migrated as standalone yaml plans, so that the migrations of the yaml plan format apply to them
+        // The plans, including the ones of the composite keywords, are migrated as standalone yaml plans, so that the
+        // migrations of the yaml plan format apply to them
         CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
         Collection<Document> descriptorsCollection = tempCollectionFactory.getCollection(AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME, Document.class);
         Collection<Document> plansCollection = tempCollectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
@@ -243,6 +250,7 @@ public class AutomationPackageDescriptorReader {
                 planIds.add(plansCollection.save(new Document(plan)).getId());
             }
         }
+        Map<Integer, ObjectId> compositePlanIds = extractCompositePlans(yamlDocument, plansCollection);
         ObjectId descriptorId = descriptorsCollection.save(yamlDocument).getId();
 
         migrationManager.migrate(tempCollectionFactory, fileVersion, YamlAutomationPackageVersions.ACTUAL_VERSION);
@@ -257,7 +265,42 @@ public class AutomationPackageDescriptorReader {
             }
             migratedDocument.put(PLANS, migratedPlans);
         }
+        restoreCompositePlans(migratedDocument, compositePlanIds, plansCollection);
         return migratedDocument;
+    }
+
+    /**
+     * Moves the plans of the composite keywords to the collection of the yaml plans to be migrated. The keywords
+     * themselves stay in the descriptor, where the migrations of the automation package format apply to them
+     *
+     * @return the ids of the moved plans, by index of their keyword
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<Integer, ObjectId> extractCompositePlans(Document yamlDocument, Collection<Document> plansCollection) {
+        Map<Integer, ObjectId> compositePlanIds = new HashMap<>();
+        if (yamlDocument.get(KEYWORDS) instanceof List<?> keywords) {
+            for (int i = 0; i < keywords.size(); i++) {
+                if (keywords.get(i) instanceof Map<?, ?> keyword
+                    && keyword.get(COMPOSITE_KEYWORD) instanceof Map<?, ?> composite
+                    && composite.get(COMPOSITE_PLAN) instanceof Map<?, ?> plan) {
+                    compositePlanIds.put(i, plansCollection.save(new Document((Map<String, Object>) plan)).getId());
+                    composite.remove(COMPOSITE_PLAN);
+                }
+            }
+        }
+        return compositePlanIds;
+    }
+
+    /**
+     * Puts the migrated plans of the composite keywords back in place
+     */
+    private static void restoreCompositePlans(Document migratedDocument, Map<Integer, ObjectId> compositePlanIds, Collection<Document> plansCollection) {
+        if (compositePlanIds.isEmpty()) {
+            return;
+        }
+        List<DocumentObject> keywords = migratedDocument.getArray(KEYWORDS);
+        compositePlanIds.forEach((index, planId) ->
+            keywords.get(index).getObject(COMPOSITE_KEYWORD).put(COMPOSITE_PLAN, findAndRemoveId(plansCollection, planId)));
     }
 
     private static Document findAndRemoveId(Collection<Document> collection, ObjectId id) {
