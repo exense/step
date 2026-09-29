@@ -85,6 +85,7 @@ public class AutomationPackageDescriptorReader {
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
 
     private final ObjectMapper yamlObjectMapper;
+    private static final String DEFAULT_DESCRIPTOR_LOCATION = "automation package descriptor";
     private static final String PLANS = "plans";
     private static final String KEYWORDS = AutomationPackageKeyword.KEYWORDS_ENTITY_NAME;
     private static final String COMPOSITE_KEYWORD = YamlModelUtils.getEntityNameByClass(YamlCompositeFunction.class);
@@ -111,8 +112,19 @@ public class AutomationPackageDescriptorReader {
     }
 
     public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageName) throws AutomationPackageReadingException {
-        log.info("Reading automation package descriptor...");
-        return readAutomationPackageYamlFile("automation-package.yml", yamlDescriptor, getDescriptorClass(), packageName);
+        return readAutomationPackageDescriptor(yamlDescriptor, DEFAULT_DESCRIPTOR_LOCATION, packageName);
+    }
+
+    /**
+     * @param location where the descriptor is read from, for instance its url, used to identify it in the logs. May
+     *                 be null when unknown
+     */
+    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String location, String packageName) throws AutomationPackageReadingException {
+        if (location == null) {
+            location = DEFAULT_DESCRIPTOR_LOCATION;
+        }
+        log.info("Reading automation package descriptor ({})...", location);
+        return readAutomationPackageYamlFile(location, yamlDescriptor, getDescriptorClass(), packageName);
     }
 
     protected Class<? extends AutomationPackageDescriptorYaml> getDescriptorClass() {
