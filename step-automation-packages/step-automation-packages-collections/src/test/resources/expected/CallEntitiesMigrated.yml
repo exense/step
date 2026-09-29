@@ -1,4 +1,3 @@
----
 plans:
   - name: "CallEntities"
     root:
@@ -9,15 +8,15 @@ plans:
               children:
                 - callPlan:
                     plan:
-                      name: SubPlan
+                      name: "SubPlan"
                       env: "T1"
                 - callPlan:
-                    plan: SubPlan
+                    plan: "SubPlan"
                 - callKeyword:
                     nodeName: "Keyword call"
-                    keyword: Keyword
+                    keyword: "Keyword"
                 - callKeyword:
                     nodeName: "Keyword call"
                     keyword:
-                      name: Keyword
-                      type: java
+                      name: "Keyword"
+                      type: "java"

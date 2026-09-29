@@ -55,7 +55,7 @@ public class YamlCallNamedEntityDefinitionDeserializer extends StepYamlDeseriali
             // for simple function definition the node (string node) contains explicit function name
             return new YamlCallNamedEntityDefinition(node.asText(), node.asText(), selectionCriteriaJson);
         } else {
-            return new YamlCallNamedEntityDefinition(YamlCallNamedEntityDefinitionSerializer.getEntityName(node.asText(), false), null, selectionCriteriaJson);
+            return new YamlCallNamedEntityDefinition(YamlCallNamedEntityDefinitionSerializer.getEntityName(selectionCriteriaJson, false), null, selectionCriteriaJson);
         }
     }
 

@@ -12,12 +12,6 @@ plans:
                       name: "SubPlan"
                       env: "T1"
                 - callPlan:
-                    plan:
-                      name: "SubPlan"
-                      env: "T1"
-                - callPlan:
-                    plan: "SubPlan"
-                - callPlan:
                     plan: "SubPlan"
                 - callKeyword:
                     nodeName: "Keyword call"

@@ -46,9 +46,9 @@ public class YamlCallNamedEntityDefinitionSerializer extends StepYamlSerializer<
     @Override
     public void serialize(YamlCallNamedEntityDefinition value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         DynamicValue<String> dynamicValue = value.toDynamicValue();
-        String simpleFunctionName = getEntityName(dynamicValue, true);
-        if (simpleFunctionName != null) {
-            gen.writeString(simpleFunctionName);
+        String simpleEntityName = getEntityName(dynamicValue, true);
+        if (simpleEntityName != null) {
+            gen.writeString(simpleEntityName);
         } else {
             Map<String, DynamicValue<String>> selectionCriteria = getSelectionCriteriaForYamlSerialization(dynamicValue);
             if (selectionCriteria != null) {
@@ -61,10 +61,10 @@ public class YamlCallNamedEntityDefinitionSerializer extends StepYamlSerializer<
         }
     }
 
-    public static String getEntityName(DynamicValue<String> dynamicSelectionCriteria, boolean asSimpleFunctionName) throws JsonProcessingException {
+    public static String getEntityName(DynamicValue<String> dynamicSelectionCriteria, boolean asSimpleEntityName) throws JsonProcessingException {
         if (!dynamicSelectionCriteria.getValue().trim().isEmpty()) {
             String jsonValue = dynamicSelectionCriteria.getValue();
-            return getEntityName(jsonValue, asSimpleFunctionName);
+            return getEntityName(jsonValue, asSimpleEntityName);
         } else {
             return null;
         }
@@ -75,19 +75,19 @@ public class YamlCallNamedEntityDefinitionSerializer extends StepYamlSerializer<
             return null;
         }
         if (jsonValue.startsWith("{")) {
-            TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
+            TypeReference<HashMap<String, JsonNode>> entityValueTypeRef = new TypeReference<>() {
             };
-            HashMap<String, JsonNode> functionNameAsMap = DEFAULT_OBJECT_MAPPER.readValue(jsonValue, functionValueTypeRef);
+            HashMap<String, JsonNode> entityNameAsMap = DEFAULT_OBJECT_MAPPER.readValue(jsonValue, entityValueTypeRef);
 
-            JsonNode simpleFunctionName = null;
-            if (!asSimpleEntityName || functionNameAsMap.size() == 1) {
-                simpleFunctionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
+            JsonNode simpleEntityName = null;
+            if (!asSimpleEntityName || entityNameAsMap.size() == 1) {
+                simpleEntityName = entityNameAsMap.get(AbstractOrganizableObject.NAME);
             }
 
-            if (simpleFunctionName != null && !simpleFunctionName.isContainerNode()) {
-                return simpleFunctionName.asText();
+            if (simpleEntityName != null && !simpleEntityName.isContainerNode()) {
+                return simpleEntityName.asText();
             } else {
-                DynamicValue<String> dynamicValue = DEFAULT_OBJECT_MAPPER.treeToValue(simpleFunctionName, DynamicValue.class);
+                DynamicValue<String> dynamicValue = DEFAULT_OBJECT_MAPPER.treeToValue(simpleEntityName, DynamicValue.class);
                 if (dynamicValue != null && !dynamicValue.isDynamic()) {
                     return dynamicValue.getValue();
                 } else {
@@ -95,7 +95,7 @@ public class YamlCallNamedEntityDefinitionSerializer extends StepYamlSerializer<
                 }
             }
         } else {
-            throw new IllegalArgumentException("Invalid Entity. Entity selector for yaml only supports function selectors as jsons, but was: " + jsonValue);
+            throw new IllegalArgumentException("Invalid Entity. Entity selector for yaml only supports entity selectors as jsons, but was: " + jsonValue);
         }
     }
 

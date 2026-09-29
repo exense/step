@@ -8,11 +8,12 @@ plans:
           - sequence:
               children:
                 - callPlan:
-                    plan:
-                      name: SubPlan
-                      env: "T1"
+                    selectionAttributes:
+                      - name: SubPlan
+                      - env: "T1"
                 - callPlan:
-                    plan: SubPlan
+                    selectionAttributes:
+                      - name: SubPlan
                 - callKeyword:
                     nodeName: "Keyword call"
                     keyword: Keyword

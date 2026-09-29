@@ -350,9 +350,6 @@
             "input": {
               "$ref": "#/$defs/DynamicKeywordInputsDef"
             },
-            "selectionAttributes": {
-              "$ref": "#/$defs/DynamicKeywordInputsDef"
-            },
             "plan": {
               "oneOf": [
                 {

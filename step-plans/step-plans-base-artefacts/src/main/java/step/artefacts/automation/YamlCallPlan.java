@@ -19,6 +19,8 @@
 package step.artefacts.automation;
 
 import step.artefacts.CallPlan;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.AbstractArtefact;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.model.AbstractYamlArtefact;
 
@@ -28,9 +30,6 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
 
     @YamlFieldCustomCopy
     protected YamlCallNamedEntityDefinition plan = null;
-
-    @YamlFieldCustomCopy
-    private YamlDynamicInputs selectionAttributes = null;
 
     @YamlFieldCustomCopy
     protected YamlDynamicInputs input = new YamlDynamicInputs("{}");
@@ -50,8 +49,15 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
             res.setSelectionAttributes(this.plan.toDynamicValue());
         }
 
-        if (this.selectionAttributes != null) {
-            res.setSelectionAttributes(this.selectionAttributes.toDynamicValue());
+        // for call plans, if nodeName is not defined or using dynamic name, we use the called plan name as default artefact name
+        if (getNodeName() == null || getNodeName().isDynamic()) {
+            String name;
+            if (plan != null && plan.getEntityName() != null && !plan.getEntityName().isEmpty()) {
+                name = plan.getEntityName();
+            } else {
+                name = AbstractArtefact.getArtefactName(getArtefactClass());
+            }
+            res.addAttribute(AbstractOrganizableObject.NAME, name);
         }
     }
 
@@ -64,5 +70,16 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
         if (artefact.getSelectionAttributes() != null) {
             this.plan = YamlCallNamedEntityDefinition.fromDynamicValue(artefact.getSelectionAttributes());
         }
+    }
+
+    @Override
+    protected String getDefaultNodeNameForYaml(CallPlan artefact) {
+        if (artefact.getSelectionAttributes() != null) {
+            String planName = YamlCallNamedEntityDefinition.fromDynamicValue(artefact.getSelectionAttributes()).getEntityName();
+            if (planName != null && !planName.isEmpty()) {
+                return planName;
+            }
+        }
+        return super.getDefaultNodeNameForYaml(artefact);
     }
 }
