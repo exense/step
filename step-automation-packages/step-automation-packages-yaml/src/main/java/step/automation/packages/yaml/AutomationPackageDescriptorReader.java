@@ -155,6 +155,9 @@ public class AutomationPackageDescriptorReader {
             }
 
             T res = yamlObjectMapper.readValue(yamlDescriptorString, targetClass);
+            if (res == null) {
+                throw new AutomationPackageReadingException("Unable to read the automation package yaml: the content is empty");
+            }
 
             logAfterRead(packageName, res);
             return res;

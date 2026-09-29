@@ -28,10 +28,12 @@ import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.plans.parser.yaml.YamlPlan;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -116,6 +118,16 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals(0, keywords.size());
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void nullDescriptorReadTest() {
+        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageDescriptorReader readerWithoutSchema = new AutomationPackageDescriptorReader(null, serializationRegistry);
+        for (AutomationPackageDescriptorReader r : List.of(reader, readerWithoutSchema)) {
+            InputStream is = new ByteArrayInputStream("~".getBytes(StandardCharsets.UTF_8));
+            assertThrows(AutomationPackageReadingException.class, () -> r.readAutomationPackageDescriptor(is, ""));
         }
     }
 
