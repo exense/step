@@ -43,7 +43,6 @@ public class AutomationPackageUpgradeTest extends AutomationPackageCollectionTes
 
         try {
             reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, true);
-            reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);
 
             assertFilesEqual(expectedFilesPath.resolve("descriptorAfterUpgrade.yml"), destinationDirectory.toPath().resolve("automation-package.yml"));
             assertFilesEqual(expectedFilesPath.resolve("keywordsAfterUpgrade.yml"), destinationDirectory.toPath().resolve("keywords.yml"));
@@ -53,6 +52,8 @@ public class AutomationPackageUpgradeTest extends AutomationPackageCollectionTes
             assertFilesEqual(sourceDirectory.toPath().resolve("plans").resolve("plan1.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
             assertFilesEqual(sourceDirectory.toPath().resolve("plans").resolve("plan2.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan2.yml"));
 
+            //called once more with upgrade false as validation
+            reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);
         } catch (AutomationPackageReadingException e) {
             Assert.fail("Caught " + e.getMessage());
         }

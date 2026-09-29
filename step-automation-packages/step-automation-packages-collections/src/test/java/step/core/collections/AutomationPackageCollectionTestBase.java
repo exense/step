@@ -75,7 +75,14 @@ public class AutomationPackageCollectionTestBase {
         resourcesDirectory = Files.createTempDirectory("automationPackageCollectionTestResources").toFile();
         FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
         resourceManager = new LocalResourceManagerImpl(resourcesDirectory);
-        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);
+        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, upgradeOnLoad());
+    }
+
+    /**
+     * @return true to load a package declaring an older schema version, which upgrades it to the current one
+     */
+    protected boolean upgradeOnLoad() {
+        return false;
     }
 
 

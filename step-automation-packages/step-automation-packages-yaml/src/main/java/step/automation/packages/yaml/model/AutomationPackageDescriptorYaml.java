@@ -18,26 +18,16 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import step.core.yaml.deserialization.PatchableYamlScalarField;
 
 import java.util.Map;
 
 public interface AutomationPackageDescriptorYaml extends AutomationPackageFragmentYaml {
-    // this name should be kept untouched to support the migrations for old versions
-    String VERSION_FIELD_NAME = "version";
     String NAME_FIELD_NAME = "name";
-
-    PatchableYamlScalarField<String> getVersion();
 
     PatchableYamlScalarField<String> getName();
 
     void setName(PatchableYamlScalarField<String> name);
-
-    void setVersion(PatchableYamlScalarField<String> version);
-
-    @JsonIgnore
-    void setVersionString(String version);
 
     Map<String, String> getAttributes();
 }

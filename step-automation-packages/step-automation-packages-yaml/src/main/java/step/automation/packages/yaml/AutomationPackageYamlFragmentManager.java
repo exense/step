@@ -29,6 +29,7 @@ import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
+import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.NamedPatchableYamlModel;
@@ -84,6 +85,7 @@ public class AutomationPackageYamlFragmentManager {
 
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
+    private final List<AutomationPackageFragmentYaml> importedFragments;
 
     private final Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> businessObjectToYamlMappers;
 
@@ -103,9 +105,10 @@ public class AutomationPackageYamlFragmentManager {
 
         initializeMaps(descriptorYaml, yamlToBusinessObjectMappers);
 
-        fragments.stream()
+        importedFragments = fragments.stream()
             .filter(f -> f != descriptorYaml)
-            .forEach(f -> initializeMaps(f, yamlToBusinessObjectMappers));
+            .collect(Collectors.toList());
+        importedFragments.forEach(f -> initializeMaps(f, yamlToBusinessObjectMappers));
     }
 
     private Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> createBusinessObjectToYamlMappers(Map<Class<?>, Object> injectables) {
@@ -400,5 +403,28 @@ public class AutomationPackageYamlFragmentManager {
         for (AbstractOrganizableObject entity : patchableMap.keySet()) {
             save(entity);
         }
+    }
+
+    /**
+     * Rewrites a package read from an older schema version against the current one. The files were migrated while
+     * read: every entity is saved again, which writes the syntax it was migrated to. The descriptor, as well as the
+     * fragments declaring their own version, then declare the current version, so that they are not migrated a second
+     * time when read again.
+     * <p>
+     * The descriptor is written last: should the upgrade fail before, it still declares its former version and is
+     * migrated again when read, instead of passing the fragments not written yet for current ones
+     */
+    public synchronized void upgradeToCurrentSchemaVersion() {
+        String currentVersion = YamlAutomationPackageVersions.ACTUAL_VERSION.toString();
+        saveAllEntities();
+        for (AutomationPackageFragmentYaml fragment : importedFragments) {
+            String declaredVersion = fragment.getVersion().getValue();
+            if (declaredVersion != null && new Version(declaredVersion).compareTo(YamlAutomationPackageVersions.ACTUAL_VERSION) < 0) {
+                fragment.setVersionString(currentVersion);
+                fragment.writeToDisk();
+            }
+        }
+        descriptorYaml.setVersionString(currentVersion);
+        descriptorYaml.writeToDisk();
     }
 }

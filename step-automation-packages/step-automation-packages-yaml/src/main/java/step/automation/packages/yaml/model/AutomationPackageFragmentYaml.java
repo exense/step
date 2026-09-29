@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
@@ -25,6 +26,7 @@ import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
+import step.core.yaml.deserialization.PatchableYamlScalarField;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
@@ -34,6 +36,19 @@ import java.util.List;
 import java.util.Map;
 
 public interface AutomationPackageFragmentYaml {
+    // this name should be kept untouched to support the migrations for old versions
+    String VERSION_FIELD_NAME = "version";
+
+    /**
+     * @return the schema version declared by this descriptor or fragment. A fragment usually declares none and follows
+     * the one of the descriptor or fragment importing it
+     */
+    PatchableYamlScalarField<String> getVersion();
+
+    void setVersion(PatchableYamlScalarField<String> version);
+
+    @JsonIgnore
+    void setVersionString(String version);
 
     PatchableYamlList<YamlAutomationPackageKeyword> getKeywords();
 

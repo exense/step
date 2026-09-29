@@ -19,7 +19,6 @@
 package step.automation.packages.yaml.model;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlScalarField;
@@ -29,8 +28,6 @@ import java.util.Map;
 
 public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPackageFragmentYaml implements AutomationPackageDescriptorYaml {
 
-    private PatchableYamlScalarField<String> version;
-
     private PatchableYamlScalarField<String> name;
 
     private Map<String, String> attributes = new HashMap<>();
@@ -38,7 +35,6 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
 
     public AutomationPackageDescriptorYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
         super(patchingContext);
-        version = new PatchableYamlScalarField<>(patchingContext, VERSION_FIELD_NAME, null);
         name = new PatchableYamlScalarField<>(patchingContext, NAME_FIELD_NAME, null);
     }
 
@@ -50,21 +46,6 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
     @Override
     public void setName(PatchableYamlScalarField<String> name) {
         this.name = name;
-    }
-
-    @Override
-    public PatchableYamlScalarField<String> getVersion() {
-        return version;
-    }
-
-    public void setVersion(PatchableYamlScalarField<String> version) {
-        this.version = version;
-    }
-
-    @Override
-    @JsonIgnore
-    public void setVersionString(String versionString) {
-        version.setValue(versionString);
     }
 
     @Override

@@ -1,0 +1,10 @@
+plans:
+  - name: "Inherited"
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "http://${host}"
+          - callPlan:
+              selectionAttributes:
+                - name: "SubPlan"

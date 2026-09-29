@@ -42,6 +42,11 @@ public class AutomationPackagePlanMigrationFormattingTest extends AutomationPack
         super(new File("src/test/resources/testdata/ap-formatting-1.2.0"));
     }
 
+    @Override
+    protected boolean upgradeOnLoad() {
+        return true;
+    }
+
     @Before
     public void setUp() throws IOException, AutomationPackageReadingException {
         super.setUp();
@@ -50,9 +55,8 @@ public class AutomationPackagePlanMigrationFormattingTest extends AutomationPack
     }
 
     /**
-     * The call plans select the called plan with the selectionAttributes of the schema 1.2.0, and are written back
-     * with the plan field as the same plan authored against the current schema (see CallEntities.yml). A migrated
-     * fragment is written from its migrated content, which has no document start marker
+     * The call plans select the called plan with the selectionAttributes of the schema 1.2.0. Once the package is
+     * upgraded, they are written with the plan field exactly as the same plan authored against the current schema
      */
     @Test
     public void testCallPlanSelectionAttributesAreMigrated() throws IOException {
@@ -62,6 +66,6 @@ public class AutomationPackagePlanMigrationFormattingTest extends AutomationPack
 
         planCollection.save(optionalPlan.get());
 
-        assertFilesEqual(expectedFilesPath.resolve("CallEntitiesMigrated.yml"),destinationDirectory.toPath().resolve("plans").resolve("CallEntities.yml"));
+        assertFilesEqual(expectedFilesPath.resolve("CallEntities.yml"), destinationDirectory.toPath().resolve("plans").resolve("CallEntities.yml"));
     }
 }

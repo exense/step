@@ -139,8 +139,11 @@ public class PatchingContext {
         allBounds.addAll(unclaimedBounds);
         unclaimedBounds.clear(); // not needed anymore, might as well free it
         allBounds.sort(ChunkBounds.COMPARATOR);
-        if (!allBounds.isEmpty() && allBounds.getLast().endLineNumber < initialLines.size()) {
-            allBounds.add(new ChunkBounds(allBounds.getLast().endLineNumber + 1, initialLines.size(), ChunkBounds.Portion.BODY));
+        // The lines after the last claimed chunk, or the whole file when nothing is claimed in it, for instance when it
+        // only holds fields no model is registered for
+        int lastClaimedLineNumber = allBounds.isEmpty() ? 0 : allBounds.getLast().endLineNumber;
+        if (lastClaimedLineNumber < initialLines.size()) {
+            allBounds.add(new ChunkBounds(lastClaimedLineNumber + 1, initialLines.size(), ChunkBounds.Portion.BODY));
         }
         allBounds.sort(ChunkBounds.COMPARATOR_WITH_PORTION);
         return allBounds;

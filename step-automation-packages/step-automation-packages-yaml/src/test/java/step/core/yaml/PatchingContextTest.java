@@ -1,11 +1,13 @@
 package step.core.yaml;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.core.yaml.deserialization.PatchableYamlList;
@@ -15,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -220,6 +223,40 @@ public class PatchingContextTest {
                 """, current);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * A file in which nothing is claimed, for instance because it only holds fields no model is registered for, must
+     * be written back as it is
+     */
+    @Test
+    public void testUnclaimedContentIsKept() {
+        String yaml = """
+            ---
+            alertingRules:
+              - name: "Rule1"
+                eventClass: "ExecutionEndedEvent"
+            """;
+        Assert.assertEquals(yaml, new PatchingContext("unclaimed.yml", yaml, new ObjectMapper()).getCurrentYaml());
+    }
+
+    /**
+     * The fields of a fragment no model is registered for are not claimed and are written back untouched, like the
+     * enterprise alerting rules when read by the open source reader
+     */
+    @Test
+    public void testFragmentHoldingOnlyUnregisteredFieldsIsKept() throws Exception {
+        String yaml = """
+            ---
+            alertingRules:
+              - name: "Rule1"
+                description: "My test alerting rule"
+                eventClass: "ExecutionEndedEvent"
+            """;
+        try (InputStream is = new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8))) {
+            AutomationPackageFragmentYaml fragment = reader.readAutomationPackageFragment(is, "alerting.yml", "", null);
+            Assert.assertEquals(yaml, fragment.getPatchingContext().getCurrentYaml());
         }
     }
 

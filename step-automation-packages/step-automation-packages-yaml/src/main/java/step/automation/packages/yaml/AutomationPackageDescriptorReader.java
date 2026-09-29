@@ -254,9 +254,10 @@ public class AutomationPackageDescriptorReader {
         Collection<Document> plansCollection = tempCollectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
 
         List<DocumentObject> plans = yamlDocument.getArray(PLANS);
-        yamlDocument.remove(PLANS);
         List<ObjectId> planIds = new ArrayList<>();
         if (plans != null) {
+            // Emptied rather than removed, so that the migrated plans are put back at the same place in the file
+            yamlDocument.put(PLANS, new ArrayList<>());
             for (DocumentObject plan : plans) {
                 planIds.add(plansCollection.save(new Document(plan)).getId());
             }
