@@ -50,6 +50,16 @@ public interface AutomationPackageFragmentYaml {
     @JsonIgnore
     void setVersionString(String version);
 
+    /**
+     * @return the schema version this descriptor or fragment was read against: the one it declares, otherwise the one
+     * it inherits. Null when neither declares one, the file is then considered as current
+     */
+    @JsonIgnore
+    String getEffectiveVersion();
+
+    @JsonIgnore
+    void setEffectiveVersion(String effectiveVersion);
+
     PatchableYamlList<YamlAutomationPackageKeyword> getKeywords();
 
     PatchableYamlList<YamlPlan> getPlans();

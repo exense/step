@@ -200,6 +200,7 @@ public class AutomationPackageDescriptorReader {
             }
 
             res.setPatchingContext(context);
+            res.setEffectiveVersion(version);
             logAfterRead(packageName, res);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
@@ -388,6 +389,20 @@ public class AutomationPackageDescriptorReader {
         var mapper = createBasicYamlObjectMapper();
         return Optional.ofNullable(mapper.readTree(apDescriptorInputStream))
             .map(rootNode -> rootNode.get("name"))
+            .map(JsonNode::asText)
+            .orElse(null);
+    }
+
+    /**
+     * Reads only the schema version declared by a descriptor, without validating it against the schema, which requires
+     * to know that version first
+     *
+     * @return the declared version, null if the descriptor declares none
+     */
+    public String readDeclaredSchemaVersion(InputStream apDescriptorInputStream) throws IOException {
+        return Optional.ofNullable(yamlObjectMapper.readTree(apDescriptorInputStream))
+            .map(rootNode -> rootNode.get(AutomationPackageFragmentYaml.VERSION_FIELD_NAME))
+            .filter(versionNode -> !versionNode.isNull())
             .map(JsonNode::asText)
             .orElse(null);
     }

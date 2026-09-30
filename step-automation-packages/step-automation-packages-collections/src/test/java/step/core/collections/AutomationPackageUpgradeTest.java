@@ -74,6 +74,33 @@ public class AutomationPackageUpgradeTest extends AutomationPackageCollectionTes
         Assert.assertTrue(e.getMessage(), e.getMessage().contains(YamlAutomationPackageVersions.ACTUAL_VERSION.toString()));
     }
 
+    /**
+     * A descriptor declaring no version is read as a current one. The missing version must be reported before, even
+     * when its content does not comply with the current schema
+     */
+    @Test
+    public void testLoadNoVersionLegacyContentUpgradeFalse() throws IOException {
+        Files.writeString(destinationDirectory.toPath().resolve("automation-package.yml"),
+            "name: \"legacy content\"\n" +
+            "plans:\n" +
+            "  - name: \"legacy\"\n" +
+            "    root:\n" +
+            "      testCase:\n" +
+            "        children:\n" +
+            "          - beforeSequence:\n" +
+            "              children:\n" +
+            "                - echo:\n" +
+            "                    text: \"before\"\n");
+
+        Assert.assertThrows(NoAutomationPackageSchemaVersionSetException.class, () ->
+            reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false));
+
+        // Upgrading does not migrate a package declaring no version, its legacy content is then rejected
+        AutomationPackageReadingException e = Assert.assertThrows(AutomationPackageReadingException.class, () ->
+            reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, true));
+        Assert.assertFalse(e.getClass().getName(), e instanceof NoAutomationPackageSchemaVersionSetException);
+    }
+
     @Test
     public void testLoadNoVersionUpgradeTrue() throws IOException {
 

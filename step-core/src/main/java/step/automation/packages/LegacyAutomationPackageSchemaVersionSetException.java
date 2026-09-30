@@ -20,9 +20,20 @@ package step.automation.packages;
 
 public class LegacyAutomationPackageSchemaVersionSetException extends AutomationPackageUpgradeRequiredException {
     public LegacyAutomationPackageSchemaVersionSetException(String declaredVersion, String currentVersion) {
-        super("The automation package declares the schema version " + declaredVersion + ", older than the current one ("
-            + currentVersion + "). It has to be upgraded before it can be opened for editing, which migrates its files to "
-            + "the current schema. Comments in the rewritten files may be lost.");
+        super(message("The automation package", declaredVersion, currentVersion));
     }
 
+    /**
+     * @param fragment the fragment declaring the older version, for instance its path relative to the package
+     */
+    public LegacyAutomationPackageSchemaVersionSetException(String fragment, String declaredVersion, String currentVersion) {
+        super(message("The automation package fragment " + fragment, declaredVersion, currentVersion));
+    }
+
+    private static String message(String subject, String declaredVersion, String currentVersion) {
+        return subject + " declares the schema version " + declaredVersion + ", older than the current one ("
+            + currentVersion + "). The automation package has to be upgraded before it can be opened for editing: the "
+            + "upgrade migrates to the current schema all the files of the package written against an older version, "
+            + "the descriptor as well as the fragments. Comments in the rewritten files may be lost.";
+    }
 }

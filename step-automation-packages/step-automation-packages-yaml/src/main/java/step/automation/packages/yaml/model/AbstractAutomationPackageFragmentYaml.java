@@ -75,6 +75,9 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private PatchingContext context;
     private long fileLastModified = 0;
 
+    @JsonIgnore
+    private String effectiveVersion;
+
     public AbstractAutomationPackageFragmentYaml(PatchingContext patchingContext) {
         context = patchingContext;
         version = new PatchableYamlScalarField<>(patchingContext, VERSION_FIELD_NAME, null);
@@ -101,6 +104,18 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @JsonIgnore
     public void setVersionString(String versionString) {
         version.setValue(versionString);
+    }
+
+    @Override
+    @JsonIgnore
+    public String getEffectiveVersion() {
+        return effectiveVersion;
+    }
+
+    @Override
+    @JsonIgnore
+    public void setEffectiveVersion(String effectiveVersion) {
+        this.effectiveVersion = effectiveVersion;
     }
 
     @Override

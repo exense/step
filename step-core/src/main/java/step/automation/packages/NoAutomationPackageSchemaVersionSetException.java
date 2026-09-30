@@ -20,8 +20,10 @@ package step.automation.packages;
 
 public class NoAutomationPackageSchemaVersionSetException extends AutomationPackageUpgradeRequiredException {
     public NoAutomationPackageSchemaVersionSetException(String currentVersion) {
-        super("The automation package declares no schema version. It has to be upgraded to the current schema version ("
-            + currentVersion + ") before it can be opened for editing. Comments in the rewritten files may be lost.");
+        super("The automation package declares no schema version. It has to be upgraded before it can be opened for "
+            + "editing: the upgrade considers it as written against the current schema version (" + currentVersion
+            + ") and declares that version, without migrating its files. If the package was written against an older "
+            + "version, declare that version in its descriptor instead, so that the upgrade migrates its files.");
     }
 
 }

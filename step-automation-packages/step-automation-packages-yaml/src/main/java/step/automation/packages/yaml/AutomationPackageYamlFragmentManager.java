@@ -399,32 +399,49 @@ public class AutomationPackageYamlFragmentManager {
     private record FragmentLocation(NewObjectFragmentMode mode, String relativeFragmentPath) {
     }
 
-    public void saveAllEntities() {
-        for (AbstractOrganizableObject entity : patchableMap.keySet()) {
-            save(entity);
-        }
+    /**
+     * @return the descriptor and the fragments read against an older schema version, and therefore migrated while read,
+     * the descriptor first
+     */
+    public List<AutomationPackageFragmentYaml> getOutdatedFragments() {
+        return Stream.concat(Stream.of(descriptorYaml), importedFragments.stream())
+            .filter(AutomationPackageYamlFragmentManager::isOutdated)
+            .collect(Collectors.toList());
+    }
+
+    private static boolean isOutdated(AutomationPackageFragmentYaml fragment) {
+        String effectiveVersion = fragment.getEffectiveVersion();
+        return effectiveVersion != null && new Version(effectiveVersion).compareTo(YamlAutomationPackageVersions.ACTUAL_VERSION) < 0;
     }
 
     /**
-     * Rewrites a package read from an older schema version against the current one. The files were migrated while
-     * read: every entity is saved again, which writes the syntax it was migrated to. The descriptor, as well as the
-     * fragments declaring their own version, then declare the current version, so that they are not migrated a second
-     * time when read again.
+     * Rewrites against the current schema the files read from an older schema version, or declaring none. These files
+     * were migrated while read: their entities are saved again, which writes the syntax they were migrated to, and the
+     * ones declaring their own version then declare the current one, so that they are not migrated a second time when
+     * read again. The files already current are left untouched.
      * <p>
      * The descriptor is written last: should the upgrade fail before, it still declares its former version and is
      * migrated again when read, instead of passing the fragments not written yet for current ones
      */
     public synchronized void upgradeToCurrentSchemaVersion() {
         String currentVersion = YamlAutomationPackageVersions.ACTUAL_VERSION.toString();
-        saveAllEntities();
+        List<AutomationPackageFragmentYaml> outdatedFragments = getOutdatedFragments();
+
+        List<AbstractOrganizableObject> outdatedEntities = fragmentMap.entrySet().stream()
+            .filter(e -> outdatedFragments.contains(e.getValue()))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
+        outdatedEntities.forEach(this::save);
+
         for (AutomationPackageFragmentYaml fragment : importedFragments) {
-            String declaredVersion = fragment.getVersion().getValue();
-            if (declaredVersion != null && new Version(declaredVersion).compareTo(YamlAutomationPackageVersions.ACTUAL_VERSION) < 0) {
+            if (outdatedFragments.contains(fragment) && fragment.getVersion().getValue() != null) {
                 fragment.setVersionString(currentVersion);
                 fragment.writeToDisk();
             }
         }
-        descriptorYaml.setVersionString(currentVersion);
-        descriptorYaml.writeToDisk();
+        if (outdatedFragments.contains(descriptorYaml) || descriptorYaml.getVersion().getValue() == null) {
+            descriptorYaml.setVersionString(currentVersion);
+            descriptorYaml.writeToDisk();
+        }
     }
 }

@@ -221,7 +221,7 @@ public class IdeCommands {
         @CommandLine.Option(names = {"-d", "--directory"}, defaultValue = ".", description = "The Automation Package directory to use for the operation. Defaults to the current working directory.")
         protected Path apDirectory;
 
-        @CommandLine.Option(names = {UPGRADE_OPTION}, description = "Upgrades an Automation Package written against an older schema version, or declaring none, to the current one before opening it. Its files are migrated and written back to disk, comments in the rewritten files may be lost.")
+        @CommandLine.Option(names = {UPGRADE_OPTION}, description = "Upgrades an Automation Package written against an older schema version to the current one before opening it. All its outdated files, descriptor and fragments, are migrated and written back to disk, comments in the rewritten files may be lost. A package declaring no version is considered as current: the version is set, but its files are not migrated.")
         protected boolean upgrade;
 
         @CommandLine.ArgGroup(exclusive = false, heading = "%nInitialization Options:%n")
