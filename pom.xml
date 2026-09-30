@@ -73,6 +73,7 @@
   <modules>
     <module>step-commons</module>
     <module>step-agent</module>
+    <module>step-agent-bundle</module>
     <module>step-constants</module>
     <module>step-core-model</module>
     <module>step-core</module>
@@ -558,6 +559,9 @@
             <goals>
               <goal>jar-no-fork</goal>
             </goals>
+            <configuration>
+              <excludeResources>true</excludeResources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -773,6 +777,10 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>sonatype</publishingServerId>
+              <!-- Build-time only, embedded in the CLI -->
+              <excludeArtifacts>
+                <excludeArtifact>step-agent-bundle</excludeArtifact>
+              </excludeArtifacts>
             </configuration>
           </plugin>
         </plugins>
