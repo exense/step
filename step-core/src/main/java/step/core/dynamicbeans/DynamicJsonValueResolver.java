@@ -21,16 +21,26 @@ package step.core.dynamicbeans;
 import java.util.Map;
 
 import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 
 import step.expressions.ExpressionHandler;
+import step.expressions.ProtectedVariable;
 
 public class DynamicJsonValueResolver {
 
     private ExpressionHandler expressionHandler;
 
+    private final StringInterpolator stringInterpolator;
+
     public DynamicJsonValueResolver(ExpressionHandler expressionHandler) {
+        this(expressionHandler, new StringInterpolator(expressionHandler));
+    }
+
+    public DynamicJsonValueResolver(ExpressionHandler expressionHandler, StringInterpolator stringInterpolator) {
         super();
         this.expressionHandler = expressionHandler;
+        this.stringInterpolator = stringInterpolator;
     }
 
     public Object evaluate(JsonObject dynamicValueAsJson, Map<String, Object> bindings, boolean canAccessProtectedValue) {
@@ -42,17 +52,42 @@ public class DynamicJsonValueResolver {
             try {
                 return expressionHandler.evaluateGroovyExpression(expression, bindings, canAccessProtectedValue);
             } catch (Exception e) {
-                Throwable cause = e.getCause();
-                String errorMsg = e.getMessage();
-                if (cause != null) {
-                    errorMsg = errorMsg + ". Groovy error: >>> " + cause.getMessage() + " <<<";
-                }
-                throw new RuntimeException(errorMsg, e);
-                //throw new RuntimeException("Error evaluating "+expression, e);
+                throw wrapEvaluationException(e);
             }
         } else {
-            return dynamicValueAsJson.get("value");
+            return interpolateIfRequired(dynamicValueAsJson.get("value"), bindings, canAccessProtectedValue);
         }
+    }
+
+    /**
+     * Interpolates the expressions contained in a plain (non dynamic) value. Only string values are concerned,
+     * any other value is returned as is
+     */
+    private Object interpolateIfRequired(JsonValue value, Map<String, Object> bindings, boolean canAccessProtectedValue) {
+        if (!(value instanceof JsonString)) {
+            return value;
+        }
+        try {
+            StringInterpolator.Result interpolation = stringInterpolator.interpolate(((JsonString) value).getString(), bindings, canAccessProtectedValue);
+            if (interpolation == null) {
+                return value;
+            }
+            // Returning a ProtectedVariable lets the caller keep track of both the clear and obfuscated results
+            return interpolation.containsProtectedValues() ?
+                new ProtectedVariable(null, interpolation.getValue(), interpolation.getObfuscatedValue()) :
+                interpolation.getValue();
+        } catch (Exception e) {
+            throw wrapEvaluationException(e);
+        }
+    }
+
+    private static RuntimeException wrapEvaluationException(Exception e) {
+        Throwable cause = e.getCause();
+        String errorMsg = e.getMessage();
+        if (cause != null) {
+            errorMsg = errorMsg + ". Groovy error: >>> " + cause.getMessage() + " <<<";
+        }
+        return new RuntimeException(errorMsg, e);
     }
 
 }

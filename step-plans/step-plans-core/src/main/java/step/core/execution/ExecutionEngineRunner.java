@@ -33,6 +33,7 @@ import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.execution.model.ExecutionTimings;
 import step.core.execution.model.ReportExport;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -96,6 +97,7 @@ public class ExecutionEngineRunner {
                 saveFailureReportWithResult(ReportNodeStatus.VETOED);
             } else {
                 try {
+                    ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_IMPORT);
                     Plan plan = getPlanFromExecutionParametersOrImport();
                     addPlanToContextAndUpdateExecution(plan);
 
@@ -126,6 +128,7 @@ public class ExecutionEngineRunner {
                     if (!executionContext.isSimulation()) {
                         logger.debug(messageWithId("Execution ended. Exporting report...."));
                         updateStatus(ExecutionStatus.EXPORTING);
+                        ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_EXPORT);
                         exportExecution(executionContext);
                         logger.info(messageWithId("Execution report exported."));
                     } else {
@@ -254,8 +257,10 @@ public class ExecutionEngineRunner {
                 // Do not update the status if the execution was aborted
                 updateStatus(ExecutionStatus.RUNNING);
             }
+            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_START);
             return artefactHandlerManager.execute(root, rootReportNode, ParentSource.MAIN);
         } finally {
+            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_END);
             try {
                 //Flush report node TS
                 executionContext.require(ReportNodeTimeSeries.class).flush();

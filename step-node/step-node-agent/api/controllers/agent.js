@@ -203,8 +203,11 @@ class Agent {
 
         if (properties['skipNpmInstall'] === 'true') {
           logger.info('Skipping npm install')
+        } else if (!hasPackageJson(npmProjectPath)) {
+          // A keyword project without a package.json declares no dependency, so there is nothing to install. npm
+          // would eventually try to find such a file in the directory ancestors and fail if none is found
+          logger.info('Skipping npm install, ' + npmProjectPath + ' has no package.json')
         } else {
-          logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
           const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
           const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
           if (npmInstallFailed || isDebugEnabled) {
@@ -306,8 +309,10 @@ class Agent {
   }
 
   async executeNpmInstall(npmProjectPath) {
+    const npmArgs = getNpmInstallArgs(npmProjectPath, this.mode === 'agent');
+    logger.info('Installing dependencies of ' + npmProjectPath + ' with: npm ' + npmArgs.join(' '));
     return await new Promise((resolve) => {
-      const child = spawn(npmCommand, ['install'], {cwd: npmProjectPath, shell: true});
+      const child = spawn(npmCommand, npmArgs, {cwd: npmProjectPath, shell: true});
       const stdChunks = [];
 
       child.stdout.on('data', (data) => {
@@ -343,6 +348,19 @@ class Agent {
       }
     });
   }
+}
+
+function hasPackageJson(npmProjectPath) {
+  return fs.existsSync(path.join(npmProjectPath, 'package.json'));
+}
+
+function getNpmInstallArgs(npmProjectPath, isAgentMode) {
+  // In the agent mode we call npm ci to preserve the dependency tree if npm-shrinkwrap.json or package-lock.json exist
+  // Outside the agent mode the keyword project is used in place, and `npm ci` would delete the node_modules
+  // the calling process (e.g. the runner) is running from. In these cases we perform a npm install
+  const useNpmCi = isAgentMode && ['npm-shrinkwrap.json', 'package-lock.json']
+    .some(lockfile => fs.existsSync(path.join(npmProjectPath, lockfile)));
+  return [useNpmCi ? 'ci' : 'install', '--no-audit', '--no-fund'];
 }
 
 async function readStepKeywordDirectory(npmProjectPath) {
@@ -591,3 +609,5 @@ class CategorizedError extends Error {
 module.exports = Agent;
 // Exposed for testing the shutdown of forked keyword processes
 module.exports.ForkedAgent = ForkedAgent;
+// Exposed for testing the npm command run in keyword projects
+module.exports.getNpmInstallArgs = getNpmInstallArgs;

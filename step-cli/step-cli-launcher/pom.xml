@@ -31,7 +31,25 @@
 
   <properties>
     <picocli.version>4.7.7</picocli.version>
+    <!-- Set to true to build a CLI without the embedded Node.js agent, for a machine which has no npm -->
+    <step.localNodeAgent.skip>false</step.localNodeAgent.skip>
+    <step.npm.executable>npm</step.npm.executable>
   </properties>
+
+  <profiles>
+    <profile>
+      <!-- npm is a shell script on Windows and, unlike an exe, is not resolved from its bare name -->
+      <id>windows</id>
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+      <properties>
+        <step.npm.executable>npm.cmd</step.npm.executable>
+      </properties>
+    </profile>
+  </profiles>
 
   <dependencies>
     <dependency>
@@ -56,6 +74,17 @@
       <version>${project.version}</version>
     </dependency>
 
+    <!--
+      Local execution of automation packages: starts real agents as separate processes and provisions them for the
+      execution. The Java agent they run is embedded as a resource by this module (see the maven-dependency-plugin
+      execution below), not by the step-agent-provisioning-local, which might be shared with consumers having no use for a 22 MB agent.
+    -->
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-agent-provisioning-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
@@ -64,6 +93,15 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <!-- Holds the embedded Java and Node.js agents, see the executions below -->
+      <resource>
+        <directory>${project.build.directory}/generated-resources</directory>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -90,6 +128,124 @@
               </artifactItems>
               <overWriteReleases>true</overWriteReleases>
               <overWriteSnapshots>true</overWriteSnapshots>
+            </configuration>
+          </execution>
+          <!--
+            Embeds the Java agent used for local execution, which is what makes the CLI self-contained. It is copied
+            in as a plain RESOURCE and must never become a dependency: shade would unpack a dependency into the CLI
+            jar and put the agent on the CLI's own classpath, which is exactly the isolation problem running the
+            agent as a separate process solves.
+            The name has to match JavaLocalAgentProvider.EMBEDDED_AGENT_RESOURCE, which reads it from the classpath
+            of whoever provides it.
+          -->
+          <execution>
+            <id>copy-local-java-agent</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>ch.exense.step</groupId>
+                  <artifactId>step-agent</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>jar-with-dependencies</classifier>
+                  <type>jar</type>
+                  <outputDirectory>${project.build.directory}/generated-resources</outputDirectory>
+                  <destFileName>step-local-java-agent.jar</destFileName>
+                </artifactItem>
+              </artifactItems>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!--
+        Embeds the Node.js agent, so that a local execution needs neither npm nor an npm registry: only node.
+        The agent sources of this build are copied out of the repository, their production dependencies are
+        resolved into that copy, and the result is packed into the archive NodeLocalAgentProvider extracts.
+        The source tree is never touched: npm runs on the copy, so a developer's node_modules keeps its dev
+        dependencies.
+        Bound to three consecutive phases rather than to one, so that the order does not depend on the order the
+        plugins are declared in.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-local-node-agent-sources</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <skip>${step.localNodeAgent.skip}</skip>
+              <outputDirectory>${project.build.directory}/local-node-agent</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/../../step-node/step-node-agent</directory>
+                  <excludes>
+                    <exclude>node_modules/**</exclude>
+                    <exclude>test/**</exclude>
+                    <exclude>.vscode/**</exclude>
+                    <exclude>.gitignore</exclude>
+                  </excludes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>install-local-node-agent</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${step.localNodeAgent.skip}</skip>
+              <executable>${step.npm.executable}</executable>
+              <workingDirectory>${project.build.directory}/local-node-agent</workingDirectory>
+              <arguments>
+                <argument>ci</argument>
+                <!-- Only what the agent needs to run: eslint, jest and nodemon have no business being shipped -->
+                <argument>--omit=dev</argument>
+                <argument>--no-audit</argument>
+                <argument>--no-fund</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>pack-local-node-agent</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <skipAssembly>${step.localNodeAgent.skip}</skipAssembly>
+              <descriptors>
+                <descriptor>src/assembly/local-node-agent.xml</descriptor>
+              </descriptors>
+              <!-- The name has to match NodeLocalAgentProvider.EMBEDDED_AGENT_RESOURCE -->
+              <finalName>step-local-node-agent</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
+              <outputDirectory>${project.build.directory}/generated-resources</outputDirectory>
+              <!-- A resource of the CLI, not an artifact of its own: nothing installs or deploys it -->
+              <attach>false</attach>
             </configuration>
           </execution>
         </executions>

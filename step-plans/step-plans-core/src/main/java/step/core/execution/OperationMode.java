@@ -18,21 +18,72 @@
  ******************************************************************************/
 package step.core.execution;
 
+/**
+ * The context in which an execution runs, which decides where its plans and keywords come from and where the keywords are run.
+ */
 public enum OperationMode {
 
-    CONTROLLER,
-
-    LOCAL, //Used for our Junit tests, LocalPlanRunner
-
-    LOCAL_AUTOMATION_PACKAGE; //Used for Local AP execution (external class loader)
+    /**
+     * An execution driven by a Step controller, on the agents of its grid.
+     */
+    CONTROLLER(false, false, false),
 
     /**
-     * Returns {@code true} for any local execution mode, regardless of which classloader
-     * strategy is used. Use this wherever the distinction between {@link #LOCAL} and
-     * {@link #LOCAL_AUTOMATION_PACKAGE} does not matter (e.g. forcing local token
-     * selection, skipping controller-only setup).
+     * A local execution taking its keywords from the annotated classes found on the class path, and running them in
+     * the same JVM. The mode of the JUnit tests and of {@code DefaultPlanRunner}, and the one an
+     * {@link ExecutionEngine} falls back to when none is set.
      */
-    public static boolean isLocal(OperationMode operationMode) {
-        return (operationMode == LOCAL || operationMode == LOCAL_AUTOMATION_PACKAGE);
+    LOCAL_PLAN(true, false, true),
+
+    /**
+     * A local execution driven by an automation package, which provides the keywords through a class loader of its
+     * own. They are still run in the same JVM.
+     */
+    LOCAL_AUTOMATION_PACKAGE(true, true, true),
+
+    /**
+     * A local execution driven by an automation package whose keywords are run on real agents, started as separate
+     * processes on this machine. The mode of the CLI.
+     */
+    CLI(true, true, false);
+
+    private final boolean local;
+    private final boolean automationPackage;
+    private final boolean keywordsInProcess;
+
+    OperationMode(boolean local, boolean automationPackage, boolean keywordsInProcess) {
+        this.local = local;
+        this.automationPackage = automationPackage;
+        this.keywordsInProcess = keywordsInProcess;
+    }
+
+    /**
+     * @return {@code true} for any local execution, regardless of which classloader strategy is used. Use this
+     * wherever the distinction between the local modes does not matter (e.g. skipping controller-only setup).
+     */
+    public boolean isLocal() {
+        return local;
+    }
+
+    /**
+     * @return {@code true} when we execute plans in context of an automation package, in which case, the Automation Package
+     * manager is responsible for providing the entities. Otherwise, the keywords are retrieved by scanning
+     * the annotated classes found on the class path.
+     */
+    public boolean isAutomationPackage() {
+        return automationPackage;
+    }
+
+    /**
+     * @return {@code true} when the keywords of the execution run in the JVM of the execution engine, on a local
+     * token, rather than on an agent.
+     * <p>
+     * This is the case for every local mode but {@link #CLI}, where real agents are started on the machine and
+     * the keywords are routed to them exactly like on a controller. Running in the JVM is a feature of the JUnit
+     * runners, where the keywords under test are the ones of the project being built; it is a limitation everywhere
+     * else, as only Java keywords have an in-JVM handler.
+     */
+    public boolean runsKeywordsInProcess() {
+        return keywordsInProcess;
     }
 }

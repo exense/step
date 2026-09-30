@@ -189,6 +189,7 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public Function save(Function function) {
         try {
             var result = functionManager.saveFunction(function);
@@ -200,6 +201,7 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public Function clone(String id) {
         try {
             assertEntityIsEditableInContext(getEntity(id));
@@ -212,6 +214,7 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
     }
 
     @Override
+    @Secured(right = "{entity}-delete")
     public void delete(String functionId) {
         try {
             Function f = getEntity(functionId);

@@ -241,7 +241,7 @@ public class AutomationPackageResourceManager {
             String resourceString = FileResolver.createPathForResource(resource);
             automationPackageToBeLinkedWithResource.setAutomationPackageResource(resourceString);
             automationPackageToBeLinkedWithResource.setAutomationPackageResourceRevision(FileResolver.createRevisionPathForResource(resource));
-            log.info("The resource has been been linked with AP '{}': {}", apName, resourceString);
+            log.info("The resource has been linked with AP '{}': {}", apName, resourceString);
         }
         return resource;
     }

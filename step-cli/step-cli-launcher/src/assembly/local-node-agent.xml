@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Packs the Node.js agent and its runtime dependencies into the archive the CLI embeds and extracts for a local
+  execution. The content is what the 'install-local-node-agent' execution resolved into target/local-node-agent:
+  the agent sources of this build plus its production dependencies, so that the extracted agent runs with node
+  alone, without npm and without reaching a registry.
+-->
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
+  <id>local-node-agent</id>
+  <formats>
+    <format>tar.gz</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+    <fileSet>
+      <directory>${project.build.directory}/local-node-agent</directory>
+      <outputDirectory>/</outputDirectory>
+      <excludes>
+        <!--
+          The commands npm generates for the packages: a symlink on Linux, a .cmd on Windows, so they are specific
+          to the machine the archive was built on. The agent is started as 'node server.js' precisely to not need
+          them, see NodeLocalAgentProvider.
+        -->
+        <exclude>**/.bin/**</exclude>
+      </excludes>
+    </fileSet>
+  </fileSets>
+</assembly>

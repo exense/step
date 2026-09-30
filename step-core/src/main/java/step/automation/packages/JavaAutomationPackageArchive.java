@@ -108,7 +108,11 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
         if (keywordLibFile != null) {
             classLoaderUrls.add(keywordLibFile.toURI().toURL());
         }
-        return new URLClassLoader(classLoaderUrls.toArray(new URL[]{}));
+        // The parent is the class loader of this application, and is given explicitly: the URLClassLoader constructor
+        // without a parent uses the system class loader, which is not the one the application is loaded by in every
+        // packaging. Under the Spring Boot launcher of the CLI for instance, the system class loader only sees the
+        // outer jar.
+        return new URLClassLoader(classLoaderUrls.toArray(new URL[]{}), JavaAutomationPackageArchive.class.getClassLoader());
     }
 
     @Override

@@ -24,13 +24,11 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.core.encryption.EncryptionManager;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
-import static step.core.execution.OperationMode.isLocal;
 
 @Plugin(dependencies = {BasePlugin.class})
 public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
@@ -44,7 +42,7 @@ public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-        if (!isLocal(executionEngineContext.getOperationMode())) {
+        if (!executionEngineContext.getOperationMode().isLocal()) {
             return;
         }
 

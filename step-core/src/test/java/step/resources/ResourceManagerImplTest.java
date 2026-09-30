@@ -280,4 +280,54 @@ public class ResourceManagerImplTest {
         assertEquals(8, resourceManager.resourceAccessor.stream().count());
     }
 
+    @Test
+    public void testChangeResourceTypeRelocatesTheContent() throws Exception {
+        Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS,
+            new java.io.ByteArrayInputStream("first".getBytes(StandardCharsets.UTF_8)), "keywords.jar", null, "testUser");
+        String resourceId = resource.getId().toString();
+        ObjectId firstRevisionId = resource.getCurrentRevisionId();
+        resourceManager.saveResourceContent(resourceId,
+            new java.io.ByteArrayInputStream("second".getBytes(StandardCharsets.UTF_8)), "keywords.jar", null, "testUser");
+
+        Resource changed = resourceManager.changeResourceType(resourceId, ResourceManager.RESOURCE_TYPE_AP);
+
+        assertEquals(resource.getId(), changed.getId());
+        assertEquals(ResourceManager.RESOURCE_TYPE_AP, resourceManager.getResource(resourceId).getResourceType());
+        assertEquals("second", readContent(resourceManager.getResourceFile(resourceId)));
+        assertEquals("every revision follows, not only the current one",
+            "first", readContent(resourceManager.getResourceFile(resourceId, firstRevisionId.toString())));
+        assertFalse(new File(rootFolder, ResourceManager.RESOURCE_TYPE_FUNCTIONS + "/" + resourceId).exists());
+    }
+
+    @Test
+    public void testChangeResourceTypeToTheCurrentTypeChangesNothing() throws Exception {
+        Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_AP,
+            new java.io.ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)), "keywords.jar", null, "testUser");
+        String resourceId = resource.getId().toString();
+
+        resourceManager.changeResourceType(resourceId, ResourceManager.RESOURCE_TYPE_AP);
+
+        assertEquals("content", readContent(resourceManager.getResourceFile(resourceId)));
+    }
+
+    @Test
+    public void testChangeResourceTypeRejectsAnUnknownType() throws Exception {
+        Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS,
+            new java.io.ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)), "keywords.jar", null, "testUser");
+        String resourceId = resource.getId().toString();
+
+        assertThrows(RuntimeException.class, () -> resourceManager.changeResourceType(resourceId, "unknownType"));
+
+        assertEquals(ResourceManager.RESOURCE_TYPE_FUNCTIONS, resourceManager.getResource(resourceId).getResourceType());
+        assertEquals("content", readContent(resourceManager.getResourceFile(resourceId)));
+    }
+
+    private String readContent(ResourceRevisionFileHandle handle) throws IOException {
+        try {
+            return Files.readString(handle.getResourceFile().toPath(), StandardCharsets.UTF_8);
+        } finally {
+            handle.close();
+        }
+    }
+
 }

@@ -195,7 +195,6 @@ public class ResourceServices extends AbstractStepAsyncServices {
     }
 
     @GET
-    @Secured
     @Path("/{id}")
     @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + READ_RIGHT)
     @Produces(MediaType.APPLICATION_JSON)
@@ -284,7 +283,6 @@ public class ResourceServices extends AbstractStepAsyncServices {
     }
 
     @DELETE
-    @Secured
     @Path("/{id}")
     @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + DELETE_RIGHT)
     public void deleteResource(@PathParam("id") String resourceId) {
@@ -295,7 +293,6 @@ public class ResourceServices extends AbstractStepAsyncServices {
     }
 
     @DELETE
-    @Secured
     @Path("/{id}/revisions")
     @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + DELETE_RIGHT)
     public void deleteResourceRevisions(@PathParam("id") String resourceId) {
