@@ -7,10 +7,10 @@ schedules:
   - name: "descriptorSchedule"
     cron: "0 15 10 ? * *"
     planName: "Versioned"
-alertingRules:
-  - name: "descriptorRule"
-    description: "Rule of the descriptor"
-    eventClass: "ExecutionEndedEvent"
+unsupportedEntities:
+  - name: "descriptorEntity"
+    description: "Entity of the descriptor"
 fragments:
   - "schedules.yml"
+  - "unsupported.yml"
   - "plans/*.yml"

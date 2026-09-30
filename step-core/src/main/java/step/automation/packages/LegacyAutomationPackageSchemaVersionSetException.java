@@ -19,21 +19,29 @@
 package step.automation.packages;
 
 public class LegacyAutomationPackageSchemaVersionSetException extends AutomationPackageUpgradeRequiredException {
-    public LegacyAutomationPackageSchemaVersionSetException(String declaredVersion, String currentVersion) {
-        super(message("The automation package", declaredVersion, currentVersion));
+    /**
+     * @param outdatedFiles the number of files of the package written against an older version, descriptor and
+     *                      fragments, all of them being migrated by the upgrade
+     */
+    public LegacyAutomationPackageSchemaVersionSetException(String declaredVersion, String currentVersion, int outdatedFiles) {
+        super(message("The automation package", declaredVersion, currentVersion, outdatedFiles));
     }
 
     /**
-     * @param fragment the fragment declaring the older version, for instance its path relative to the package
+     * @param fragment      the fragment declaring the older version, for instance its path relative to the package
+     * @param outdatedFiles the number of files of the package written against an older version, descriptor and
+     *                      fragments, all of them being migrated by the upgrade
      */
-    public LegacyAutomationPackageSchemaVersionSetException(String fragment, String declaredVersion, String currentVersion) {
-        super(message("The automation package fragment " + fragment, declaredVersion, currentVersion));
+    public LegacyAutomationPackageSchemaVersionSetException(String fragment, String declaredVersion, String currentVersion, int outdatedFiles) {
+        super(message("The automation package fragment " + fragment, declaredVersion, currentVersion, outdatedFiles));
     }
 
-    private static String message(String subject, String declaredVersion, String currentVersion) {
+    private static String message(String subject, String declaredVersion, String currentVersion, int outdatedFiles) {
         return subject + " declares the schema version " + declaredVersion + ", older than the current one ("
-            + currentVersion + "). The automation package has to be upgraded before it can be opened for editing: the "
-            + "upgrade migrates to the current schema all the files of the package written against an older version, "
-            + "the descriptor as well as the fragments. Comments in the rewritten files may be lost.";
+            + currentVersion + ")."
+            + (outdatedFiles > 1 ? " In total, " + outdatedFiles + " files of the package, descriptor and fragments, are "
+            + "written against an older version." : "")
+            + " The automation package has to be upgraded before it can be opened for editing, which migrates all its "
+            + "outdated files to the current schema. Comments in the rewritten files may be lost.";
     }
 }

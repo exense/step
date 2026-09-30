@@ -250,13 +250,14 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             .findFirst()
             .orElse(outdatedFragments.get(0));
         String currentVersion = STEP_YAML_SCHEMA_VERSION.toString();
+        int outdatedFiles = outdatedFragments.size();
         if (declaring == descriptor) {
-            return new LegacyAutomationPackageSchemaVersionSetException(declaring.getEffectiveVersion(), currentVersion);
+            return new LegacyAutomationPackageSchemaVersionSetException(declaring.getEffectiveVersion(), currentVersion, outdatedFiles);
         }
         Path fragmentPath = declaring.getFragmentPath();
         String fragment = fragmentPath == null ? ""
             : descriptor.getFragmentPath().getParent().relativize(fragmentPath).toString().replace('\\', '/');
-        return new LegacyAutomationPackageSchemaVersionSetException(fragment, declaring.getEffectiveVersion(), currentVersion);
+        return new LegacyAutomationPackageSchemaVersionSetException(fragment, declaring.getEffectiveVersion(), currentVersion, outdatedFiles);
     }
 
     private static String readDeclaredSchemaVersion(AutomationPackageDescriptorReader reader, URL descriptorUrl) throws IOException {

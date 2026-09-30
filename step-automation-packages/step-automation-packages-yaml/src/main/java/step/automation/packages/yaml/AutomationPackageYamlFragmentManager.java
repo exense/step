@@ -418,7 +418,8 @@ public class AutomationPackageYamlFragmentManager {
      * Rewrites against the current schema the files read from an older schema version, or declaring none. These files
      * were migrated while read: their entities are saved again, which writes the syntax they were migrated to, and the
      * ones declaring their own version then declare the current one, so that they are not migrated a second time when
-     * read again. The files already current are left untouched.
+     * read again. Each of them is written, including the ones holding no supported entity: the content the editor does
+     * not support is written as it was migrated. The files already current are left untouched.
      * <p>
      * The descriptor is written last: should the upgrade fail before, it still declares its former version and is
      * migrated again when read, instead of passing the fragments not written yet for current ones
@@ -434,8 +435,10 @@ public class AutomationPackageYamlFragmentManager {
         outdatedEntities.forEach(this::save);
 
         for (AutomationPackageFragmentYaml fragment : importedFragments) {
-            if (outdatedFragments.contains(fragment) && fragment.getVersion().getValue() != null) {
-                fragment.setVersionString(currentVersion);
+            if (outdatedFragments.contains(fragment)) {
+                if (fragment.getVersion().getValue() != null) {
+                    fragment.setVersionString(currentVersion);
+                }
                 fragment.writeToDisk();
             }
         }

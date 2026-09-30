@@ -34,12 +34,12 @@ import java.util.Properties;
  * The plans of a package declaring an older schema version are migrated when read, and written back with the current
  * syntax once saved
  */
-public class AutomationPackagePlanMigrationFormattingTest extends AutomationPackageCollectionTestBase {
+public class AutomationPackageUpgradeCallPlanSelectionAttributesTest extends AutomationPackageCollectionTestBase {
 
     private Collection<Plan> planCollection;
 
-    public AutomationPackagePlanMigrationFormattingTest() {
-        super(new File("src/test/resources/testdata/ap-formatting-1.2.0"));
+    public AutomationPackageUpgradeCallPlanSelectionAttributesTest() {
+        super(new File("src/test/resources/testdata/ap-upgrade-call-plan-selection-attributes"));
     }
 
     @Override

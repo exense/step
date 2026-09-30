@@ -36,18 +36,22 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
- * The upgrade of a package writes back the files it migrated. The entities the editor does not support, here the
- * schedules and the alerting rules for which no model is registered, must come out of it unchanged, whether they sit in
- * the descriptor, in a fragment written because it holds a supported entity, or in a fragment written because it
- * declares its own version
+ * The upgrade of a package writes back all the files it migrated. The entities the editor does not support are written
+ * as they were migrated, whether they sit in the descriptor, in a fragment holding a supported entity, in a fragment
+ * declaring its own version or in a fragment holding no supported entity at all.
+ * <p>
+ * The unsupported entities are here the schedules, for which no model is registered in this test, and the
+ * unsupportedEntities, which stand for any field unknown to the reader, for instance a field of the enterprise edition.
+ * No migration task concerns them, so they must come out of the upgrade unchanged
  */
 public class AutomationPackageUpgradeUnsupportedEntitiesTest extends AutomationPackageCollectionTestBase {
 
     private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory());
-    private static final List<String> UNSUPPORTED_FIELDS = List.of("schedules", "alertingRules");
-    private static final List<String> FILES = List.of("automation-package.yml", "schedules.yml", "plans/Versioned.yml", "plans/Inherited.yml");
+    private static final List<String> UNSUPPORTED_FIELDS = List.of("schedules", "unsupportedEntities");
+    private static final List<String> FILES = List.of("automation-package.yml", "schedules.yml", "unsupported.yml", "plans/Versioned.yml", "plans/Inherited.yml");
 
     public AutomationPackageUpgradeUnsupportedEntitiesTest() {
         super(new File("src/test/resources/testdata/ap-upgrade-unsupported-entities"));
@@ -82,6 +86,11 @@ public class AutomationPackageUpgradeUnsupportedEntitiesTest extends AutomationP
                 assertEquals(file + ":\n" + upgradedYaml, original.get(field), upgraded.get(field));
             }
         }
+
+        // The fragment holding no supported entity is written as well, from its migrated content: its values are
+        // quoted by the serialization of the migrated document, unlike in the source
+        String unsupported = Files.readString(destinationDirectory.toPath().resolve("unsupported.yml"));
+        assertTrue(unsupported, unsupported.contains("name: \"fragmentEntity\""));
 
         // The package is now a current one, it can be read without upgrade
         reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);

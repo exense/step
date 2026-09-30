@@ -73,12 +73,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class AutomationPackageDescriptorReader {
 
@@ -248,72 +251,75 @@ public class AutomationPackageDescriptorReader {
 
         log.info("Migrating automation package file from version {} to {}", version, YamlAutomationPackageVersions.ACTUAL_VERSION);
 
-        // The plans, including the ones of the composite keywords, are migrated as standalone yaml plans, so that the
-        // migrations of the yaml plan format apply to them
-        CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
-        Collection<Document> descriptorsCollection = tempCollectionFactory.getCollection(AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME, Document.class);
-        Collection<Document> plansCollection = tempCollectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
+        // First step: the descriptor itself.
+        Document migratedDocument = migrate(AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME, List.of(yamlDocument), fileVersion).getFirst();
 
+        // Second step: its plans
         List<DocumentObject> plans = yamlDocument.getArray(PLANS);
-        List<ObjectId> planIds = new ArrayList<>();
         if (plans != null) {
             // Emptied rather than removed, so that the migrated plans are put back at the same place in the file
             yamlDocument.put(PLANS, new ArrayList<>());
-            for (DocumentObject plan : plans) {
-                planIds.add(plansCollection.save(new Document(plan)).getId());
-            }
         }
-        Map<Integer, ObjectId> compositePlanIds = extractCompositePlans(yamlDocument, plansCollection);
-        ObjectId descriptorId = descriptorsCollection.save(yamlDocument).getId();
-
-        migrationManager.migrate(tempCollectionFactory, fileVersion, YamlAutomationPackageVersions.ACTUAL_VERSION);
-
-        // The declared version is deliberately left untouched: it is what the imported fragments inherit. Only the ids,
-        // generated when saving into the temporary collections, have to be removed
-        Document migratedDocument = findAndRemoveId(descriptorsCollection, descriptorId);
         if (plans != null) {
-            List<Document> migratedPlans = new ArrayList<>();
-            for (ObjectId planId : planIds) {
-                migratedPlans.add(findAndRemoveId(plansCollection, planId));
-            }
-            migratedDocument.put(PLANS, migratedPlans);
+            List<Document> planDocuments = plans.stream().map(Document::new).collect(Collectors.toList());
+            migratedDocument.put(PLANS, migrate(YAML_PLANS_COLLECTION_NAME, planDocuments, fileVersion));
         }
-        restoreCompositePlans(migratedDocument, compositePlanIds, plansCollection);
+
+        // Third step: the plans of the composite keywords, put back in their keyword
+        Map<Integer, Document> compositePlans = detachCompositePlans(yamlDocument);
+        if (!compositePlans.isEmpty()) {
+            Iterator<Document> migratedCompositePlans = migrate(YAML_PLANS_COLLECTION_NAME, List.copyOf(compositePlans.values()), fileVersion).iterator();
+            List<DocumentObject> keywords = migratedDocument.getArray(KEYWORDS);
+            for (Integer keywordIndex : compositePlans.keySet()) {
+                keywords.get(keywordIndex).getObject(COMPOSITE_KEYWORD).put(COMPOSITE_PLAN, migratedCompositePlans.next());
+            }
+        }
         return migratedDocument;
     }
 
     /**
-     * Moves the plans of the composite keywords to the collection of the yaml plans to be migrated. The keywords
-     * themselves stay in the descriptor, where the migrations of the automation package format apply to them
+     * Removes the plans of the composite keywords from the document
      *
-     * @return the ids of the moved plans, by index of their keyword
+     * @return the removed plans, by index of their keyword and in the order of the keywords
      */
     @SuppressWarnings("unchecked")
-    private static Map<Integer, ObjectId> extractCompositePlans(Document yamlDocument, Collection<Document> plansCollection) {
-        Map<Integer, ObjectId> compositePlanIds = new HashMap<>();
+    private static Map<Integer, Document> detachCompositePlans(Document yamlDocument) {
+        Map<Integer, Document> compositePlans = new LinkedHashMap<>();
         if (yamlDocument.get(KEYWORDS) instanceof List<?> keywords) {
             for (int i = 0; i < keywords.size(); i++) {
                 if (keywords.get(i) instanceof Map<?, ?> keyword
                     && keyword.get(COMPOSITE_KEYWORD) instanceof Map<?, ?> composite
                     && composite.get(COMPOSITE_PLAN) instanceof Map<?, ?> plan) {
-                    compositePlanIds.put(i, plansCollection.save(new Document((Map<String, Object>) plan)).getId());
+                    compositePlans.put(i, new Document((Map<String, Object>) plan));
                     composite.remove(COMPOSITE_PLAN);
                 }
             }
         }
-        return compositePlanIds;
+        return compositePlans;
     }
 
     /**
-     * Puts the migrated plans of the composite keywords back in place
+     * Migrates documents in a temporary collection of their own, which decides the migrations applying to them: the
+     * ones of the automation package format for {@link AbstractAutomationPackageMigrationTask#AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME},
+     * the ones of the yaml plan format for {@link AbstractYamlPlanMigrationTask#YAML_PLANS_COLLECTION_NAME}
+     *
+     * @return the migrated documents, in the same order and without the ids generated by the temporary collection
      */
-    private static void restoreCompositePlans(Document migratedDocument, Map<Integer, ObjectId> compositePlanIds, Collection<Document> plansCollection) {
-        if (compositePlanIds.isEmpty()) {
-            return;
+    private List<Document> migrate(String collectionName, List<Document> documents, Version fromVersion) {
+        CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
+        Collection<Document> collection = tempCollectionFactory.getCollection(collectionName, Document.class);
+        List<ObjectId> ids = new ArrayList<>();
+        for (Document document : documents) {
+            ids.add(collection.save(document).getId());
         }
-        List<DocumentObject> keywords = migratedDocument.getArray(KEYWORDS);
-        compositePlanIds.forEach((index, planId) ->
-            keywords.get(index).getObject(COMPOSITE_KEYWORD).put(COMPOSITE_PLAN, findAndRemoveId(plansCollection, planId)));
+
+        migrationManager.migrate(tempCollectionFactory, fromVersion, YamlAutomationPackageVersions.ACTUAL_VERSION);
+
+        List<Document> migratedDocuments = new ArrayList<>();
+        for (ObjectId id : ids) {
+            migratedDocuments.add(findAndRemoveId(collection, id));
+        }
+        return migratedDocuments;
     }
 
     private static Document findAndRemoveId(Collection<Document> collection, ObjectId id) {

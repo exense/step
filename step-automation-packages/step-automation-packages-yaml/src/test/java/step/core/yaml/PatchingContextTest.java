@@ -234,28 +234,27 @@ public class PatchingContextTest {
     public void testUnclaimedContentIsKept() {
         String yaml = """
             ---
-            alertingRules:
-              - name: "Rule1"
-                eventClass: "ExecutionEndedEvent"
+            unsupportedEntities:
+              - name: "entity1"
+                description: "An entity no model is registered for"
             """;
         Assert.assertEquals(yaml, new PatchingContext("unclaimed.yml", yaml, new ObjectMapper()).getCurrentYaml());
     }
 
     /**
-     * The fields of a fragment no model is registered for are not claimed and are written back untouched, like the
-     * enterprise alerting rules when read by the open source reader
+     * The fields of a fragment no model is registered for are not claimed and are written back untouched, like a field
+     * of the enterprise edition when read by the open source reader
      */
     @Test
     public void testFragmentHoldingOnlyUnregisteredFieldsIsKept() throws Exception {
         String yaml = """
             ---
-            alertingRules:
-              - name: "Rule1"
-                description: "My test alerting rule"
-                eventClass: "ExecutionEndedEvent"
+            unsupportedEntities:
+              - name: "entity1"
+                description: "An entity no model is registered for"
             """;
         try (InputStream is = new ByteArrayInputStream(yaml.getBytes(StandardCharsets.UTF_8))) {
-            AutomationPackageFragmentYaml fragment = reader.readAutomationPackageFragment(is, "alerting.yml", "", null);
+            AutomationPackageFragmentYaml fragment = reader.readAutomationPackageFragment(is, "unsupported.yml", "", null);
             Assert.assertEquals(yaml, fragment.getPatchingContext().getCurrentYaml());
         }
     }

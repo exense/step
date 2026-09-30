@@ -11,6 +11,5 @@ schedules:
   - name: "versionedSchedule"
     cron: "0 0 12 * * ?"
     planName: "Versioned"
-alertingRules:
-  - name: "versionedRule"
-    eventClass: "ExecutionEndedEvent"
+unsupportedEntities:
+  - name: "versionedEntity"
