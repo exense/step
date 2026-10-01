@@ -32,7 +32,14 @@ public class AutomationPackageStaging {
     private List<Function> functions = new ArrayList<>();
     private final Map<String, List<?>> additionalObjects = new HashMap<>();
 
-    private ResourceManager resourceManager = new LocalResourceManagerImpl(new File("ap_staging_resources_" + new ObjectId()));
+    private final ResourceManager resourceManager;
+
+    /**
+     * @param stagingResourcesRoot the parent folder of the staging resource folder ({@code null} for the working directory)
+     */
+    public AutomationPackageStaging(File stagingResourcesRoot) {
+        resourceManager = new LocalResourceManagerImpl(new File(stagingResourcesRoot, "ap_staging_resources_" + new ObjectId()));
+    }
 
     public List<Plan> getPlans() {
         return plans;
