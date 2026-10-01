@@ -5,7 +5,9 @@ import org.junit.Before;
 import org.junit.Test;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
+import step.core.metrics.Measurement;
 import step.core.metrics.MetricSample;
+import step.core.metrics.MetricsExecutionPlugin;
 import step.core.metrics.InstrumentType;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
@@ -135,13 +137,51 @@ public class TimeSeriesBucketingHandlerTest {
         Assert.assertEquals("qa", buckets.get(0).getAttributes().get("env"));
     }
 
+    // ── Artefact hash ────────────────────────────────────────────────────────
+
+    /**
+     * In exclude-mode, the production default, the artefact hash of the report node the sample was
+     * produced by is ingested as a bucket dimension, for both metrics and measurements.
+     */
+    @Test
+    public void artefactHashIsIngestedAsBucketAttribute() {
+        TimeSeriesMetricSamplesHandler excludeModeHandler = newExcludeModeHandler();
+
+        MetricSample snapshot = new MetricSample(0L,
+            "requests", Map.of(), InstrumentType.COUNTER, 1, 1, 1, 1, 1, null);
+        excludeModeHandler.processMetrics(null, List.of(buildMetricMeasurement(snapshot)));
+
+        Measurement measurement = new Measurement();
+        measurement.setExecId("exec-1");
+        measurement.setName("myKeyword");
+        measurement.setBegin(0L);
+        measurement.setValue(1L);
+        measurement.addCustomField(MetricsExecutionPlugin.ARTEFACT_HASH, "HASH-2");
+        excludeModeHandler.processMeasurements(null, List.of(measurement));
+
+        excludeModeHandler.flush();
+
+        Set<Object> hashes = allBuckets().stream()
+            .map(b -> b.getAttributes().get(MetricsExecutionPlugin.ARTEFACT_HASH))
+            .collect(Collectors.toSet());
+        Assert.assertEquals(Set.of("HASH-1", "HASH-2"), hashes);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private TimeSeriesMetricSamplesHandler newExcludeModeHandler() {
+        bucketsCollection = new InMemoryCollection<>();
+        TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
+        TimeSeries timeSeries = new TimeSeriesBuilder().registerCollection(tsCollection).build();
+        return new TimeSeriesMetricSamplesHandler(timeSeries, Set.of(), Set.of("begin", "value"));
+    }
 
     private ExecutionMetricSample buildMetricMeasurement(MetricSample snapshot) {
         return new ExecutionMetricSample(
             snapshot,
             "exec-1",        // execId
             "rn-1",          // rnId
+            "HASH-1",        // artefactHash
             "plan-1",        // planId
             "MyPlan",        // plan name
             "canonical",     // canonicalPlanName
