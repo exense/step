@@ -43,6 +43,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+import static step.core.Constants.STEP_YAML_SCHEMA_VERSION_STRING;
+
 /*
  * This is a singleton class that represents IDE-specific state and logic.
  * For instance, it contains information about which automation package the user
@@ -110,21 +112,21 @@ public class LocalIDEModel implements ExecutionDiversion {
         logger.debug("Setting resource manager to {}", resourceManager);
     }
 
-    public void useExistingAutomationPackageDirectory(Path apDir) throws Exception {
+    public void useExistingAutomationPackageDirectory(Path apDir, boolean upgrade) throws Exception {
         validateExistingAutomationPackageDirectory(apDir);
-        useAutomationPackageDirectory(apDir);
+        useAutomationPackageDirectory(apDir, upgrade);
     }
 
     public void useNewAutomationPackageDirectory(Path apDir, String apName) throws Exception {
         initializeAPDirectory(apDir, apName);
-        useAutomationPackageDirectory(apDir);
+        useAutomationPackageDirectory(apDir, false);
     }
 
-    private void useAutomationPackageDirectory(Path apDir) throws Exception {
+    private void useAutomationPackageDirectory(Path apDir, boolean upgrade) throws Exception {
         AutomationPackageReaderRegistry readerRegistry = Objects.requireNonNull(automationPackageReaderRegistry,
             "No automation package reader registry set, the IDE backend is not started");
         JavaAutomationPackageReader reader = (JavaAutomationPackageReader) readerRegistry.<JavaAutomationPackageArchive>getReaderByType(JavaAutomationPackageArchive.TYPE);
-        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager);
+        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager, upgrade);
         Properties properties = new Properties();
 
         // TODO: decide on the final implementation (or make it user-selectable), then remove dead code
@@ -233,7 +235,7 @@ public class LocalIDEModel implements ExecutionDiversion {
         }
 
         String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
-        String content = "schemaVersion: 1.0.0\nname: \"" + yamlName + "\"\n";
+        String content = "version: \"" + STEP_YAML_SCHEMA_VERSION_STRING + "\"\nname: \"" + yamlName + "\"\n";
         Files.writeString(descriptor, content);
     }
 

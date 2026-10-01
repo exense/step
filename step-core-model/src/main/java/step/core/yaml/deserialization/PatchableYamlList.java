@@ -130,10 +130,6 @@ public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlM
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public StartingLineDeterminationStrategy getStartingLineDeterminationStrategy() {
-        return StartingLineDeterminationStrategy.NEXT_CONTENT_LINE;
-    }
 
     @Override
     public void setModified() {
@@ -141,7 +137,7 @@ public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlM
     }
 
     @Override
-    public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
-        bounds = patchingContext.claimChunk(startLocation, endLocation, this);
+    public void onParsed(JsonLocation startLocation, PatchingParserDelegate parser) {
+        bounds = patchingContext.claimChunk(startLocation, parser.getLastDistinctLocation(), this);
     }
 }

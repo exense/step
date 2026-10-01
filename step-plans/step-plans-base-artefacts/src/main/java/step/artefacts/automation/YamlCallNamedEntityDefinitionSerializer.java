@@ -34,23 +34,23 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@StepYamlSerializerAddOn(targetClasses = {YamlKeywordDefinition.class})
-public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeywordDefinition> {
+@StepYamlSerializerAddOn(targetClasses = {YamlCallNamedEntityDefinition.class})
+public class YamlCallNamedEntityDefinitionSerializer extends StepYamlSerializer<YamlCallNamedEntityDefinition> {
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = DefaultJacksonMapperProvider.getObjectMapper();
 
-    public YamlKeywordDefinitionSerializer(ObjectMapper yamlObjectMapper) {
+    public YamlCallNamedEntityDefinitionSerializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
     }
 
     @Override
-    public void serialize(YamlKeywordDefinition value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+    public void serialize(YamlCallNamedEntityDefinition value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         DynamicValue<String> dynamicValue = value.toDynamicValue();
-        String simpleFunctionName = getFunctionName(dynamicValue, true);
-        if (simpleFunctionName != null) {
-            gen.writeString(simpleFunctionName);
+        String simpleEntityName = getEntityName(dynamicValue, true);
+        if (simpleEntityName != null) {
+            gen.writeString(simpleEntityName);
         } else {
-            Map<String, DynamicValue<String>> selectionCriteria = getFunctionSelectionCriteriaForYamlSerialization(dynamicValue);
+            Map<String, DynamicValue<String>> selectionCriteria = getSelectionCriteriaForYamlSerialization(dynamicValue);
             if (selectionCriteria != null) {
                 gen.writeStartObject();
                 for (Map.Entry<String, DynamicValue<String>> entry : selectionCriteria.entrySet()) {
@@ -61,33 +61,33 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
         }
     }
 
-    public static String getFunctionName(DynamicValue<String> dynamicSelectionCriteria, boolean asSimpleFunctionName) throws JsonProcessingException {
+    public static String getEntityName(DynamicValue<String> dynamicSelectionCriteria, boolean asSimpleEntityName) throws JsonProcessingException {
         if (!dynamicSelectionCriteria.getValue().trim().isEmpty()) {
             String jsonValue = dynamicSelectionCriteria.getValue();
-            return getFunctionName(jsonValue, asSimpleFunctionName);
+            return getEntityName(jsonValue, asSimpleEntityName);
         } else {
             return null;
         }
     }
 
-    public static String getFunctionName(String jsonValue, boolean asSimpleFunctionName) throws JsonProcessingException {
+    public static String getEntityName(String jsonValue, boolean asSimpleEntityName) throws JsonProcessingException {
         if (jsonValue == null || jsonValue.isEmpty()) {
             return null;
         }
         if (jsonValue.startsWith("{")) {
-            TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
+            TypeReference<HashMap<String, JsonNode>> entityValueTypeRef = new TypeReference<>() {
             };
-            HashMap<String, JsonNode> functionNameAsMap = DEFAULT_OBJECT_MAPPER.readValue(jsonValue, functionValueTypeRef);
+            HashMap<String, JsonNode> entityNameAsMap = DEFAULT_OBJECT_MAPPER.readValue(jsonValue, entityValueTypeRef);
 
-            JsonNode simpleFunctionName = null;
-            if (!asSimpleFunctionName || functionNameAsMap.size() == 1) {
-                simpleFunctionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
+            JsonNode simpleEntityName = null;
+            if (!asSimpleEntityName || entityNameAsMap.size() == 1) {
+                simpleEntityName = entityNameAsMap.get(AbstractOrganizableObject.NAME);
             }
 
-            if (simpleFunctionName != null && !simpleFunctionName.isContainerNode()) {
-                return simpleFunctionName.asText();
+            if (simpleEntityName != null && !simpleEntityName.isContainerNode()) {
+                return simpleEntityName.asText();
             } else {
-                DynamicValue<String> dynamicValue = DEFAULT_OBJECT_MAPPER.treeToValue(simpleFunctionName, DynamicValue.class);
+                DynamicValue<String> dynamicValue = DEFAULT_OBJECT_MAPPER.treeToValue(simpleEntityName, DynamicValue.class);
                 if (dynamicValue != null && !dynamicValue.isDynamic()) {
                     return dynamicValue.getValue();
                 } else {
@@ -95,30 +95,30 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
                 }
             }
         } else {
-            throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + jsonValue);
+            throw new IllegalArgumentException("Invalid Entity. Entity selector for yaml only supports entity selectors as jsons, but was: " + jsonValue);
         }
     }
 
     /**
      * Returns all selection criteria for keyword serialization
      */
-    private Map<String, DynamicValue<String>> getFunctionSelectionCriteriaForYamlSerialization(DynamicValue<String> function) throws JsonProcessingException {
-        if (!function.getValue().trim().isEmpty()) {
-            if (function.getValue().startsWith("{")) {
+    private Map<String, DynamicValue<String>> getSelectionCriteriaForYamlSerialization(DynamicValue<String> entity) throws JsonProcessingException {
+        if (!entity.getValue().trim().isEmpty()) {
+            if (entity.getValue().startsWith("{")) {
                 Map<String, DynamicValue<String>> result = new HashMap<>();
                 TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
                 };
-                HashMap<String, JsonNode> selectionCriteriaMap = YamlKeywordDefinitionSerializer.DEFAULT_OBJECT_MAPPER.readValue(function.getValue(), functionValueTypeRef);
+                HashMap<String, JsonNode> selectionCriteriaMap = YamlCallNamedEntityDefinitionSerializer.DEFAULT_OBJECT_MAPPER.readValue(entity.getValue(), functionValueTypeRef);
                 for (Map.Entry<String, JsonNode> entry : selectionCriteriaMap.entrySet()) {
                     if (entry.getValue().isContainerNode()) {
-                        result.put(entry.getKey(), YamlKeywordDefinitionSerializer.DEFAULT_OBJECT_MAPPER.treeToValue(entry.getValue(), DynamicValue.class));
+                        result.put(entry.getKey(), YamlCallNamedEntityDefinitionSerializer.DEFAULT_OBJECT_MAPPER.treeToValue(entry.getValue(), DynamicValue.class));
                     } else {
                         result.put(entry.getKey(), new DynamicValue<>(entry.getValue().asText()));
                     }
                 }
                 return result;
             } else {
-                throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());
+                throw new IllegalArgumentException("Invalid entity. Entity selector for yaml only supports entity selectors as jsons, but was: " + entity.getValue());
             }
 
         } else {

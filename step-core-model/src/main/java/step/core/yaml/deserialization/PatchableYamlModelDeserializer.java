@@ -42,7 +42,7 @@ public class PatchableYamlModelDeserializer<T extends PatchableYamlModel> extend
         if (p instanceof PatchingParserDelegate patchingParser) {
             JsonLocation startItem = patchingParser.currentLocation();
             T entity = delegate.deserialize(p, ctxt);
-            entity.onParsed(startItem, patchingParser.getLastDistinctLocation());
+            entity.onParsed(startItem, patchingParser);
             return entity;
         }
         return delegate.deserialize(p, ctxt);

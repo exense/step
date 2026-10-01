@@ -19,6 +19,7 @@
 package step.core.yaml;
 
 import com.fasterxml.jackson.core.JsonLocation;
+import step.core.yaml.deserialization.PatchingParserDelegate;
 
 public interface PatchableYamlModel {
 
@@ -30,12 +31,5 @@ public interface PatchableYamlModel {
 
     void setModified();
 
-    enum StartingLineDeterminationStrategy {
-        SAME_LINE,
-        NEXT_CONTENT_LINE
-    }
-
-    StartingLineDeterminationStrategy getStartingLineDeterminationStrategy();
-
-    void onParsed(JsonLocation startLocation, JsonLocation endLocation);
+    void onParsed(JsonLocation startLocation, PatchingParserDelegate parser);
 }

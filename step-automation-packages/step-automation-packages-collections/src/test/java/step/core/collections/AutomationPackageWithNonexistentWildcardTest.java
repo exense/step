@@ -28,7 +28,7 @@ public class AutomationPackageWithNonexistentWildcardTest {
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
         var reader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
         try {
-            reader.getAutomationPackageYamlFragmentManager(new File("src/test/resources/testdata/ap-with-nonexisting-wildcard"), new LocalResourceManagerImpl(tempFolder.getRoot()));
+            reader.getAutomationPackageYamlFragmentManager(new File("src/test/resources/testdata/ap-with-nonexisting-wildcard"), new LocalResourceManagerImpl(tempFolder.getRoot()), false);
             Assert.fail("Expected exception");
         } catch (IllegalArgumentException e) {
             Assert.assertEquals("Illegal resource definition, resource cannot be found: nonexisting/*.yml", e.getMessage());

@@ -1,4 +1,4 @@
-schemaVersion: 1.0.0
+version: 1.3.0
 name: "My package"
 alertingRules:
   - name: "Rule1"
@@ -12,7 +12,7 @@ alertingRules:
           predicate:
             BindingValueEqualsPredicate:
               value: "myValue"
-plans: [ ]
+plans: []
 parameters:
   - key: "paramInMainAP"
     value: "once"

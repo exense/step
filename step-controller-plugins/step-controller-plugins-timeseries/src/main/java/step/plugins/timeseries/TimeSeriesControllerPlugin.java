@@ -44,6 +44,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static step.core.metrics.MetricsExecutionPlugin.AGENT_URL;
+import static step.core.metrics.MetricsExecutionPlugin.ARTEFACT_HASH;
 import static step.core.metrics.MetricsExecutionPlugin.BEGIN;
 import static step.core.metrics.MetricsExecutionPlugin.RN_ID;
 import static step.core.metrics.MetricsExecutionPlugin.VALUE;
@@ -66,7 +67,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     // Before Step 30, the list of supported attributed by the time-series were defined with below default values and could be customized via step.properties
     // This was used to determine if we had to fall back to RAW measurement when a filter or group by used unknown fields
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
-    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
+    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = MetricsConstants.getAllAttributeNames() + ",metricType,origin,project," + ARTEFACT_HASH;
 
     // Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
     public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";

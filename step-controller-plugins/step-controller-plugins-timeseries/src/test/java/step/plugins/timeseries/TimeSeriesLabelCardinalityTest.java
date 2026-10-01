@@ -308,6 +308,22 @@ public class TimeSeriesLabelCardinalityTest {
         labelCountNotices.forEach(n -> Assert.assertEquals("1", n.parameters().get("quota")));
     }
 
+    // ── Context labels set by Step itself are exempt from the quota ─────────────────────────────
+
+    /**
+     * The artefact hash is a context label set by Step, not a keyword-author-defined one, so it must
+     * survive even the strictest quota, which drops every custom label.
+     */
+    @Test
+    public void artefactHashIsNotSubjectToTheLabelQuota() {
+        TimeSeriesMetricSamplesHandler handler = newLabelCountHandler(0, null);
+        handler.processMetrics(null, metricsWithDistinctLabel("user_id", 3, "m1", "e1"));
+        handler.flush();
+
+        Assert.assertTrue(bucketAttributeValues("user_id").isEmpty());
+        Assert.assertEquals(Set.of("HASH-0", "HASH-1", "HASH-2"), bucketAttributeValues("artefactHash"));
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────────────────────────
 
     private List<ExecutionMetricSample> metricsWithDistinctLabel(String labelName, int count, String metricName, String execId) {
@@ -315,7 +331,7 @@ public class TimeSeriesLabelCardinalityTest {
         for (int i = 0; i < count; i++) {
             MetricSample snapshot = new MetricSample(0L, metricName,
                 Map.of(labelName, labelName + "-" + i), InstrumentType.GAUGE, 1, 1, 1, 1, 1, null);
-            samples.add(new ExecutionMetricSample(snapshot, execId, "rn-" + i, "plan-1", "MyPlan",
+            samples.add(new ExecutionMetricSample(snapshot, execId, "rn-" + i, "HASH-" + i, "plan-1", "MyPlan",
                 "canonical", "", "", "", null, null, null, null));
         }
         return samples;
@@ -324,7 +340,7 @@ public class TimeSeriesLabelCardinalityTest {
     private ExecutionMetricSample metricWithLabel(String metricName, String execId, String labelName, String labelValue) {
         MetricSample snapshot = new MetricSample(0L, metricName,
             Map.of(labelName, labelValue), InstrumentType.GAUGE, 1, 1, 1, 1, 1, null);
-        return new ExecutionMetricSample(snapshot, execId, "rn", "plan-1", "MyPlan",
+        return new ExecutionMetricSample(snapshot, execId, "rn", "HASH-1", "plan-1", "MyPlan",
             "canonical", "", "", "", null, null, null, null);
     }
 
