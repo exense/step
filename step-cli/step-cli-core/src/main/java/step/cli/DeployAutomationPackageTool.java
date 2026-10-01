@@ -34,7 +34,7 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
         super(url, params);
     }
 
-    public void execute() throws StepCliExecutionException {
+    public AutomationPackageUpdateResult execute() throws StepCliExecutionException {
         parameters.validate();
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
             int deploymentTimeoutSeconds = parameters.getDeploymentTimeout() != null
@@ -64,6 +64,7 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
                 if (updateResult != null && updateResult.getId() != null) {
                     logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId() +
                         (updateResult.getWarnings().isEmpty() ? "" : ". Warnings: " + updateResult.getWarnings()), null);
+                    return updateResult;
                 } else {
                     throw new StepCliExecutionException("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
                 }

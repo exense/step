@@ -38,14 +38,13 @@ import step.core.plans.filters.PlanByIncludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
 import step.core.plans.filters.PlanMultiFilter;
 import step.core.plans.runner.PlanRunnerResult;
-import step.ide.api.IDEExecutorDelegate;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,7 +52,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
-public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> implements IDEExecutorDelegate {
+public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecuteAutomationPackageTool.class);
 
@@ -74,14 +73,13 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
         return executionTree;
     }
 
-    public void execute() throws StepCliExecutionException {
-        executePackageOnStep(null);
+    public List<StartedExecution> execute() throws StepCliExecutionException {
+        return executePackageOnStep(null);
     }
 
 
-    @Override
-    public void executePackageAndFillExecutionId(CompletableFuture<String> singleExecutionIdFuture) throws Exception {
-        executePackageOnStep(singleExecutionIdFuture);
+    public List<StartedExecution> executePackageAndFillExecutionId(CompletableFuture<String> singleExecutionIdFuture) throws Exception {
+        return executePackageOnStep(singleExecutionIdFuture);
     }
 
     /**
@@ -95,10 +93,11 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
      * in an asynchronous fashion, and uses the ID retrieved here).
      *
      * @param firstExecutionIdFuture execution ID future to complete once it's known.
+     * @return the executions started on Step, in the order the server returned them. Executing an automation package
+     * starts one execution per plan, unless the plans are wrapped into a single test set.
      * @throws StepCliExecutionException on error
      */
-    // TODO SED-4429 extract and refactor this logic
-    protected void executePackageOnStep(CompletableFuture<String> firstExecutionIdFuture) throws StepCliExecutionException {
+    protected List<StartedExecution> executePackageOnStep(CompletableFuture<String> firstExecutionIdFuture) throws StepCliExecutionException {
         parameters.validate();
 
         File outputFolder = null;
@@ -147,13 +146,15 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                 if (executionIds.isEmpty()) {
                     throw logAndThrow("No executions started (unexpected empty response from server).", null);
                 } else {
-                    Map<String, Execution> executionInfos = new HashMap<>();
+                    Map<String, Execution> executionInfos = new LinkedHashMap<>();
+                    List<StartedExecution> startedExecutions = new ArrayList<>();
                     logInfo("Execution(s) started in Step:", null);
                     for (String executionId : executionIds) {
                         // It's ok to do this in the loop, if present the future will be completed exactly once, with the first id.
                         Optional.ofNullable(firstExecutionIdFuture).ifPresent(f -> f.complete(executionId));
                         Execution executionInfo = remoteExecutionManager.get(executionId);
                         executionInfos.put(executionId, executionInfo);
+                        startedExecutions.add(new StartedExecution(executionId, executionInfo == null ? null : executionInfo.getDescription()));
                         logInfo("- " + executionToString(executionId, executionInfo), null);
                     }
 
@@ -198,6 +199,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                     } else {
                         logInfo("waitForExecution set to 'false'. Not waiting for executions to complete.", null);
                     }
+                    return startedExecutions;
                 }
             } else {
                 throw logAndThrow("Unexpected response from Step. No execution Id returned. Please check the controller logs.");
@@ -302,6 +304,13 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
             multiFilter.add(new PlanByExcludedCategoriesFilter(excludeCategories));
         }
         return new PlanMultiFilter(multiFilter);
+    }
+
+    /**
+     * An execution started on Step, with the description Step gave it. For the executions started one per plan,
+     * the description is the plan name.
+     */
+    public record StartedExecution(String id, String description) {
     }
 
     public enum ReportType {
