@@ -279,6 +279,9 @@ public class AutomationPackageExecutor {
 
         params.setRepositoryObject(new RepositoryObjectReference(repoId, repositoryParameters));
         params.setSharedContextId(sharedContextId);
+        if (log.isDebugEnabled()) {
+            log.debug("Set shared context {} to execution parameters for plans {}", sharedContextId, includePlans);
+        }
         if (defaultDescription != null) {
             params.setDescription(defaultDescription);
         }

@@ -192,6 +192,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         if (sharedContextId != null) {
             context.getExecutionParameters().setSharedContextId(null);
             context.getExecutionManager().updateExecution(e -> e.getExecutionParameters().setSharedContextId(null));
+            if (log.isDebugEnabled()) {
+                log.debug("Consumed shared context {} by execution {}", sharedContextId, context.getExecutionId());
+            }
         }
         return sharedContextId;
     }
@@ -450,6 +453,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         IsolatedPackageExecutionContext res = new IsolatedPackageExecutionContext(contextId, sharedContextId, inMemoryPackageManager, shared);
         if (shared) {
             sharedPackageExecutionContexts.put(sharedContextId, res);
+            if (log.isDebugEnabled()) {
+                log.debug("Stored shared package execution context {}, new shared context cache size {}", sharedContextId, sharedPackageExecutionContexts.size());
+            }
         }
         return res;
     }
@@ -616,6 +622,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             //and remove it from the shared map
             if (shared) {
                 IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.remove(sharedContextId);
+                if (log.isDebugEnabled()) {
+                    log.debug("Removed shared package execution context {}, new shared context cache size {}", sharedContextId, sharedPackageExecutionContexts.size());
+                }
                 if (automationPackageManager != null) {
                     automationPackageManager.getAutomationPackageManager().cleanup();
                 }
