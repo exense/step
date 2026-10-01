@@ -94,6 +94,52 @@ public class LocalProcessAgentProvisioningDriverTest {
     }
 
     /**
+     * The CLI runs the plans of a package one after the other on the same grid, which still lists the tokens of the
+     * agent stopped at the end of the previous execution until their registration expires. Those tokens must not be
+     * selected by the next execution: their agent is gone, and waiting for it to answer only ends with a timeout.
+     */
+    @Test
+    public void doesNotSelectTheTokensOfTheAgentOfAPreviousExecution() throws Exception {
+        LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
+            .setWorkDirectory(workDirectory.getRoot().toPath())
+            .setAgentStartTimeout(Duration.ofSeconds(90));
+
+        LocalAgentWorkspace workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
+        RecordingLocalAgentProvider provider =
+            new RecordingLocalAgentProvider(new JavaLocalAgentProvider(configuration, workspace));
+
+        try (LocalExecutionGrid grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace)) {
+            try (LocalProcessAgentProvisioningDriver driver = new LocalProcessAgentProvisioningDriver(grid, workspace,
+                configuration, List.of(provider))) {
+                String javaPool = LocalProcessAgentProvisioningDriver.agentPoolName(AgentTypeConstants.AGENT_TYPE_JAVA);
+
+                String firstRequestId = provision(driver, "firstExecution", javaPool);
+                driver.deprovisionTokens(firstRequestId);
+                Assert.assertFalse("The agent of the first execution should have been stopped",
+                    provider.getStartedProcess().isAlive());
+
+                String secondRequestId = provision(driver, "secondExecution", javaPool);
+                try {
+                    Assert.assertNull(driver.getTokenProvisioningStatus(secondRequestId).error);
+                    Assert.assertEquals("The grid lists the tokens of both agents", 2, grid.getGrid().getTokens().size());
+                } finally {
+                    driver.deprovisionTokens(secondRequestId);
+                }
+            }
+        }
+    }
+
+    private static String provision(LocalProcessAgentProvisioningDriver driver, String executionId, String agentPool)
+        throws Exception {
+        AgentProvisioningRequest request = new AgentProvisioningRequest();
+        request.executionId = executionId;
+        request.agentPoolRequirementSpecs = List.of(new AgentPoolRequirementSpec(agentPool, 1));
+        String requestId = driver.initializeTokenProvisioningRequest(request);
+        driver.executeTokenProvisioningRequest(requestId);
+        return requestId;
+    }
+
+    /**
      * Delegates to the real provider and keeps hold of the started process, to assert on its lifecycle.
      */
     private static class RecordingLocalAgentProvider implements LocalAgentProvider {

@@ -19,6 +19,7 @@ public class ApplicationConfigurationBuilder {
     private String title;
     private String contextRoot;
     private boolean forceLegacyReporting;
+    private boolean disableLegacyReporting;
 
 
     public ApplicationConfigurationBuilder setAuthentication(boolean authentication) {
@@ -96,10 +97,15 @@ public class ApplicationConfigurationBuilder {
         return this;
     }
 
+    public ApplicationConfigurationBuilder setDisableLegacyReporting(boolean disableLegacyReporting) {
+        this.disableLegacyReporting = disableLegacyReporting;
+        return this;
+    }
+
     public ApplicationConfiguration build() {
         return new ApplicationConfiguration(authentication, authenticatorName, debug, noLoginMask,
             passwordManagement, userManagement, roleManagement, projectMembershipManagement, roles, miscParams,
-            defaultUrl, title, contextRoot, forceLegacyReporting);
+            defaultUrl, title, contextRoot, forceLegacyReporting, disableLegacyReporting);
     }
 
 

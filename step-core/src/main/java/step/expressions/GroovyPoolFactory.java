@@ -33,12 +33,20 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
     private static final Logger logger = LoggerFactory.getLogger(GroovyPoolFactory.class);
 
     private final CompilerConfiguration groovyCompilerConfiguration = new CompilerConfiguration();
+    private final GroovyClassLoader baseClassLoader;
 
     public GroovyPoolFactory(String scriptBaseClass) {
         super();
 
         if (scriptBaseClass != null) {
+            // Workaround for groovy quirk when base class is set:
+            // Introduce a separate class loader ONLY for resolving the base class. If we don't, the compiler
+            // configuration will cause the definition of the base class itself to ALSO extend the base class again,
+            // leading to recursive load/compile attempts that block the initialization for ~20-30 seconds.
             groovyCompilerConfiguration.setScriptBaseClass(scriptBaseClass);
+            baseClassLoader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
+        } else {
+            baseClassLoader = null;
         }
     }
 
@@ -47,12 +55,7 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
         logger.debug("Creating new script: " + groovyPoolKey.getScript());
 
         final GroovyShell shell;
-        if (groovyCompilerConfiguration.getScriptBaseClass() != null) {
-            // Workaround for groovy quirk when base class is set:
-            // Introduce a separate class loader ONLY for resolving the base class. If we don't, the compiler
-            // configuration will cause the definition of the base class itself to ALSO extend the base class again,
-            // leading to recursive load/compile attempts that block the initialization for ~20-30 seconds.
-            var baseClassLoader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
+        if (baseClassLoader != null) {
             shell = new GroovyShell(baseClassLoader, groovyCompilerConfiguration);
         } else {
             shell = new GroovyShell(groovyCompilerConfiguration);

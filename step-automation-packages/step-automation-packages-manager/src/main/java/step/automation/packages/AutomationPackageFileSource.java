@@ -35,6 +35,12 @@ public class AutomationPackageFileSource {
     private InputStream inputStream;
     private String managedLibraryName;
 
+    /**
+     * Overrides the name the automation package is deployed under. When unset, the name is derived
+     * from the archive's own file name, which is the usual behaviour.
+     */
+    private String archiveName;
+
     public enum Mode {
         INPUT_STREAM,
         MAVEN,
@@ -73,6 +79,22 @@ public class AutomationPackageFileSource {
 
     public static AutomationPackageFileSource empty() {
         return new AutomationPackageFileSource();
+    }
+
+    /**
+     * Deploys the package under the given name instead of the archive's file name. Needed wherever
+     * the caller, rather than the archive, decides the name — the keyword package migration uses it
+     * to disambiguate two packages built from identically named archives.
+     *
+     * @param archiveName the name to use, or {@code null} to keep the default behaviour
+     */
+    public AutomationPackageFileSource withArchiveName(String archiveName) {
+        this.archiveName = archiveName;
+        return this;
+    }
+
+    public String getArchiveName() {
+        return archiveName;
     }
 
     public MavenArtifactIdentifier getMavenArtifactIdentifier() {

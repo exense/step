@@ -19,6 +19,7 @@ public class ApplicationConfigurationManager {
             .setPasswordManagement(false)
             .setTitle(configuration.getProperty("ui.title", "Step"))
             .setContextRoot(configuration.getProperty(UI_CONTEXT_ROOT_CFG_KEY, UI_CONTEXT_ROOT_DEFAULT_VALUE))
-            .setForceLegacyReporting(configuration.getPropertyAsBoolean("ui.reporting.force.legacy", false));
+            .setForceLegacyReporting(configuration.getPropertyAsBoolean("ui.reporting.force.legacy", false))
+            .setDisableLegacyReporting(configuration.getPropertyAsBoolean("ui.reporting.disable.legacy", false));
     }
 }

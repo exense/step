@@ -49,11 +49,13 @@ public class ApplicationConfiguration {
 
     boolean forceLegacyReporting;
 
+    boolean disableLegacyReporting;
+
     public ApplicationConfiguration(boolean authentication, String authenticatorName, boolean debug,
                                     boolean noLoginMask, boolean passwordManagement, boolean userManagement,
                                     boolean roleManagement, boolean projectMembershipManagement,
                                     List<String> roles, Map<String, String> miscParams, String defaultUrl, String title,
-                                    String contextRoot, boolean forceLegacyReporting) {
+                                    String contextRoot, boolean forceLegacyReporting, boolean disableLegacyReporting) {
         this.authentication = authentication;
         this.authenticatorName = authenticatorName;
         this.debug = debug;
@@ -68,6 +70,7 @@ public class ApplicationConfiguration {
         this.title = title;
         this.contextRoot = contextRoot;
         this.forceLegacyReporting = forceLegacyReporting;
+        this.disableLegacyReporting = disableLegacyReporting;
     }
 
     public boolean isNoLoginMask() {
@@ -124,5 +127,9 @@ public class ApplicationConfiguration {
 
     public boolean isForceLegacyReporting() {
         return forceLegacyReporting;
+    }
+
+    public boolean isDisableLegacyReporting() {
+        return disableLegacyReporting;
     }
 }

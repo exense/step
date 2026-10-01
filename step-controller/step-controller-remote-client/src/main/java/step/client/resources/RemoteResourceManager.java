@@ -335,6 +335,11 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
     }
 
     @Override
+    public Resource changeResourceType(String resourceId, String resourceType) throws IOException {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override
     public String getResourcesRootPath() {
         throw new RuntimeException("Not implemented");
     }

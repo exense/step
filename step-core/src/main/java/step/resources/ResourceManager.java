@@ -162,6 +162,20 @@ public interface ResourceManager {
      */
     Resource saveResource(Resource resource) throws IOException;
 
+    /**
+     * Changes the type of an existing resource, relocating its content accordingly: the content is
+     * stored per type, so updating the type through {@link #saveResource(Resource)} alone leaves the
+     * content where it can no longer be found. The id and the revisions are kept.
+     * <p><b>Warning:</b> always use this method, never {@link #saveResource(Resource)}, to change the
+     * type of an existing resource.</p>
+     *
+     * @param resourceId   the id of the resource
+     * @param resourceType the new type of the resource
+     * @return the updated {@link Resource}, unchanged if it already had this type
+     * @throws IOException if the content cannot be relocated
+     */
+    Resource changeResourceType(String resourceId, String resourceType) throws IOException;
+
     ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException;
 
 

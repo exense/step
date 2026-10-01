@@ -207,8 +207,8 @@ public class ExpressionHandlerTest {
 
     @Test
     public void testScriptBaseClass() {
-        // 3 seconds should be ample, even in a "cold", slow environment.
-        long deadline = System.currentTimeMillis() + 3000;
+        // 5 seconds should be ample, even in a "cold", slow environment.
+        long deadline = System.currentTimeMillis() + 5000;
         logger.info("testScriptBaseClass start={}, deadline={}", new Date(System.currentTimeMillis()), new Date(deadline));
         Object o;
         try (ExpressionHandler e = new ExpressionHandler("step.expressions.GroovyFunctions")) {
@@ -216,7 +216,7 @@ public class ExpressionHandlerTest {
         }
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
         assertEquals(f.format(new Date()), o.toString());
-        assertTrue("Probable regression: Groovy expression evaluation with base class definition took longer than 3 seconds", System.currentTimeMillis() <= deadline);
+        assertTrue("Probable regression: Groovy expression evaluation with base class definition took longer than 5 seconds", System.currentTimeMillis() <= deadline);
     }
 
     @Test

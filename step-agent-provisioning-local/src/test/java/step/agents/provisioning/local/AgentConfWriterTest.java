@@ -66,6 +66,7 @@ public class AgentConfWriterTest {
         Assert.assertEquals(3, tokenGroup.get("capacity"));
         Map<String, Object> tokenConf = (Map<String, Object>) tokenGroup.get("tokenConf");
         Assert.assertEquals(Map.of(AgentTypes.AGENT_TYPE_KEY, "aType"), tokenConf.get("attributes"));
+        Assert.assertEquals(Map.of("aCriterion", "aPattern"), tokenConf.get("selectionPatterns"));
     }
 
     @Test
@@ -101,7 +102,7 @@ public class AgentConfWriterTest {
     private Map<String, Object> write(Map<String, Object> additionalSettings) throws IOException {
         SymmetricSecurityConfiguration security = new SymmetricSecurityConfiguration("aSecret");
         LocalAgentStartContext context = new LocalAgentStartContext("aGrid", runDirectory.getRoot().toPath(), 3,
-            Map.of(AgentTypes.AGENT_TYPE_KEY, "aType"), security);
+            Map.of(AgentTypes.AGENT_TYPE_KEY, "aType"), Map.of("aCriterion", "aPattern"), security);
 
         Path confFile = writer.write(runDirectory.getRoot().toPath(), "AgentConf.yaml", context, additionalSettings);
 
