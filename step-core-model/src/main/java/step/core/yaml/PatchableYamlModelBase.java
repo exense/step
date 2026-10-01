@@ -20,10 +20,12 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
+import step.core.yaml.deserialization.PatchingParserDelegate;
 
 public class PatchableYamlModelBase extends AbstractYamlModel implements PatchableYamlModel {
     @JsonIgnore
     private PatchingContext context;
+
 
     public PatchableYamlModelBase(PatchingContext patchingContext) {
         this.context = patchingContext;
@@ -63,15 +65,7 @@ public class PatchableYamlModelBase extends AbstractYamlModel implements Patchab
     }
 
     @Override
-    @JsonIgnore
-    public StartingLineDeterminationStrategy getStartingLineDeterminationStrategy() {
-        // Let's hope that this really is true for all subclasses :-)
-        return StartingLineDeterminationStrategy.SAME_LINE;
+    public void onParsed(JsonLocation startLocation, PatchingParserDelegate parser) {
+        context.claimChunk(startLocation, parser.getLastDistinctLocation(), this);
     }
-
-    @Override
-    public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
-        context.claimChunk(startLocation, endLocation, this);
-    }
-
 }

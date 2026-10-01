@@ -454,44 +454,42 @@
               "$ref": "#/$defs/DynamicKeywordInputsDef"
             },
             "keyword": {
-              "keyword": {
-                "oneOf": [
-                  {
-                    "type": "string"
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    ".*": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "$ref": "#/$defs/DynamicExpressionDef"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
                   },
-                  {
-                    "type": "object",
-                    "patternProperties": {
-                      ".*": {
-                        "anyOf": [
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "$ref": "#/$defs/DynamicExpressionDef"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                ]
-              }
+                  "additionalProperties": false
+                }
+              ]
             }
           }
         }
@@ -548,8 +546,43 @@
             "input": {
               "$ref": "#/$defs/DynamicKeywordInputsDef"
             },
-            "selectionAttributes": {
-              "$ref": "#/$defs/DynamicKeywordInputsDef"
+            "plan": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    ".*": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "$ref": "#/$defs/DynamicExpressionDef"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ]
             },
             "planId": {
               "type": "string"

@@ -21,38 +21,31 @@ package step.automation.packages.yaml.model;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.PatchableYamlScalarField;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPackageFragmentYaml implements AutomationPackageDescriptorYaml {
 
-    private String version;
+    private PatchableYamlScalarField<String> name;
 
     private Map<String, String> attributes = new HashMap<>();
 
-    private String name;
 
     public AutomationPackageDescriptorYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
         super(patchingContext);
+        name = new PatchableYamlScalarField<>(patchingContext, NAME_FIELD_NAME, null);
     }
 
     @Override
-    public String getName() {
+    public PatchableYamlScalarField<String> getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Override
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
+    public void setName(PatchableYamlScalarField<String> name) {
+        this.name = name;
     }
 
     @Override

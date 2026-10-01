@@ -45,7 +45,7 @@ plans:
                       - switch:
                           nodeName: "Switch - switch"
                           description: "Description"
-                          expression: "testd"
+                          expression: "test"
                           children:
                             - case:
                                 value: "Bla"

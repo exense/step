@@ -3,6 +3,8 @@ fragments: []
 keywords: []
 plans:
   - name: "Test Plan"
+    categories:
+      - "Yaml Plan"
     root:
       testCase:
         nodeName: "Test Plan"
@@ -18,8 +20,6 @@ plans:
               keyword: "MyKeyword2"
               inputs:
                 - myInput: "myValue"
-    categories:
-      - "Yaml Plan"
   - name: "New Name"
     root:
       sequence:

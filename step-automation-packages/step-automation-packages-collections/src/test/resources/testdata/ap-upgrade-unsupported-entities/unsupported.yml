@@ -1,0 +1,3 @@
+unsupportedEntities:
+  - name: fragmentEntity
+    description: Entity of a fragment holding no supported entity

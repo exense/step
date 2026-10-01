@@ -36,6 +36,7 @@ import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
+import step.core.yaml.deserialization.PatchableYamlScalarField;
 import step.plans.automation.AutomationPackagePlainTextPlanJsonSchema;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
@@ -56,6 +57,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     static final String EDITOR_REFERENCE_PREFIX =
         FileResolver.AP_RESOURCE_PREFIX + FileResolver.LOCAL_AP_ID + FileResolver.RESOURCE_PATH_SEPARATOR;
 
+    private PatchableYamlScalarField<String> version;
     private PatchableYamlList<PatchableYamlPrimitive<String>> fragments;
     private PatchableYamlList<YamlAutomationPackageKeyword> keywords;
     private PatchableYamlList<YamlPlan> plans;
@@ -73,8 +75,12 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private PatchingContext context;
     private long fileLastModified = 0;
 
+    @JsonIgnore
+    private String effectiveVersion;
+
     public AbstractAutomationPackageFragmentYaml(PatchingContext patchingContext) {
         context = patchingContext;
+        version = new PatchableYamlScalarField<>(patchingContext, VERSION_FIELD_NAME, null);
         plans = new PatchableYamlList<>(patchingContext, YamlPlan.PLANS_ENTITY_NAME);
         keywords = new PatchableYamlList<>(patchingContext, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
         plansPlainText = new PatchableYamlList<>(patchingContext, AutomationPackagePlainTextPlanJsonSchema.FIELD_NAME_IN_AP);
@@ -83,6 +89,34 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @JsonIgnore
     private Path path;
+
+    @Override
+    public PatchableYamlScalarField<String> getVersion() {
+        return version;
+    }
+
+    @Override
+    public void setVersion(PatchableYamlScalarField<String> version) {
+        this.version = version;
+    }
+
+    @Override
+    @JsonIgnore
+    public void setVersionString(String versionString) {
+        version.setValue(versionString);
+    }
+
+    @Override
+    @JsonIgnore
+    public String getEffectiveVersion() {
+        return effectiveVersion;
+    }
+
+    @Override
+    @JsonIgnore
+    public void setEffectiveVersion(String effectiveVersion) {
+        this.effectiveVersion = effectiveVersion;
+    }
 
     @Override
     public Map<String, Object> getMetadata() {

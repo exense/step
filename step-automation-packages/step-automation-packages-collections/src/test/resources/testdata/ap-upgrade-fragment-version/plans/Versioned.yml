@@ -1,0 +1,11 @@
+version: 1.2.0
+plans:
+  - name: "Versioned"
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "http://${host}"
+          - callPlan:
+              selectionAttributes:
+                - name: "SubPlan"

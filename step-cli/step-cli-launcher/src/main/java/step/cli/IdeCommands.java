@@ -3,6 +3,7 @@ package step.cli;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import picocli.CommandLine;
+import step.automation.packages.AutomationPackageUpgradeRequiredException;
 import step.cli.parameters.ApExecuteParameters;
 import step.core.Constants;
 import step.core.execution.model.ExecutionParameters;
@@ -46,6 +47,10 @@ public class IdeCommands {
             } catch (CommandLine.ParameterException e) {
                 // This is handled by PicoCLI itself, it will result in ExitCode.USAGE (=2)
                 throw e;
+            } catch (AutomationPackageUpgradeRequiredException e) {
+                // Expected when opening a package of an older schema version, the stack trace would tell the user nothing
+                logger.error("{} To upgrade it, run the command again with the {} option.", e.getMessage(), IdeOpenCommand.UPGRADE_OPTION);
+                return CommandLine.ExitCode.SOFTWARE; // (=1)
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 return CommandLine.ExitCode.SOFTWARE; // (=1)
@@ -211,8 +216,13 @@ public class IdeCommands {
     )
     public static class IdeOpenCommand extends IdeBaseCommand {
 
+        static final String UPGRADE_OPTION = "--upgrade";
+
         @CommandLine.Option(names = {"-d", "--directory"}, defaultValue = ".", description = "The Automation Package directory to use for the operation. Defaults to the current working directory.")
         protected Path apDirectory;
+
+        @CommandLine.Option(names = {UPGRADE_OPTION}, description = "Upgrades an Automation Package written against an older schema version to the current one before opening it. All its outdated files, descriptor and fragments, are migrated and written back to disk, comments in the rewritten files may be lost. A package declaring no version is considered as current: the version is set, but its files are not migrated.")
+        protected boolean upgrade;
 
         @CommandLine.ArgGroup(exclusive = false, heading = "%nInitialization Options:%n")
         public InitGroup initGroup;
@@ -251,7 +261,7 @@ public class IdeCommands {
         @Override
         protected void afterBackendStart() throws Exception {
             if (initGroup == null || !initGroup.initialize) {
-                getState().useExistingAutomationPackageDirectory(apDirectory);
+                getState().useExistingAutomationPackageDirectory(apDirectory, upgrade);
             } else {
                 getState().useNewAutomationPackageDirectory(apDirectory, initGroup.name);
             }

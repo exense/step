@@ -29,6 +29,7 @@ import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
+import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.NamedPatchableYamlModel;
@@ -51,6 +52,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -83,6 +85,7 @@ public class AutomationPackageYamlFragmentManager {
 
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
+    private final List<AutomationPackageFragmentYaml> importedFragments;
 
     private final Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> businessObjectToYamlMappers;
 
@@ -102,9 +105,10 @@ public class AutomationPackageYamlFragmentManager {
 
         initializeMaps(descriptorYaml, yamlToBusinessObjectMappers);
 
-        fragments.stream()
+        importedFragments = fragments.stream()
             .filter(f -> f != descriptorYaml)
-            .forEach(f -> initializeMaps(f, yamlToBusinessObjectMappers));
+            .collect(Collectors.toList());
+        importedFragments.forEach(f -> initializeMaps(f, yamlToBusinessObjectMappers));
     }
 
     private Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> createBusinessObjectToYamlMappers(Map<Class<?>, Object> injectables) {
@@ -209,46 +213,56 @@ public class AutomationPackageYamlFragmentManager {
 
     private <T extends PatchableYamlModel> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T oldEntity, T newEntity, String fieldName) {
         entityList.replaceItem(oldEntity, newEntity);
-        Path oldRelativePath = determineRelativePathFor(oldEntity, fieldName);
-        Path newRelativePath = determineRelativePathFor(newEntity, fieldName);
 
-        // Path did not change - skip entire move logic
-        if (!oldRelativePath.equals(newRelativePath)) {
-            Path oldAbsolutePath = apRoot.resolve(oldRelativePath);
 
-             /*  oldRelativePath is the path which would have been given to old version of the entity
-                 by the fragment manager. If it matches the fragment path, this means that
-                 the fragment path was intended to follow the naming convention based on the configuration
-                 (i.e. PER_OBJECT naming)
+        if (oldEntity instanceof NamedPatchableYamlModel namedOldEntity && newEntity instanceof NamedPatchableYamlModel namedNewEntity) {
 
-                 if the paths don't match, then simply skip the renaming. This silently allows for:
-                  - legacy fragments which don't follow the naming convention
-                  - FRAGMENT type naming (fixed fragment for object types such as Parameters)
-              */
-            if (oldAbsolutePath.equals(fragment.getFragmentPath())) {
-                Path newAbsolutePath = apRoot.resolve(newRelativePath);
+            // Names did not change - skip entire move logic
+            if (!Objects.equals(namedNewEntity.getName(), namedOldEntity.getName())) {
 
-                try {
-                    FileUtils.moveFile(oldAbsolutePath.toFile(), newAbsolutePath.toFile());
-                    fragment.setFragmentPath(newAbsolutePath);
-                } catch (IOException e) {
-                    throw new AutomationPackageConcurrentEditException(
-                        String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", oldAbsolutePath, newAbsolutePath));
-                }
+                Path oldRelativePath = determineRelativePathFor(oldEntity, fieldName);
+                Path newRelativePath = determineRelativePathFor(newEntity, fieldName);
 
-                AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
-                    .orElse(descriptorYaml);
+                // Path did not change - skip entire move logic
+                if (!oldRelativePath.equals(newRelativePath)) {
+                    Path oldAbsolutePath = apRoot.resolve(oldRelativePath);
 
-                String newReference = determineFragmentReferenceString(newEntity, fieldName, true);
-                String oldReference = resourcePathMatchingResolver.getFragmentReferenceString(oldRelativePath);
+                     /*  oldRelativePath is the path which would have been given to old version of the entity
+                         by the fragment manager. If it matches the fragment path, this means that
+                         the fragment path was intended to follow the naming convention based on the configuration
+                         (i.e. PER_OBJECT naming)
 
-                // If the old reference is explicitly present in the YAML list, replace it with the new one.
-                if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
-                    referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
-                    referencingFragment.writeToDisk();
+                         if the paths don't match, then simply skip the renaming. This silently allows for:
+                          - legacy fragments which don't follow the naming convention
+                          - FRAGMENT type naming (fixed fragment for object types such as Parameters)
+                      */
+                    if (oldAbsolutePath.equals(fragment.getFragmentPath())) {
+                        Path newAbsolutePath = apRoot.resolve(newRelativePath);
+
+                        try {
+                            FileUtils.moveFile(oldAbsolutePath.toFile(), newAbsolutePath.toFile());
+                            fragment.setFragmentPath(newAbsolutePath);
+                        } catch (IOException e) {
+                            throw new AutomationPackageConcurrentEditException(
+                                String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", oldAbsolutePath, newAbsolutePath));
+                        }
+
+                        AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
+                            .orElse(descriptorYaml);
+
+                        String newReference = determineFragmentReferenceString(newEntity, fieldName, true);
+                        String oldReference = resourcePathMatchingResolver.getFragmentReferenceString(oldRelativePath);
+
+                        // If the old reference is explicitly present in the YAML list, replace it with the new one.
+                        if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
+                            referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
+                            referencingFragment.writeToDisk();
+                        }
+                    }
                 }
             }
         }
+
         fragment.writeToDisk();
     }
 
@@ -383,5 +397,54 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     private record FragmentLocation(NewObjectFragmentMode mode, String relativeFragmentPath) {
+    }
+
+    /**
+     * @return the descriptor and the fragments read against an older schema version, and therefore migrated while read,
+     * the descriptor first
+     */
+    public List<AutomationPackageFragmentYaml> getOutdatedFragments() {
+        return Stream.concat(Stream.of(descriptorYaml), importedFragments.stream())
+            .filter(AutomationPackageYamlFragmentManager::isOutdated)
+            .collect(Collectors.toList());
+    }
+
+    private static boolean isOutdated(AutomationPackageFragmentYaml fragment) {
+        String effectiveVersion = fragment.getEffectiveVersion();
+        return effectiveVersion != null && new Version(effectiveVersion).compareTo(YamlAutomationPackageVersions.ACTUAL_VERSION) < 0;
+    }
+
+    /**
+     * Rewrites against the current schema the files read from an older schema version, or declaring none. These files
+     * were migrated while read: their entities are saved again, which writes the syntax they were migrated to, and the
+     * ones declaring their own version then declare the current one, so that they are not migrated a second time when
+     * read again. Each of them is written, including the ones holding no supported entity: the content the editor does
+     * not support is written as it was migrated. The files already current are left untouched.
+     * <p>
+     * The descriptor is written last: should the upgrade fail before, it still declares its former version and is
+     * migrated again when read, instead of passing the fragments not written yet for current ones
+     */
+    public synchronized void upgradeToCurrentSchemaVersion() {
+        String currentVersion = YamlAutomationPackageVersions.ACTUAL_VERSION.toString();
+        List<AutomationPackageFragmentYaml> outdatedFragments = getOutdatedFragments();
+
+        List<AbstractOrganizableObject> outdatedEntities = fragmentMap.entrySet().stream()
+            .filter(e -> outdatedFragments.contains(e.getValue()))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
+        outdatedEntities.forEach(this::save);
+
+        for (AutomationPackageFragmentYaml fragment : importedFragments) {
+            if (outdatedFragments.contains(fragment)) {
+                if (fragment.getVersion().getValue() != null) {
+                    fragment.setVersionString(currentVersion);
+                }
+                fragment.writeToDisk();
+            }
+        }
+        if (outdatedFragments.contains(descriptorYaml) || descriptorYaml.getVersion().getValue() == null) {
+            descriptorYaml.setVersionString(currentVersion);
+            descriptorYaml.writeToDisk();
+        }
     }
 }

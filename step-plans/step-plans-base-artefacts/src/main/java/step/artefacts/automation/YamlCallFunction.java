@@ -27,7 +27,7 @@ import step.core.yaml.YamlFieldCustomCopy;
 public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
 
     @YamlFieldCustomCopy
-    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, null, "{}");
+    protected YamlCallNamedEntityDefinition keyword = new YamlCallNamedEntityDefinition(null, null, "{}");
 
     @YamlFieldCustomCopy
     protected YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
@@ -51,8 +51,8 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
         // for keywords, if nodeName is not defined or using dynamic name, we use the keyword name as default artefact name
         if (getNodeName() == null || getNodeName().isDynamic()) {
             String name;
-            if (keyword != null && keyword.getKeywordName() != null && !keyword.getKeywordName().isEmpty()) {
-                name = keyword.getKeywordName();
+            if (keyword != null && keyword.getEntityName() != null && !keyword.getEntityName().isEmpty()) {
+                name = keyword.getEntityName();
             } else {
                 name = AbstractArtefact.getArtefactName(getArtefactClass());
             }
@@ -67,7 +67,7 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
             this.inputs = YamlDynamicInputs.fromDynamicValue(artefact.getArgument());
         }
         if (artefact.getFunction() != null) {
-            this.keyword = YamlKeywordDefinition.fromDynamicValue(artefact.getFunction());
+            this.keyword = YamlCallNamedEntityDefinition.fromDynamicValue(artefact.getFunction());
         }
 
     }
@@ -75,7 +75,7 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
     @Override
     protected String getDefaultNodeNameForYaml(CallFunction artefact) {
         if (artefact.getFunction() != null) {
-            String keywordName = YamlKeywordDefinition.fromDynamicValue(artefact.getFunction()).getKeywordName();
+            String keywordName = YamlCallNamedEntityDefinition.fromDynamicValue(artefact.getFunction()).getEntityName();
             if (keywordName != null && !keywordName.isEmpty()) {
                 return keywordName;
             }
