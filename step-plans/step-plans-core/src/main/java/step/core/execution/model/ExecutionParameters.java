@@ -34,6 +34,8 @@ public class ExecutionParameters extends CommonExecutionParameters {
 
     List<RepositoryObjectReference> exports;
     String description;
+    // id of the shared isolated context the execution was started with, unset once used by the execution
+    String sharedContextId;
 
     public ExecutionParameters() {
         this((RepositoryObjectReference) null, null);
@@ -104,5 +106,13 @@ public class ExecutionParameters extends CommonExecutionParameters {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getSharedContextId() {
+        return sharedContextId;
+    }
+
+    public void setSharedContextId(String sharedContextId) {
+        this.sharedContextId = sharedContextId;
     }
 }
