@@ -1,0 +1,9 @@
+metadata:
+  origin: "AI"
+plans:
+  - name: "Plan in fragment"
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"

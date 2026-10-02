@@ -1,0 +1,4 @@
+version: 1.3.0
+name: "Current package with an outdated fragment"
+fragments:
+  - "plans/*.yml"

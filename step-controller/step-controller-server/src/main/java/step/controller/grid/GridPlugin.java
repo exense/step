@@ -155,6 +155,8 @@ public class GridPlugin extends AbstractControllerPlugin {
         context.put(Grid.class, grid);
         context.put(GridImpl.class, grid);
         context.put(GridClient.class, client);
+        // Required by the components starting agents connecting to this grid
+        context.put(SymmetricSecurityConfiguration.class, gridSecurity);
 
         context.getServiceRegistrationCallback().registerService(GridServices.class);
 

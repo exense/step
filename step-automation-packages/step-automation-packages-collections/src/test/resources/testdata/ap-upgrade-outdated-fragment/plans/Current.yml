@@ -1,0 +1,8 @@
+# A comment the upgrade must not touch
+plans:
+  - name: Current
+    root:
+      testCase:
+        children:
+          - callPlan:
+              plan: Outdated

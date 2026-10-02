@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
@@ -47,6 +48,7 @@ import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -67,8 +69,15 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     public static final Long DEFAULT_MAVEN_CLEANUP_FREQUENCY = 60L;
     private static final Integer DEFAULT_MAX_VERSIONS_PER_AP = 0; //quota disabled
     private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
+    // Sub-folders of the resource directory holding the temporary resources of isolated executions and AP staging
+    private static final String ISOLATED_RESOURCES_FOLDER = "temp_isolated_ap";
+    private static final String STAGING_RESOURCES_FOLDER = "temp_staging_ap";
     protected AutomationPackageLocks automationPackageLocks;
     private AutomationPackageAccessor packageAccessor;
+    private File isolatedResourcesRoot;
+    private File stagingResourcesRoot;
+    private AutomationPackageReaderRegistry automationPackageReaderRegistry;
+    private File apResourceCacheRoot;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -101,10 +110,25 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         AutomationPackageSerializationRegistry serRegistry = new AutomationPackageSerializationRegistry();
         context.put(AutomationPackageSerializationRegistry.class, serRegistry);
 
-        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry);
+        automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry);
         JavaAutomationPackageReader javaAutomationPackageReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration());
         automationPackageReaderRegistry.register(javaAutomationPackageReader);
         context.put(AutomationPackageReaderRegistry.class, automationPackageReaderRegistry);
+
+        apResourceCacheRoot = new File(context.getConfiguration().getProperty(
+            ApResourceCache.CACHE_DIR_PROPERTY, ApResourceCache.DEFAULT_CACHE_DIR));
+
+        // Install the apResource resolver on the global FileResolver used by the function types.
+        // Non-isolated (deployed) executions resolve keyword scripts / datasources through this global
+        // resolver (see AbstractFunctionType.registerFile), so it must know how to resolve
+        // apResource:<apId>:<path> references against the globally deployed automation packages.
+        // Isolated executions resolve through their own execution-context FileResolver, which is wired
+        // separately in AutomationPackageExecutionPlugin using the pushed isolated accessor.
+        context.setApResourceProvider(new AutomationPackageResourceProvider(
+            apResourceCacheRoot,
+            () -> packageAccessor,
+            archiveReference -> context.getFileResolver().resolve(archiveReference),
+            file -> automationPackageReaderRegistry.getReaderForFile(file).createAutomationPackageArchive(file, null, null)));
     }
 
     public static class AutomationPackageImportHook implements BiConsumer<Object, ImportContext> {
@@ -123,7 +147,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         super.afterInitializeData(context);
 
         if (context.get(AutomationPackageManager.class) == null) {
-            log.info("Using the OS implementation of automation package manager");
+            log.info("Creating the automation package manager");
 
             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = new MavenConfigProviderImpl(
                 context.require(ControllerSettingAccessor.class),
@@ -152,7 +176,36 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 maxVersionPerPackage,
                 context.get(ObjectHookRegistry.class)
             );
+
+            File resourcesDir = new File(ResourceManagerControllerPlugin.getResourceDir(context.getConfiguration()));
+            isolatedResourcesRoot = new File(resourcesDir, ISOLATED_RESOURCES_FOLDER);
+            stagingResourcesRoot = new File(resourcesDir, STAGING_RESOURCES_FOLDER);
+            // no execution or deployment is running at startup, remaining files are leftovers of a previous controller
+            // run that couldn't clean them up (i.e. crash)
+            deleteLeftovers(isolatedResourcesRoot);
+            deleteLeftovers(stagingResourcesRoot);
+            packageManager.setIsolatedResourcesRoot(isolatedResourcesRoot);
+            packageManager.setStagingResourcesRoot(stagingResourcesRoot);
+
+            // Only the MAIN manager owns the apResource cache lifecycle (wipe on redeploy/delete).
+            packageManager.setApResourceCacheRoot(apResourceCacheRoot);
             context.put(AutomationPackageManager.class, packageManager);
+        }
+    }
+
+    private static void deleteLeftovers(File folder) {
+        String[] leftovers = folder.list();
+        if (leftovers != null && leftovers.length > 0) {
+            log.warn("Deleting {} leftover temporary folder(s) of a previous controller run in {}", leftovers.length, folder.getAbsolutePath());
+            deleteTemporaryFolder(folder);
+        }
+    }
+
+    private static void deleteTemporaryFolder(File folder) {
+        try {
+            FileUtils.deleteDirectory(folder);
+        } catch (IOException e) {
+            log.warn("Unable to delete the temporary folder {}", folder.getAbsolutePath(), e);
         }
     }
 
@@ -176,11 +229,21 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         } catch (InterruptedException e) {
             log.warn("Interrupted", e);
         }
+
+        // the executions are terminated before the plugins are stopped and the isolated contexts have been closed by
+        // the executor shutdown above: remaining folders couldn't be cleaned up (i.e. pending asynchronous deployments)
+        if (isolatedResourcesRoot != null) {
+            deleteTemporaryFolder(isolatedResourcesRoot);
+        }
+        if (stagingResourcesRoot != null) {
+            deleteTemporaryFolder(stagingResourcesRoot);
+        }
     }
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new AutomationPackageExecutionPlugin(automationPackageLocks, packageAccessor);
+        return new AutomationPackageExecutionPlugin(automationPackageLocks, packageAccessor,
+            apResourceCacheRoot, automationPackageReaderRegistry);
     }
 
     private static class MavenConfigProviderImpl implements AutomationPackageMavenConfig.ConfigProvider {

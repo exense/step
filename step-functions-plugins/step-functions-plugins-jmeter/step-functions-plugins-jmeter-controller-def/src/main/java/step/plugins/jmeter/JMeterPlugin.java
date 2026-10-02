@@ -18,9 +18,11 @@
  ******************************************************************************/
 package step.plugins.jmeter;
 
+import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.plugins.*;
 import step.functions.plugin.FunctionControllerPlugin;
+import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies = {FunctionControllerPlugin.class})
@@ -28,10 +30,13 @@ public class JMeterPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
-        //registerWebapp(context,"/jmeterplugin/");
+        Configuration configuration = context.getConfiguration();
+        if (configuration.getPropertyAsBoolean(AbstractFunctionType.CONFIGURATION_FROM_ENVIRONMENT, false)) {
+            JMeterFunctionTypeLocalPlugin.applyEnvironmentConfiguration(configuration);
+        }
 
         FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
-        functionTypeRegistry.registerFunctionType(new JMeterFunctionType(context.getConfiguration()));
+        functionTypeRegistry.registerFunctionType(new JMeterFunctionType(configuration));
 
         super.serverStart(context);
     }

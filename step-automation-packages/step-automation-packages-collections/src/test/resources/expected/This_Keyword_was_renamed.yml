@@ -1,0 +1,10 @@
+---
+keywords:
+  - Composite:
+      name: "This Keyword was renamed"
+      plan:
+        root:
+          sequence:
+            children:
+              - echo:
+                  text: "Hello World"

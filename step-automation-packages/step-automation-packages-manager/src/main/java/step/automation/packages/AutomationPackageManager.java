@@ -39,6 +39,7 @@ import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ImportResult;
+import step.core.yaml.YamlMetadata;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -97,11 +98,29 @@ public class AutomationPackageManager {
     private final int maxParallelVersionsPerPackage;
     private final ObjectHookRegistry objectHookRegistry;
 
+    /**
+     * Materialisation cache root for {@code apResource:} files. It is passed to the manager to handle cleanup only,
+     * the materialization itself is handled by the {@code FileResolver}
+     * {@code null} for local/isolated managers. Local clean up the cache with the engine,
+     * isolated when closing the IsolatedPackageExecutionContext
+     */
+    private File apResourceCacheRoot;
+
+    /**
+     * Parent folder of the temporary resource folders created by the isolated managers. {@code null} resolves them
+     * against the working directory.
+     */
+    private File isolatedResourcesRoot;
+    /**
+     * Parent folder of the temporary resource folders used for staging. {@code null} resolves them against the
+     * working directory.
+     */
+    private File stagingResourcesRoot;
 
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
      * context please use the separate in-memory automation package manager created via
-     * {@link AutomationPackageManager#createIsolated(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
+     * {@link AutomationPackageManager#createIsolated(ObjectId, String, FunctionTypeRegistry, FunctionAccessor)}
      */
     private AutomationPackageManager(AutomationPackageOperationMode operationMode,
                                      AutomationPackageAccessor automationPackageAccessor,
@@ -189,21 +208,30 @@ public class AutomationPackageManager {
      * Creates the automation package manager for isolated (not persisted) execution. Based on in-memory accessors
      * for plans and keywords.
      *
-     * @param isolatedContextId    the unique id of isolated context (isolated execution)
-     * @param functionTypeRegistry the function type registry
-     * @param mainFunctionAccessor the main (persisted) accessor for keywords. it is used in read-only mode to lookup
-     *                             existing keywords and override (reuse their ids) them in in-memory layer to avoid
-     *                             keywords with duplicated names
+     * @param isolatedContextId     the unique id of isolated context (isolated execution)
+     * @param sharedContextId       the id of the isolated execution context instance using this manager, distinguishing
+     *                              the managers created for the same context
+     * @param functionTypeRegistry  the function type registry
+     * @param mainFunctionAccessor  the main (persisted) accessor for keywords. it is used in read-only mode to lookup
+     *                              existing keywords and override (reuse their ids) them in in-memory layer to avoid
+     *                              keywords with duplicated names
+     * @param isolatedResourcesRoot the parent folder of the isolated resource folder ({@code null} for the working directory)
+     * @param stagingResourcesRoot  the parent folder of the staging resource folders ({@code null} for the working directory)
      * @return the automation manager with in-memory accessors for plans and keywords
      */
     public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId,
+                                                                                  String sharedContextId,
                                                                                   FunctionTypeRegistry functionTypeRegistry,
                                                                                   FunctionAccessor mainFunctionAccessor,
                                                                                   AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                                   AutomationPackageHookRegistry hookRegistry,
-                                                                                  AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+                                                                                  AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
+                                                                                  File isolatedResourcesRoot,
+                                                                                  File stagingResourcesRoot) {
 
-        ResourceManager resourceManager = new LocalResourceManagerImpl(new File("resources_" + isolatedContextId.toString()));
+        // the folder is deleted on cleanup, each context instance needs its own
+        File resourcesFolder = new File(isolatedResourcesRoot, "resources_" + isolatedContextId.toString() + "_" + Objects.requireNonNull(sharedContextId));
+        ResourceManager resourceManager = new LocalResourceManagerImpl(resourcesFolder);
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
 
@@ -221,6 +249,8 @@ public class AutomationPackageManager {
             mavenConfigProvider, -1, null
         );
         automationPackageManager.isIsolated = true;
+        automationPackageManager.isolatedResourcesRoot = isolatedResourcesRoot;
+        automationPackageManager.stagingResourcesRoot = stagingResourcesRoot;
         return automationPackageManager;
     }
 
@@ -258,14 +288,25 @@ public class AutomationPackageManager {
      * for plans and keywords.
      *
      * @param isolatedContextId    the unique id of isolated context (isolated execution)
+     * @param sharedContextId      the id of the isolated execution context instance using this manager, distinguishing
+     *                             the managers created for the same context (i.e. parallel re-executions)
      * @param functionTypeRegistry the function type registry
      * @param mainFunctionAccessor the main (persisted) accessor for keywords. it is used in read-only mode to lookup
      *                             existing keywords and override (reuse their ids) them in in-memory layer to avoid
      *                             keywords with duplicated names
      * @return the automation manager with in-memory accessors for plans and keywords
      */
-    public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor) {
-        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getAutomationPackageReaderRegistry(), automationPackageHookRegistry, mavenConfigProvider);
+    public AutomationPackageManager createIsolated(ObjectId isolatedContextId, String sharedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor) {
+        return createIsolatedAutomationPackageManager(isolatedContextId, sharedContextId, functionTypeRegistry, mainFunctionAccessor, getAutomationPackageReaderRegistry(),
+            automationPackageHookRegistry, mavenConfigProvider, isolatedResourcesRoot, stagingResourcesRoot);
+    }
+
+    public void setIsolatedResourcesRoot(File isolatedResourcesRoot) {
+        this.isolatedResourcesRoot = isolatedResourcesRoot;
+    }
+
+    public void setStagingResourcesRoot(File stagingResourcesRoot) {
+        this.stagingResourcesRoot = stagingResourcesRoot;
     }
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
@@ -324,7 +365,33 @@ public class AutomationPackageManager {
         }
     }
 
+    public File getApResourceCacheRoot() {
+        return apResourceCacheRoot;
+    }
+
+    public void setApResourceCacheRoot(File apResourceCacheRoot) {
+        this.apResourceCacheRoot = apResourceCacheRoot;
+    }
+
+    /**
+     * Wipes the materialised {@code apResource:} cache of the given package, if a cache root is
+     * configured. Called from {@link #deleteAutomationPackageEntities} which runs under the AP write
+     * lock, so no execution can be reading the wiped entries. The path is keyed by the (stable) AP id,
+     * so on a redeploy this clears stale content that the next resolve re-materialises fresh.
+     */
+    private void wipeApResourceCache(AutomationPackage automationPackage) {
+        if (apResourceCacheRoot == null || automationPackage == null) {
+            return;
+        }
+        String apId = automationPackage.getId().toHexString();
+        if (!ApResourceCache.wipe(apResourceCacheRoot, apId)) {
+            log.warn("Unable to fully wipe the apResource cache directory {}",
+                ApResourceCache.apDirectory(apResourceCacheRoot, apId).getAbsolutePath());
+        }
+    }
+
     protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator) {
+        wipeApResourceCache(automationPackage);
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
 
@@ -871,7 +938,7 @@ public class AutomationPackageManager {
     }
 
     protected AutomationPackageStaging createStaging() {
-        return new AutomationPackageStaging();
+        return new AutomationPackageStaging(stagingResourcesRoot);
     }
 
     protected void fillStaging(AutomationPackage newPackage, AutomationPackageStaging staging, AutomationPackageContent packageContent,
@@ -893,7 +960,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new StagingAutomationPackageContext(newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
+                    new StagingAutomationPackageContext(new AutomationPackageResourceMapper(), newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging, objectPredicate);
@@ -993,7 +1060,7 @@ public class AutomationPackageManager {
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String actorUser) {
-        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
+        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(new AutomationPackageResourceMapper(), newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
@@ -1047,6 +1114,7 @@ public class AutomationPackageManager {
         }
         newPackage.addAttribute(AbstractOrganizableObject.NAME, packageContent.getName());
         newPackage.addAttribute(AP_BASE_NAME_ATTR_KEY, packageContent.getBaseName());
+        YamlMetadata.applyTo(newPackage, packageContent.getMetadata());
         Date currentTime = new Date();
         if (oldPackage == null) {
             newPackage.setCreationDate(currentTime);

@@ -44,6 +44,7 @@
       <artifactId>step-automation-packages-client</artifactId>
       <version>${project.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>

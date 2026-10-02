@@ -9,6 +9,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.EntityManager;
@@ -72,7 +73,7 @@ public class ReportLayoutPluginTest {
 
     private List<ReportLayout> getAllPresets() {
         return accessor.getCollectionDriver()
-            .find(step.core.collections.Filters.equals(
+            .find(Filters.equals(
                     ReportLayout.FIELD_VISIBILITY,
                     ReportLayout.ReportLayoutVisibility.Preset.name()),
                 null, null, null, 0)
@@ -245,6 +246,49 @@ public class ReportLayoutPluginTest {
 
         // The drop step runs unconditionally before the folder existence check
         assertTrue("Existing presets are dropped even when folder is missing", getAllPresets().isEmpty());
+    }
+
+    // --- initializeData with classpath resources ---
+
+    private static final String CLASSPATH_PRESET = "step/core/reporting/presets/ClasspathPreset.json";
+
+    @Test
+    public void initializeData_classpathResources_createsPresets() throws Exception {
+        context.getConfiguration().putProperty(ReportLayoutPlugin.PRESET_RESOURCES_CONFIG_KEY, " " + CLASSPATH_PRESET + " ,");
+
+        plugin.initializeData(context);
+
+        List<ReportLayout> presets = getAllPresets();
+        assertEquals(1, presets.size());
+        assertEquals("Classpath Preset", presets.get(0).getAttribute(AbstractOrganizableObject.NAME));
+        assertEquals("6a5a49dfcbff3f2ff375c999", presets.get(0).getId().toHexString());
+        assertEquals(ReportLayout.ReportLayoutType.CrossExecution, presets.get(0).reportType);
+    }
+
+    @Test
+    public void initializeData_classpathResources_takePrecedenceOverFolder() throws Exception {
+        File folder = tempFolder.newFolder("presets");
+        writePresetFile(folder, "layout.json", "Folder Preset");
+        setPresetsFolder(folder);
+        context.getConfiguration().putProperty(ReportLayoutPlugin.PRESET_RESOURCES_CONFIG_KEY, CLASSPATH_PRESET);
+
+        plugin.initializeData(context);
+
+        List<ReportLayout> presets = getAllPresets();
+        assertEquals(1, presets.size());
+        assertEquals("Classpath Preset", presets.get(0).getAttribute(AbstractOrganizableObject.NAME));
+    }
+
+    @Test
+    public void initializeData_missingClasspathResource_isSkipped() throws Exception {
+        context.getConfiguration().putProperty(ReportLayoutPlugin.PRESET_RESOURCES_CONFIG_KEY,
+            "step/core/reporting/presets/DoesNotExist.json," + CLASSPATH_PRESET);
+
+        plugin.initializeData(context);
+
+        List<ReportLayout> presets = getAllPresets();
+        assertEquals(1, presets.size());
+        assertEquals("Classpath Preset", presets.get(0).getAttribute(AbstractOrganizableObject.NAME));
     }
 
     // --- id validation ---

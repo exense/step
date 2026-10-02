@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +42,9 @@ public class ExecuteAutomationPackageToolTest {
 
     protected static final Tenant TENANT_1 = createTenant1();
 
-    public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
-    public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
-    public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
+    public static final List<String> TEST_INCLUDE_PLANS = List.of("plan1", "plan2");
+    public static final List<String> TEST_INCLUDE_CATEGORIES = List.of("PerformanceTest", "JMterTest");
+    public static final List<String> TEST_EXCLUDE_CATEGORIES = List.of("CypressTest", "OidcTest");
 
     private File tempReportFolder;
 
@@ -87,6 +86,30 @@ public class ExecuteAutomationPackageToolTest {
 
     private static List<String> getExecuteAutomationPackageResult(List<Execution> executions) {
         return executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+    }
+
+    /**
+     * Executing an automation package starts one execution per plan, unless the plans are wrapped into a single
+     * test set, so all of them have to be reported back to the caller.
+     */
+    @Test
+    public void testExecuteReportsEveryStartedExecution() throws Exception {
+        List<Execution> executions = List.of(
+            getMockedExecution(ReportNodeStatus.PASSED, null, "PlanA"),
+            getMockedExecution(ReportNodeStatus.PASSED, null, "PlanB"));
+        List<String> executionIds = getExecuteAutomationPackageResult(executions);
+
+        RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
+
+        RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
+
+        ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
+        List<ExecuteAutomationPackageTool.StartedExecution> started = tool.execute();
+
+        Assert.assertEquals(executionIds, started.stream().map(ExecuteAutomationPackageTool.StartedExecution::id).collect(Collectors.toList()));
+        Assert.assertEquals(List.of("PlanA", "PlanB"),
+            started.stream().map(ExecuteAutomationPackageTool.StartedExecution::description).collect(Collectors.toList()));
     }
 
     @Test
@@ -154,9 +177,9 @@ public class ExecuteAutomationPackageToolTest {
         Assert.assertEquals("testUser", captured.getUserID());
         Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
         PlanMultiFilter planFilter = (PlanMultiFilter) captured.getPlanFilter();
-        PlanMultiFilter expectedFilter = new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(Arrays.asList(TEST_INCLUDE_PLANS.split(","))),
-            new PlanByIncludedCategoriesFilter(Arrays.asList(TEST_INCLUDE_CATEGORIES.split(","))),
-            new PlanByExcludedCategoriesFilter(Arrays.asList(TEST_EXCLUDE_CATEGORIES.split(",")))));
+        PlanMultiFilter expectedFilter = new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(TEST_INCLUDE_PLANS),
+            new PlanByIncludedCategoriesFilter(TEST_INCLUDE_CATEGORIES),
+            new PlanByExcludedCategoriesFilter(TEST_EXCLUDE_CATEGORIES)));
         Assert.assertEquals(expectedFilter, planFilter);
         Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
     }
@@ -166,9 +189,13 @@ public class ExecuteAutomationPackageToolTest {
     }
 
     private static Execution getMockedExecution(ReportNodeStatus resultStatus, String importError) {
+        return getMockedExecution(resultStatus, importError, "My execution");
+    }
+
+    private static Execution getMockedExecution(ReportNodeStatus resultStatus, String importError, String description) {
         Execution execution = Mockito.mock(Execution.class);
         Mockito.when(execution.getId()).thenReturn(new ObjectId());
-        Mockito.when(execution.getDescription()).thenReturn("My execution");
+        Mockito.when(execution.getDescription()).thenReturn(description);
         Mockito.when(execution.getStatus()).thenReturn(ExecutionStatus.ENDED);
         Mockito.when(execution.getResult()).thenReturn(resultStatus);
 

@@ -242,10 +242,10 @@ public class StepConsoleTest {
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, remoteExecuteHistory.size());
         TestApExecuteCommand.RemoteExecutionParams usedParams = remoteExecuteHistory.get(0);
-        Assert.assertEquals("p1,p2", usedParams.params.getIncludePlans());
-        Assert.assertEquals("p3,p4", usedParams.params.getExcludePlans());
-        Assert.assertEquals("CatA,CatB", usedParams.params.getIncludeCategories());
-        Assert.assertEquals("CatC,CatD", usedParams.params.getExcludeCategories());
+        Assert.assertEquals(List.of("p1", "p2"), usedParams.params.getIncludePlans());
+        Assert.assertEquals(List.of("p3", "p4"), usedParams.params.getExcludePlans());
+        Assert.assertEquals(List.of("CatA", "CatB"), usedParams.params.getIncludeCategories());
+        Assert.assertEquals(List.of("CatC", "CatD"), usedParams.params.getExcludeCategories());
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertEquals("abc", usedParams.params.getAuthToken());
         Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
@@ -372,10 +372,10 @@ public class StepConsoleTest {
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, localExecuteHistory.size());
         TestApExecuteCommand.LocalExecutionParams usedParams = localExecuteHistory.get(0);
-        Assert.assertEquals("p1,p2", usedParams.includePlans);
-        Assert.assertEquals("p3,p4", usedParams.excludePlans);
-        Assert.assertEquals("CatA,CatB", usedParams.includeCategories);
-        Assert.assertEquals("CatC,CatD", usedParams.excludeCategories);
+        Assert.assertEquals(List.of("p1", "p2"), usedParams.includePlans);
+        Assert.assertEquals(List.of("p3", "p4"), usedParams.excludePlans);
+        Assert.assertEquals(List.of("CatA", "CatB"), usedParams.includeCategories);
+        Assert.assertEquals(List.of("CatC", "CatD"), usedParams.excludeCategories);
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.executionParameters);
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
         Assert.assertEquals(List.of("-Xmx4g", "-XX:HeapDumpPath=C:\\Program Files\\dumps"),
@@ -464,35 +464,31 @@ public class StepConsoleTest {
 
     private int runMain(Histories histories, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = executeMain(
-            () -> new TestApDeployCommand(histories.deployHistory),
-            () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
-            () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
-            false,
-            args
-        );
+        var commandFactory = new TestCommandFactory()
+            .register(ApCommand.ApDeployCommand.class, new TestApDeployCommand(histories.deployHistory))
+            .register(ApCommand.ApExecuteCommand.class, new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory))
+            .register(LibraryCommand.DeployLibraryCommand.class, new TestLibraryDeployCommand(histories.deployLibraryHistory));
+        int res = executeMain(false, commandFactory, args);
         log.info("--- Run CLI - END ---" + "\n");
         return res;
     }
 
     private int runMainWithVersion(Histories histories, Version version, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = executeMain(
-            () -> new TestApDeployCommand(histories.deployHistory, version),
-            () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
-            () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
-            false,
-            args
-        );
+        var commandFactory = new TestCommandFactory()
+            .register(ApCommand.ApDeployCommand.class, new TestApDeployCommand(histories.deployHistory, version))
+            .register(ApCommand.ApExecuteCommand.class, new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version))
+            .register(LibraryCommand.DeployLibraryCommand.class, new TestLibraryDeployCommand(histories.deployLibraryHistory));
+        int res = executeMain(false, commandFactory, args);
         log.info("--- Run CLI - END ---" + "\n");
         return res;
     }
 
     private static class Histories {
-        private List<TestApDeployCommand.ExecutionParams> deployHistory;
-        private List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory;
-        private List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory;
-        private List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory;
+        private final List<TestApDeployCommand.ExecutionParams> deployHistory;
+        private final List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory;
+        private final List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory;
+        private final List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory;
 
         public Histories(List<TestApDeployCommand.ExecutionParams> deployHistory,
                          List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory,
@@ -604,10 +600,10 @@ public class StepConsoleTest {
 
         public static class LocalExecutionParams {
             private File apFile;
-            private String includePlans;
-            private String excludePlans;
-            private String includeCategories;
-            private String excludeCategories;
+            private List<String> includePlans;
+            private List<String> excludePlans;
+            private List<String> includeCategories;
+            private List<String> excludeCategories;
             private Map<String, String> executionParameters;
             public LocalAgentProvisioningConfiguration localAgentConfiguration;
         }
@@ -636,8 +632,8 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans,
-                                      String includeCategories, String excludeCategories, Map<String, String> executionParameters,
+        protected void executeLocally(File file, File kwLibFile, List<String> includePlans, List<String> excludePlans,
+                                      List<String> includeCategories, List<String> excludeCategories, Map<String, String> executionParameters,
                                       LocalAgentProvisioningConfiguration localAgentConfiguration) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();

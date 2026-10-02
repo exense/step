@@ -29,6 +29,7 @@ import step.grid.security.SymmetricSecurityConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,7 +63,7 @@ public class AgentConfWriterTest {
     public void writesTheTokensAndTheirAttributes() throws Exception {
         Map<String, Object> conf = write(Map.of());
 
-        Map<String, Object> tokenGroup = ((java.util.List<Map<String, Object>>) conf.get("tokenGroups")).get(0);
+        Map<String, Object> tokenGroup = ((List<Map<String, Object>>) conf.get("tokenGroups")).get(0);
         Assert.assertEquals(3, tokenGroup.get("capacity"));
         Map<String, Object> tokenConf = (Map<String, Object>) tokenGroup.get("tokenConf");
         Assert.assertEquals(Map.of(AgentTypes.AGENT_TYPE_KEY, "aType"), tokenConf.get("attributes"));

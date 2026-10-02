@@ -18,15 +18,16 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import step.core.yaml.deserialization.PatchableYamlScalarField;
+
 import java.util.Map;
 
 public interface AutomationPackageDescriptorYaml extends AutomationPackageFragmentYaml {
-    // this name should be kept untouched to support the migrations for old versions
-    String VERSION_FIELD_NAME = "version";
+    String NAME_FIELD_NAME = "name";
 
-    String getName();
+    PatchableYamlScalarField<String> getName();
 
-    String getVersion();
+    void setName(PatchableYamlScalarField<String> name);
 
     Map<String, String> getAttributes();
 }

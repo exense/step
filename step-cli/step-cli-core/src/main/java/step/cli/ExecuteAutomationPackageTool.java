@@ -28,20 +28,29 @@ import step.cli.reports.JUnitReportCreator;
 import step.cli.reports.ReportCreator;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.plans.PlanFilter;
-import step.core.plans.filters.*;
+import step.core.plans.filters.PlanByExcludedCategoriesFilter;
+import step.core.plans.filters.PlanByExcludedNamesFilter;
+import step.core.plans.filters.PlanByIncludedCategoriesFilter;
+import step.core.plans.filters.PlanByIncludedNamesFilter;
+import step.core.plans.filters.PlanMultiFilter;
 import step.core.plans.runner.PlanRunnerResult;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> {
 
@@ -64,11 +73,31 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
         return executionTree;
     }
 
-    public void execute() throws StepCliExecutionException {
-        executePackageOnStep();
+    public List<StartedExecution> execute() throws StepCliExecutionException {
+        return executePackageOnStep(null);
     }
 
-    protected void executePackageOnStep() throws StepCliExecutionException {
+
+    public List<StartedExecution> executePackageAndFillExecutionId(CompletableFuture<String> singleExecutionIdFuture) throws Exception {
+        return executePackageOnStep(singleExecutionIdFuture);
+    }
+
+    /**
+     * Executes the AP on Step, according to its parameterization.
+     * Depending on the configuration (parameters.getWaitForExecution),
+     * this can result in a blocking or non-blocking operation.
+     * <p>
+     * Regardless of the mode, if the parameter firstExecutionIdFuture is present,
+     * the given future will be completed immediately once the execution ID is known.
+     * This is used by the IDE execution diversion mechanism (which starts the execution
+     * in an asynchronous fashion, and uses the ID retrieved here).
+     *
+     * @param firstExecutionIdFuture execution ID future to complete once it's known.
+     * @return the executions started on Step, in the order the server returned them. Executing an automation package
+     * starts one execution per plan, unless the plans are wrapped into a single test set.
+     * @throws StepCliExecutionException on error
+     */
+    protected List<StartedExecution> executePackageOnStep(CompletableFuture<String> firstExecutionIdFuture) throws StepCliExecutionException {
         parameters.validate();
 
         File outputFolder = null;
@@ -117,11 +146,15 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                 if (executionIds.isEmpty()) {
                     throw logAndThrow("No executions started (unexpected empty response from server).", null);
                 } else {
-                    Map<String, Execution> executionInfos = new HashMap<>();
+                    Map<String, Execution> executionInfos = new LinkedHashMap<>();
+                    List<StartedExecution> startedExecutions = new ArrayList<>();
                     logInfo("Execution(s) started in Step:", null);
                     for (String executionId : executionIds) {
+                        // It's ok to do this in the loop, if present the future will be completed exactly once, with the first id.
+                        Optional.ofNullable(firstExecutionIdFuture).ifPresent(f -> f.complete(executionId));
                         Execution executionInfo = remoteExecutionManager.get(executionId);
                         executionInfos.put(executionId, executionInfo);
+                        startedExecutions.add(new StartedExecution(executionId, executionInfo == null ? null : executionInfo.getDescription()));
                         logInfo("- " + executionToString(executionId, executionInfo), null);
                     }
 
@@ -166,6 +199,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                     } else {
                         logInfo("waitForExecution set to 'false'. Not waiting for executions to complete.", null);
                     }
+                    return startedExecutions;
                 }
             } else {
                 throw logAndThrow("Unexpected response from Step. No execution Id returned. Please check the controller logs.");
@@ -255,25 +289,28 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
         return executionParameters;
     }
 
-    public static PlanFilter getPlanFilters(String includePlans, String excludePlans, String includeCategories, String excludeCategories) {
+    public static PlanFilter getPlanFilters(List<String> includePlans, List<String> excludePlans, List<String> includeCategories, List<String> excludeCategories) {
         List<PlanFilter> multiFilter = new ArrayList<>();
         if (includePlans != null) {
-            multiFilter.add(new PlanByIncludedNamesFilter(parseList(includePlans)));
+            multiFilter.add(new PlanByIncludedNamesFilter(includePlans));
         }
         if (excludePlans != null) {
-            multiFilter.add(new PlanByExcludedNamesFilter(parseList(excludePlans)));
+            multiFilter.add(new PlanByExcludedNamesFilter(excludePlans));
         }
         if (includeCategories != null) {
-            multiFilter.add(new PlanByIncludedCategoriesFilter(parseList(includeCategories)));
+            multiFilter.add(new PlanByIncludedCategoriesFilter(includeCategories));
         }
         if (excludeCategories != null) {
-            multiFilter.add(new PlanByExcludedCategoriesFilter(parseList(excludeCategories)));
+            multiFilter.add(new PlanByExcludedCategoriesFilter(excludeCategories));
         }
         return new PlanMultiFilter(multiFilter);
     }
 
-    private static List<String> parseList(String string) {
-        return (string != null && !string.isBlank()) ? Arrays.stream(string.split(",")).collect(Collectors.toList()) : new ArrayList<>();
+    /**
+     * An execution started on Step, with the description Step gave it. For the executions started one per plan,
+     * the description is the plan name.
+     */
+    public record StartedExecution(String id, String description) {
     }
 
     public enum ReportType {

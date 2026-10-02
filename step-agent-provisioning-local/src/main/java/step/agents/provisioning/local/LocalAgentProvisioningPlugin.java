@@ -18,56 +18,31 @@
  ******************************************************************************/
 package step.agents.provisioning.local;
 
-import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.functions.TokenForecastingContext;
-import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
-import step.artefacts.handlers.functions.TokenSelectionCriteriaFilter;
-import step.core.agents.provisioning.AgentPoolRequirementSpec;
+import step.artefacts.handlers.functions.AgentProvisioningExecutionPlugin;
 import step.core.agents.provisioning.driver.AgentProvisioningDriver;
-import step.core.agents.provisioning.driver.AgentProvisioningRequest;
 import step.core.execution.AbstractExecutionEngineContext;
-import step.core.execution.DeprovisioningException;
-import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.execution.ProvisioningException;
-import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
-import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
-import step.functions.Function;
-import step.functions.accessor.FunctionAccessor;
-import step.functions.type.FunctionTypeRegistry;
 import step.grid.Grid;
-import step.grid.agent.AgentTypes;
 import step.grid.client.GridClient;
-import step.grid.tokenpool.Interest;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect;
 
 /**
- * Runs the keywords of a local execution on real agents started on the developer machine.
+ * Sets up the keywords of a local execution to run on real agents started on the developer machine.
  * <p>
- * This is the local equivalent of what the controller does with its grid and its agent provisioning driver, packed
- * into a single execution engine plugin: it starts an embedded grid, publishes it and a
- * {@link LocalProcessAgentProvisioningDriver} in the engine context so that the function and token forecasting
- * plugins pick them up, and provisions the agents an execution needs when it starts.
+ * This is the local equivalent of what the controller does with its grid and its agent provisioning driver: it starts
+ * an embedded grid and publishes it and a {@link LocalProcessAgentProvisioningDriver} in the engine context, so that
+ * the function, token forecasting and {@link AgentProvisioningExecutionPlugin agent provisioning} plugins pick them up.
+ * The latter has to be added to the execution engine as well: it is the one provisioning the agents an execution needs.
  * <p>
  * It is deliberately <b>not</b> auto-discovered: the JUnit runner, where
  * running keywords in the same JVM is a feature rather than a limitation, must keep the in-JVM path.
@@ -76,18 +51,16 @@ import static step.core.plans.agents.configuration.AutomaticAgentProvisioningCon
  * was given to. See {@link #close()}.
  */
 // Runs before FunctionPlugin, which builds the function execution service around whichever grid client it finds in
-// the context: the grid of the local agents has to be published before that. FunctionPlugin knows nothing about this
-// plugin, hence runsBefore rather than a dependency declared on its side.
-@Plugin(runsBefore = {FunctionPlugin.class})
+// the context, and before AgentProvisioningExecutionPlugin, which requires the driver: both have to be published
+// before that. Neither knows anything about this plugin, hence runsBefore rather than dependencies declared on their side.
+@Plugin(runsBefore = {FunctionPlugin.class, AgentProvisioningExecutionPlugin.class})
 @IgnoreDuringAutoDiscovery
 public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalAgentProvisioningPlugin.class);
-    private static final String PROVISIONING_REQUEST_ID = "$provisioningRequestId";
 
     private final LocalAgentProvisioningConfiguration configuration;
     private LocalExecutionGrid grid;
-    private LocalProcessAgentProvisioningDriver driver;
     private boolean closed;
 
     public LocalAgentProvisioningPlugin() {
@@ -115,199 +88,27 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         }
 
         try {
-            grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace);
+            grid = LocalExecutionGrid.startEmbedded(configuration.getAgentStartTimeout(), workspace);
         } catch (Exception e) {
             throw new PluginCriticalException("Error while starting the local grid", e);
         }
 
+        LocalProcessAgentProvisioningDriver driver;
         try {
-            driver = new LocalProcessAgentProvisioningDriver(grid, workspace, configuration, List.of(
-                new JavaLocalAgentProvider(configuration, workspace),
-                new NodeLocalAgentProvider(configuration, workspace),
-                new DotNetLocalAgentProvider(configuration)));
+            driver = LocalAgentProvisioning.createDriver(grid, workspace, configuration);
         } catch (RuntimeException e) {
             closeQuietly(grid);
             grid = null;
             throw new PluginCriticalException("Error while initializing the local agents", e);
         }
 
-        // Picked up by FunctionPlugin (grid client) and TokenForecastingExecutionPlugin (driver). Both are Closeable
-        // and are closed by the context when the execution engine is closed: the grid client releases the class
-        // loaders of the local tokens and the driver stops any agent still running. The grid itself is deliberately
-        // not registered here, see close().
+        // Picked up by FunctionPlugin (grid client), TokenForecastingExecutionPlugin and AgentProvisioningExecutionPlugin
+        // (driver). Both are Closeable and are closed by the context when the execution engine is closed: the grid
+        // client releases the class loaders of the local tokens and the driver stops any agent still running. The grid
+        // itself is deliberately not registered here, see close().
         context.put(Grid.class, grid.getGrid());
         context.put(GridClient.class, grid.getGridClient());
         context.put(AgentProvisioningDriver.class, driver);
-
-        // Last, and deliberately so: the script engines only concern the keywords of two languages, while an
-        // execution without the driver in its context fails on every keyword, with a "no agent type available"
-        // which points at everything except the actual cause.
-        declareScriptEngineLibraries(context, workspace);
-    }
-
-    /**
-     * Points {@code plugins.<language>.libs} at the script engine libraries, the way the step.properties of a
-     * controller does. Without them a Groovy or JavaScript keyword reaches the agent and fails there with "Unable to
-     * find script engine": the engine lives in the CLI, and the agent runs in its own process with its own class path.
-     * <p>
-     * A value already configured wins, so that an agent can be sent a different Groovy than the one the CLI runs on.
-     */
-    private static void declareScriptEngineLibraries(ExecutionEngineContext context, LocalAgentWorkspace workspace) {
-        Configuration configuration = context.getConfiguration();
-        if (configuration == null) {
-            configuration = new Configuration();
-            context.setConfiguration(configuration);
-        }
-        ScriptEngineLibraries libraries = new ScriptEngineLibraries(workspace);
-        for (ScriptEngineLibraries.ScriptEngine engine : List.of(ScriptEngineLibraries.GROOVY, ScriptEngineLibraries.JAVASCRIPT)) {
-            String property = "plugins." + engine.language() + ".libs";
-            if (configuration.getProperty(property, null) != null) {
-                continue;
-            }
-            try {
-                Path directory = libraries.resolve(engine);
-                if (directory != null) {
-                    configuration.putProperty(property, directory.toString());
-                }
-            } catch (Exception e) {
-                // Not worth aborting the execution: only the keywords of that language are affected, and they fail
-                // with an error of their own naming the missing engine. Every exception is caught, not only the
-                // expected one: resolving the engines reads how the application itself is packaged, and the way that
-                // fails is not ours to predict.
-                logger.warn("The {} keywords will not be executable: unable to provide the script engine to the agents.",
-                    engine.language(), e);
-            }
-        }
-    }
-
-    /**
-     * Registers the filter reducing the token selection criteria to what a local execution can honour.
-     */
-    @Override
-    public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext context) {
-        if (driver != null) {
-            context.put(TokenSelectionCriteriaFilter.class, new LocalTokenSelectionCriteriaFilter());
-        }
-    }
-
-    /**
-     * @return the keywords available to this execution
-     * @throws ProvisioningException when the engine has no keyword accessor, which no agent can make up for: every
-     *                               keyword call fails on the very same accessor
-     */
-    private static Collection<Function> functionsOf(ExecutionContext context) {
-        FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
-        if (functionAccessor == null) {
-            throw new ProvisioningException("The agents required by this plan cannot be determined: this execution has"
-                + " no keyword accessor. The execution engine was built without " + FunctionPlugin.class.getSimpleName() + ".");
-        }
-        List<Function> functions = new ArrayList<>();
-        functionAccessor.getAll().forEachRemaining(functions::add);
-        return functions;
-    }
-
-    /**
-     * @return the registry resolving the type, and thus the required agent, of a keyword
-     * @throws ProvisioningException see {@link #functionsOf(ExecutionContext)}
-     */
-    private static FunctionTypeRegistry functionTypeRegistryOf(ExecutionContext context) {
-        FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
-        if (functionTypeRegistry == null) {
-            throw new ProvisioningException("The agents required by this plan cannot be determined: this execution has"
-                + " no function type registry. The execution engine was built without " + FunctionPlugin.class.getSimpleName() + ".");
-        }
-        return functionTypeRegistry;
-    }
-
-    @Override
-    public void provisionRequiredResources(ExecutionContext context) {
-        AgentProvisioningConfiguration planAgentConfiguration = Objects.requireNonNullElse(
-            context.getPlan().getAgents(), new AutomaticAgentProvisioningConfiguration(auto_detect));
-
-        List<AgentPoolRequirementSpec> requiredAgentPools;
-        if (planAgentConfiguration.enableAutomaticTokenNumberCalculation()) {
-            TokenForecastingContext tokenForecastingContext = TokenForecastingExecutionPlugin.getTokenForecastingContext(context);
-            requiredAgentPools = tokenForecastingContext.getAgentPoolRequirementSpec();
-            Set<Map<String, Interest>> criteriaWithoutMatch = tokenForecastingContext.getCriteriaWithoutMatch();
-            if (!criteriaWithoutMatch.isEmpty()) {
-                // Typically a keyword of a language whose agent this machine has no installation of
-                throw new ProvisioningException(unavailableAgentsMessage(criteriaWithoutMatch, driver::getInstallationHint));
-            }
-        } else {
-            List<AgentPoolRequirementSpec> configuredAgentPools = planAgentConfiguration.getAgentPoolRequirementSpecs();
-            if (configuredAgentPools == null) {
-                throw new ProvisioningException("Automatic agent calculation is disabled, but no manual agent requirements are defined.");
-            }
-            requiredAgentPools = LocalAgentPoolRequirements.forRequiredAgentTypes(functionsOf(context),
-                functionTypeRegistryOf(context), driver.getAvailableAgentTypes(),
-                configuration.getMaxTokensPerAgent(), driver::getInstallationHint);
-            String configuredPoolNames = configuredAgentPools.stream().map(p -> p.agentPoolTemplateName)
-                .collect(Collectors.joining(", "));
-            if (requiredAgentPools.isEmpty()) {
-                logger.info("This plan configures its agent pools manually ({}), but none of its keywords requires an "
-                    + "agent: none is started.", configuredPoolNames);
-            } else {
-                logger.info("This plan configures its agent pools manually ({}). Those pools are those of a Step "
-                        + "instance and do not exist here: one agent of each required type is started with {} tokens "
-                        + "instead ({}).", configuredPoolNames, configuration.getMaxTokensPerAgent(),
-                    requiredAgentPools.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", ")));
-            }
-        }
-
-        if (requiredAgentPools.isEmpty()) {
-            logger.debug("This plan requires no agent");
-            return;
-        }
-
-        AgentProvisioningRequest request = new AgentProvisioningRequest();
-        request.executionId = context.getExecutionId();
-        request.agentPoolRequirementSpecs = requiredAgentPools;
-
-        String provisioningRequestId = driver.initializeTokenProvisioningRequest(request);
-        context.put(PROVISIONING_REQUEST_ID, provisioningRequestId);
-        try {
-            driver.executeTokenProvisioningRequest(provisioningRequestId);
-        } catch (ProvisioningException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ProvisioningException("Error while starting the local agents", e);
-        }
-    }
-
-    /**
-     * Turns the criteria no local agent pool matched into an error naming the agent types and, when their provider has
-     * one, what to do about them: the criteria as they are collected ({@code [{$agenttype=dotnet}]}) do say what is
-     * missing, but not that the .NET agent is the user's to install, nor how this CLI is told where it is.
-     */
-    static String unavailableAgentsMessage(Set<Map<String, Interest>> criteriaWithoutMatch,
-                                           java.util.function.Function<String, String> installationHints) {
-        List<String> agentTypes = criteriaWithoutMatch.stream()
-            .map(criteria -> criteria.get(AgentTypes.AGENT_TYPE_KEY))
-            .filter(Objects::nonNull)
-            .map(Interest::getSelectionPattern)
-            .filter(Objects::nonNull)
-            .map(Pattern::pattern)
-            .distinct()
-            .collect(Collectors.toList());
-        if (agentTypes.isEmpty()) {
-            // Criteria this plugin cannot read as an agent type, reported as they were collected
-            return "This plan requires agents which are not available for local execution: " + criteriaWithoutMatch;
-        }
-        return LocalAgentPoolRequirements.unavailableAgentTypesMessage(agentTypes, installationHints);
-    }
-
-    @Override
-    public void deprovisionRequiredResources(ExecutionContext context) {
-        String provisioningRequestId = (String) context.get(PROVISIONING_REQUEST_ID);
-        if (provisioningRequestId == null) {
-            return;
-        }
-        context.remove(PROVISIONING_REQUEST_ID);
-        try {
-            driver.deprovisionTokens(provisioningRequestId);
-        } catch (Exception e) {
-            throw new DeprovisioningException("Error while stopping the local agents", e);
-        }
     }
 
     /**

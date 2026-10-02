@@ -1,0 +1,312 @@
+package step.cli;
+
+import org.apache.commons.lang3.function.Failable;
+import org.slf4j.Logger;
+import picocli.CommandLine;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
+import step.automation.packages.AutomationPackageUpdateResult;
+import step.automation.packages.AutomationPackageUpgradeRequiredException;
+import step.cli.parameters.ApExecuteParameters;
+import step.core.Constants;
+import step.core.execution.model.ExecutionParameters;
+import step.ide.LocalIDE;
+import step.ide.LocalIDEModel;
+import step.ide.api.IDEDelegator;
+import step.ide.api.LocalExecutionDelegate;
+import step.ide.api.LocalExecutionRequest;
+import step.ide.api.RemoteDefaults;
+import step.ide.api.RemoteDeploymentRequest;
+import step.ide.api.RemoteExecution;
+import step.ide.api.RemoteExecutionRequest;
+import step.ide.exceptions.FileExistsException;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+
+public class IdeCommands {
+    public static final String COMMAND_NAME = "ide";
+
+    private IdeCommands() {
+    }
+
+    public static class IdeBaseCommand extends BaseCommand implements IDEDelegator {
+        protected static final Logger logger = StepConsole.log;
+
+        protected LocalIDEModel model() {
+            return LocalIDEModel.get();
+        }
+
+        @CommandLine.Option(names = {"--no-browser"}, defaultValue = "false", description = "Skip launching the browser after starting.")
+        public boolean noBrowser;
+
+        // The IDE has no connection options of its own: a remote deployment or execution triggered from the IDE
+        // falls back to the options configured here and in the default configuration file.
+        @CommandLine.Option(names = {StepConsole.AbstractStepCommand.CONFIG}, paramLabel = "<configFile>",
+            description = "Optional configuration file(s) containing CLI options (ex: projectName=Common)")
+        protected List<String> config;
+
+        @Override
+        public Integer call() {
+            try {
+                validateArguments();
+                startBackend();
+                afterBackendStart();
+                return awaitTermination();
+            } catch (CommandLine.ParameterException e) {
+                // This is handled by PicoCLI itself, it will result in ExitCode.USAGE (=2)
+                throw e;
+            } catch (AutomationPackageUpgradeRequiredException e) {
+                // Expected when opening a package of an older schema version, the stack trace would tell the user nothing
+                logger.error("{} To upgrade it, run the command again with the {} option.", e.getMessage(), IdeOpenCommand.UPGRADE_OPTION);
+                return CommandLine.ExitCode.SOFTWARE; // (=1)
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+                return CommandLine.ExitCode.SOFTWARE; // (=1)
+            }
+        }
+
+        protected void validateArguments() throws CommandLine.ParameterException {
+            // overridden in subclasses as needed
+        }
+
+        protected void startBackend() throws Exception {
+            LocalIDEModel model = model();
+            // Wire the various delegations (execute locally/remotely, deploy, read the CLI configuration) before
+            // starting the backend, so that the controller plugins can already use them while they start up.
+            model.setDelegator(this);
+            CompletableFuture<Void> awaitStartup = new CompletableFuture<>();
+            model.setStartupAwaitFuture(awaitStartup);
+            // Note that the start() method is currently invoked synchronously, i.e. it will block
+            // until startup is either complete, or failed. This does not break any functionality,
+            // it just renders the timeout handling below useless -- the future will (should!) always
+            // be finished (either normally, or exceptionally) by the time start() returns.
+            // Not sure if doing it asynchronously (i.e. in a separate thread) has real benefits though.
+            new LocalIDE().start();
+            // Wait until startup is complete, handling various error scenarios
+            long timeoutSeconds = 60;
+            try {
+                // Wait for the backend to start, with timeout (see above note)
+                awaitStartup.get(timeoutSeconds, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new RuntimeException("Backend failed to start within the " + timeoutSeconds + " second timeout", e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException("Backend startup failed with an exception", e.getCause());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Thread was interrupted while waiting for backend to start", e);
+            }
+        }
+
+        protected void afterBackendStart() throws Exception {
+            int port = determineFrontendPort();
+            String browserUrl = "http://localhost:" + port + "/";
+            if (noBrowser) {
+                logger.info("The IDE backend started successfully. To access it, please navigate to: {}", browserUrl);
+                return;
+            }
+            openBrowser(browserUrl);
+        }
+
+        private static void openBrowser(String url) {
+            String os = System.getProperty("os.name").toLowerCase();
+            ProcessBuilder pb;
+
+            try {
+                if (os.contains("win")) {
+                    // Passed as separate arguments to prevent tokenization bugs
+                    pb = new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url);
+                } else if (os.contains("mac")) {
+                    pb = new ProcessBuilder("open", url);
+                } else if (os.contains("nix") || os.contains("nux") || os.contains("bsd")) {
+                    pb = new ProcessBuilder("xdg-open", url);
+                } else {
+                    logger.warn("Unable to determine how to launch browser. Please manually navigate to: {}", url);
+                    return;
+                }
+                pb.start();
+                logger.info("Your browser should have opened the IDE. If it hasn't, please manually navigate to: {}", url);
+            } catch (Exception e) {
+                logger.warn("Failed to launch browser: {}. Please manually navigate to: {}", e.getMessage(), url);
+            }
+        }
+
+        private static int determineFrontendPort() {
+            // If the app is bundled, it is served by the backend, otherwise by the (hardcoded) port of the dev server.
+            LocalIDEModel model = LocalIDEModel.get();
+            String resourceName = "/" + model.getIdeResourcePath() + "/index.html";
+            boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
+            if (!resourceExists) {
+                logger.warn("Unable to find resource {} , assuming local development mode", resourceName);
+            }
+            return resourceExists ? model.getPort() : 4201;
+        }
+
+        private int awaitTermination() {
+            // This awaits specific user input
+            CompletableFuture<Void> quitCommand = new CompletableFuture<>();
+            Thread waitForQuitCommandThread = new Thread(() -> {
+                Scanner scanner = new Scanner(System.in);
+                while (scanner.hasNextLine()) {
+                    String input = scanner.nextLine().trim().toLowerCase();
+                    if (input.equals("q") || input.equals("quit")) {
+                        logger.debug("User entered termination command: {}", input);
+                        quitCommand.complete(null);
+                        break;
+                    } else {
+                        logger.warn("Unrecognized input, ignoring: {}", input);
+                    }
+                }
+            }, "cli-quit-listener");
+            waitForQuitCommandThread.setDaemon(true);
+            waitForQuitCommandThread.start();
+            // This will be triggered when the backend is shutdown (e.g. using Ctrl-C, or via REST call)
+            CompletableFuture<Void> backendShutdown = new CompletableFuture<>();
+            model().setShutdownAwaitFuture(backendShutdown);
+
+            logger.info("The IDE is running. Type 'quit' (or 'q') to shutdown. You can also press Ctrl-C to terminate the process.");
+            try {
+                // Wait for any of the futures to complete.
+                CompletableFuture.anyOf(backendShutdown, quitCommand).get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.error("Main thread interrupted.");
+                return 1;
+            } catch (ExecutionException e) {
+                logger.error("Error while waiting for backend shutdown: ", e);
+                return 1;
+            }
+            return 0;
+        }
+
+        // IDEDelegator method implementations
+
+        @Override
+        public final LocalExecutionDelegate delegateLocalExecution(LocalExecutionRequest request) {
+            File apPath = request.automationPackage().toFile();
+            ExecutionParameters executionParams = request.executionParameters();
+            ApExecuteParameters params = new ApExecuteParameters()
+                .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apPath::getCanonicalPath), "automation package", true))
+                .setAutomationPackageMavenArtifact(null)
+                .setLibraryFile(null)
+                .setlibraryMavenArtifact(null)
+                .setManagedLibraryName(null)
+                .setStepProjectName(null)
+                .setUserId(null)
+                .setAuthToken(null)
+                .setExecutionParameters(executionParams.getCustomParameters())
+                .setExecutionResultTimeoutS(3600)
+                .setWaitForExecution(false)
+                .setEnsureExecutionSuccess(false)
+                // an empty list of included plan names means that all plans of the package are executed
+                .setIncludePlans(request.includedPlanNames().isEmpty() ? null : request.includedPlanNames())
+                .setExcludePlans(null)
+                .setIncludeCategories(null)
+                .setExcludeCategories(null)
+                .setWrapIntoTestSet(false)
+                .setNumberOfThreads(null)
+                .setReports(null);
+            String localUrl = model().getLocalConnection().url();
+            return singleExecutionIdFuture -> new ExecuteAutomationPackageTool(localUrl, params).executePackageAndFillExecutionId(singleExecutionIdFuture);
+        }
+
+        @Override
+        public final List<RemoteExecution> executeOnStep(Path apPath, RemoteExecutionRequest request) {
+            return remoteDelegate().execute(apPath, request);
+        }
+
+        @Override
+        public final AutomationPackageUpdateResult deploy(Path apPath, RemoteDeploymentRequest request) {
+            return remoteDelegate().deploy(apPath, request);
+        }
+
+        @Override
+        public final RemoteDefaults remoteDefaults() {
+            return remoteDelegate().remoteDefaults();
+        }
+
+        @Override
+        public final LocalAgentProvisioningConfiguration localAgentConfiguration() {
+            return remoteDelegate().localAgentConfiguration();
+        }
+
+        private IdeRemoteDelegate remoteDelegate() {
+            return new IdeRemoteDelegate(spec.defaultValueProvider());
+        }
+    }
+
+    @CommandLine.Command(name = COMMAND_NAME,
+        description = "The CLI interface to launch the local Step IDE",
+        version = Constants.STEP_VERSION_STRING,
+        mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
+        subcommands = {IdeCommands.IdeOpenCommand.class, CommandLine.HelpCommand.class}
+    )
+    public static class IdeCommand extends IdeBaseCommand {
+    }
+
+    @CommandLine.Command(name = "open",
+        description = "Opens an Automation Package in the IDE",
+        version = Constants.STEP_VERSION_STRING,
+        mixinStandardHelpOptions = true, usageHelpAutoWidth = true
+    )
+    public static class IdeOpenCommand extends IdeBaseCommand {
+
+        static final String UPGRADE_OPTION = "--upgrade";
+
+        @CommandLine.Option(names = {"-d", "--directory"}, defaultValue = ".", description = "The Automation Package directory to use for the operation. Defaults to the current working directory.")
+        protected Path apDirectory;
+
+        @CommandLine.Option(names = {UPGRADE_OPTION}, description = "Upgrades an Automation Package written against an older schema version to the current one before opening it. All its outdated files, descriptor and fragments, are migrated and written back to disk, comments in the rewritten files may be lost. A package declaring no version is considered as current: the version is set, but its files are not migrated.")
+        protected boolean upgrade;
+
+        @CommandLine.ArgGroup(exclusive = false, heading = "%nInitialization Options:%n")
+        public InitGroup initGroup;
+
+        public static class InitGroup {
+            // required = true here means it is only required if the group is triggered
+            @CommandLine.Option(names = {"--init"}, required = true, description = "Initializes an Automation Package")
+            public boolean initialize;
+
+            @CommandLine.Option(names = {"--force"}, description = "Forces reinitialization, i.e., overwrites existing AP descriptors. Use with caution! (requires --init)")
+            public boolean force;
+
+            @CommandLine.Option(names = {"--name"}, description = "Name of the AP. Defaults to the directory name if not specified. (requires --init)")
+            public String name;
+        }
+
+        @Override
+        protected void validateArguments() throws CommandLine.ParameterException {
+            try {
+                var model = model();
+                if (initGroup == null || !initGroup.initialize) {
+                    model.validateExistingAutomationPackageDirectory(apDirectory);
+                    return;
+                }
+                // initialization requested
+                try {
+                    model.validateInitializableAutomationPackageDirectory(apDirectory, initGroup.force);
+                } catch (FileExistsException e) {
+                    throw new IllegalArgumentException("Automation Package descriptor already exists at " + e.existingPath.toString() + ". Use --force to overwrite.");
+                }
+            } catch (Exception e) {
+                throw new CommandLine.ParameterException(spec.commandLine(), e.getMessage());
+            }
+        }
+
+        @Override
+        protected void afterBackendStart() throws Exception {
+            if (initGroup == null || !initGroup.initialize) {
+                model().useExistingAutomationPackageDirectory(apDirectory, upgrade);
+            } else {
+                model().useNewAutomationPackageDirectory(apDirectory, initGroup.name);
+            }
+            super.afterBackendStart();
+        }
+    }
+}

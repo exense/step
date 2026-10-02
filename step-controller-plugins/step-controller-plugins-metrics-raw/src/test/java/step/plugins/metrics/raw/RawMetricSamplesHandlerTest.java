@@ -62,7 +62,7 @@ public class RawMetricSamplesHandlerTest {
 
             Document document = measurementAccessor.find(Filters.empty()).findFirst().orElseThrow();
             assertNotNull(document);
-            assertEquals(14, document.size());
+            assertEquals(15, document.size());
             assertEquals("val1", document.get("attr1"));
             assertEquals("val2", document.get("attr2"));
             assertFalse(document.containsKey("plan"));
@@ -74,6 +74,8 @@ public class RawMetricSamplesHandlerTest {
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
             assertEquals("", document.get("canonicalPlanName")); // there is no importResult on the execution
+            // The hash of the artefact the measurement was produced by, i.e. its position in the resolved plan
+            assertTrue(((String) document.get("artefactHash")).matches("[0-9A-F]{32}"));
             assertEquals("", document.get("taskId"));
         }
 
@@ -113,7 +115,7 @@ public class RawMetricSamplesHandlerTest {
 
             Document document = measurementAccessor.find(Filters.empty()).findFirst().orElseThrow();
             assertNotNull(document);
-            assertEquals(14, document.size());
+            assertEquals(15, document.size());
             assertEquals("val1", document.get("attr1"));
             assertEquals("val2", document.get("attr2"));
             assertFalse(document.containsKey("plan"));
@@ -125,6 +127,8 @@ public class RawMetricSamplesHandlerTest {
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
             assertEquals("", document.get("canonicalPlanName")); // there is no importResult on the execution
+            // The hash of the artefact the measurement was produced by, i.e. its position in the resolved plan
+            assertTrue(((String) document.get("artefactHash")).matches("[0-9A-F]{32}"));
             assertEquals(taskParameters.getId().toHexString(), document.get("taskId"));
 
 

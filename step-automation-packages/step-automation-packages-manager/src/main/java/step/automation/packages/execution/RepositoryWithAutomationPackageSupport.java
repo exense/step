@@ -25,6 +25,8 @@ import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.*;
+import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.accessor.LayeredAutomationPackageAccessor;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
@@ -32,6 +34,7 @@ import step.core.accessors.LayeredAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectEnricher;
@@ -105,7 +108,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             File artifact = getArtifact(repositoryParameters, objectPredicate);
 
             // keyword library file is not required here
-            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(),
+            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new ObjectId().toString(),
                 new AutomationPackageFile(artifact, null), false, null, actorUser);
             TestSetStatusOverview overview = new TestSetStatusOverview();
             List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
@@ -126,7 +129,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         ImportResult result = new ImportResult();
         try {
             try {
-                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate(), context.getExecutionParameters().getUserID());
+                ctx = getOrRestorePackageExecutionContext(consumeSharedContextId(context), repositoryParameters, context.getObjectEnricher(),
+                    context.getObjectPredicate(), context.getExecutionParameters().getUserID());
                 //If context is shared across multiple executions, it was created externally and will be closed by the creator,
                 // otherwise it should be closed once the executions ends from the execution context
                 if (!ctx.isShared()) {
@@ -178,6 +182,23 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             result.setErrors(errors);
             return result;
         }
+    }
+
+    /**
+     * Returns the shared context id of the execution and removes it from its parameters, in the execution context and
+     * in the persisted execution. Re-executions copying the parameters must not use the shared context, which was
+     * created for another execution context (user, project...)
+     */
+    private static String consumeSharedContextId(ExecutionContext context) {
+        String sharedContextId = context.getExecutionParameters().getSharedContextId();
+        if (sharedContextId != null) {
+            context.getExecutionParameters().setSharedContextId(null);
+            context.getExecutionManager().updateExecution(e -> e.getExecutionParameters().setSharedContextId(null));
+            if (log.isDebugEnabled()) {
+                log.debug("Consumed shared context {} by execution {}", sharedContextId, context.getExecutionId());
+            }
+        }
+        return sharedContextId;
     }
 
     @Override
@@ -311,11 +332,16 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
+    /**
+     * @param sharedContextId the id of the shared context to be used, {@code null} if none. If it isn't available, a
+     *                        new context is restored with its own id
+     */
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(String sharedContextId, Map<String, String> repositoryParameters,
+                                                                          ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
-        PackageExecutionContext current = contextId == null ? null : sharedPackageExecutionContexts.get(contextId);
+        PackageExecutionContext current = sharedContextId == null ? null : sharedPackageExecutionContexts.get(sharedContextId);
         if (current == null) {
             if (contextId == null) {
                 contextId = new ObjectId().toString();
@@ -326,7 +352,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             // Restore keyword library file
             AutomationPackageFile kwLibFile = restoreLibraryFile(contextId, repositoryParameters, predicate);
             return createIsolatedPackageExecutionContext(
-                enricher, predicate, contextId, apFile, false,
+                enricher, predicate, contextId, new ObjectId().toString(), apFile, false,
                 kwLibFile,
                 actorUser
             );
@@ -392,12 +418,17 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return false;
     }
 
-    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate,
-                                                                         String contextId, AutomationPackageFile apFile, boolean shared,
-                                                                         AutomationPackageFile keywordLibraryFile, String actorUser) {
+    /**
+     * @param contextId       the id of the context under which the AP and library files are stored for re-executions
+     * @param sharedContextId the id of the created context instance. It identifies the context in the executions using
+     *                        it when the context is shared (see {@link ExecutionParameters#getSharedContextId()})
+     */
+    public IsolatedPackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate,
+                                                                                 String contextId, String sharedContextId, AutomationPackageFile apFile, boolean shared,
+                                                                                 AutomationPackageFile keywordLibraryFile, String actorUser) {
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
-            new ObjectId(contextId), functionTypeRegistry,
+            new ObjectId(contextId), sharedContextId, functionTypeRegistry,
             functionAccessor
         );
 
@@ -421,9 +452,12 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }
 
-        PackageExecutionContext res = new IsolatedPackageExecutionContext(contextId, inMemoryPackageManager, shared);
+        IsolatedPackageExecutionContext res = new IsolatedPackageExecutionContext(contextId, sharedContextId, inMemoryPackageManager, shared);
         if (shared) {
-            sharedPackageExecutionContexts.put(contextId, res);
+            sharedPackageExecutionContexts.put(sharedContextId, res);
+            if (log.isDebugEnabled()) {
+                log.debug("Stored shared package execution context {}, new shared context cache size {}", sharedContextId, sharedPackageExecutionContexts.size());
+            }
         }
         return res;
     }
@@ -474,6 +508,19 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         // import all resources from automation package to execution context by adding the layer to contextResourceManager
         // resource manager used in isolated package manager is non-permanent
         ((LayeredResourceManager) contextResourceManager).pushManager(apManager.getResourceManager(), false);
+
+        // Make the apResource: resolver see the isolated automation package: the global accessor
+        // installed at execution init does not contain the in-memory isolated AP. We layer the
+        // isolated accessor on top of the global one (mirroring the resource-manager layer pushed just
+        // above) rather than replacing it: an isolated execution may still run a globally-deployed
+        // keyword (surfaced through the layered function accessor) whose apResource: reference points
+        // to the global automation package, which must remain resolvable.
+        AutomationPackageAccessor globalAccessor = context.get(AutomationPackageAccessor.class);
+        AutomationPackageAccessor isolatedAccessor = apManager.getAutomationPackageAccessor();
+        AutomationPackageAccessor layeredAccessor = (globalAccessor != null)
+            ? new LayeredAutomationPackageAccessor(List.of(isolatedAccessor, globalAccessor))
+            : isolatedAccessor;
+        context.put(AutomationPackageAccessor.class, layeredAccessor);
 
         // call some hooks on import
         apManager.runExtensionsBeforeIsolatedExecution(automationPackage, context, apManager.getExtensions(), result);
@@ -544,13 +591,27 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
     public class IsolatedPackageExecutionContext implements PackageExecutionContext {
         private final String contextId;
+        private final String sharedContextId;
         private final AutomationPackageManager inMemoryManager;
         private final boolean shared;
 
-        public IsolatedPackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean shared) {
+        /**
+         * @param contextId       the id of the context under which the AP and library files are stored for re-executions
+         * @param sharedContextId the id of this context instance, identifying it in the executions using it when it is shared
+         */
+        public IsolatedPackageExecutionContext(String contextId, String sharedContextId, AutomationPackageManager inMemoryManager, boolean shared) {
             this.contextId = contextId;
+            this.sharedContextId = sharedContextId;
             this.inMemoryManager = inMemoryManager;
             this.shared = shared;
+        }
+
+        public String getContextId() {
+            return contextId;
+        }
+
+        public String getSharedContextId() {
+            return sharedContextId;
         }
 
         @Override
@@ -572,16 +633,35 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         public void close() throws IOException {
             // cleanup the associated automation package manager and remove this context from the shared map in case of shared context
             log.info("Cleanup isolated execution context");
+            // Wipe the materialised apResource cache of the isolated package before disposing the
+            // manager (the AP is still reachable here). The cache root lives on the MAIN manager.
+            wipeApResourceCache();
             //In case the Package execution context is shared (i.e. when triggering isolated executions from CLI), we close the shared context
             //and remove it from the shared map
             if (shared) {
-                IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.remove(contextId);
+                IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.remove(sharedContextId);
+                if (log.isDebugEnabled()) {
+                    log.debug("Removed shared package execution context {}, new shared context cache size {}", sharedContextId, sharedPackageExecutionContexts.size());
+                }
                 if (automationPackageManager != null) {
                     automationPackageManager.getAutomationPackageManager().cleanup();
                 }
                 //Otherwise directly clean the automation package stored in this context
             } else {
                 inMemoryManager.cleanup();
+            }
+        }
+
+        private void wipeApResourceCache() {
+            File cacheRoot = manager.getApResourceCacheRoot();
+            AutomationPackage automationPackage = getAutomationPackage();
+            if (cacheRoot == null || automationPackage == null) {
+                return;
+            }
+            String apId = automationPackage.getId().toHexString();
+            if (!ApResourceCache.wipe(cacheRoot, apId)) {
+                log.warn("Unable to fully wipe the apResource cache directory {}",
+                    ApResourceCache.apDirectory(cacheRoot, apId).getAbsolutePath());
             }
         }
     }

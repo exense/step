@@ -18,18 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.yaml.migrations;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
@@ -40,6 +30,15 @@ import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.parameter.automation.AutomationPackageParameter;
 import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.plans.parser.yaml.YamlPlan;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The values of an automation package written against a schema older than 1.3.0 were used literally. After the
