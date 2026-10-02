@@ -197,7 +197,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive, ResourceManager resourceManager, boolean upgrade) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorUrl = archive.getDescriptorYamlUrl();
-        try (InputStream inputStream = descriptorUrl.openStream()) {
+        try (InputStream inputStream = AutomationPackageArchive.openStreamWithoutCaching(descriptorUrl)) {
             // A version must be declared in the descriptor. It is checked before reading the descriptor, which is
             // otherwise read as a current one and may fail the schema validation
             if (!upgrade && readDeclaredSchemaVersion(reader, descriptorUrl) == null) {
@@ -261,7 +261,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     }
 
     private static String readDeclaredSchemaVersion(AutomationPackageDescriptorReader reader, URL descriptorUrl) throws IOException {
-        try (InputStream inputStream = descriptorUrl.openStream()) {
+        try (InputStream inputStream = AutomationPackageArchive.openStreamWithoutCaching(descriptorUrl)) {
             return reader.readDeclaredSchemaVersion(inputStream);
         }
     }
@@ -298,7 +298,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                     throw new AutomationPackageReadingException("Invalid fragment reference '" + importedFragmentReference + "' in the automation package: " + e.getMessage(), e);
                 }
                 for (URL resource : resources) {
-                    try (InputStream fragmentYamlStream = resource.openStream()) {
+                    try (InputStream fragmentYamlStream = AutomationPackageArchive.openStreamWithoutCaching(resource)) {
                         AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName(), packageVersion);
                         fragments.add(referencedFragment);
                         try {
@@ -359,7 +359,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 }
 
                 for (URL url : urls) {
-                    try (InputStream is = url.openStream()) {
+                    try (InputStream is = AutomationPackageArchive.openStreamWithoutCaching(url)) {
                         Plan parsedPlan = planTextPlanParser.parse(is, plainTextPlan.getRootType() == null ? RootArtefactType.TestCase : plainTextPlan.getRootType());
                         String planNameInYaml = plainTextPlan.getName();
                         String finalPlanName;
