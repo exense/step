@@ -385,10 +385,11 @@ public class LocalIDEModel implements ExecutionDiversion {
     }
 
     /**
-     * Returns the local agent provisioning options configured in the CLI properties.
+     * Returns the local agent provisioning options configured in the CLI properties, or the default ones when the
+     * IDE was not started through the CLI launcher.
      */
     public LocalAgentProvisioningConfiguration localAgentConfiguration() {
-        return requireDelegator().localAgentConfiguration();
+        return delegator != null ? delegator.localAgentConfiguration() : new LocalAgentProvisioningConfiguration();
     }
 
     private IDEDelegator requireDelegator() {

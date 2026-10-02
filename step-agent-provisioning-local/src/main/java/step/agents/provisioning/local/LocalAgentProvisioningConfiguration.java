@@ -44,6 +44,20 @@ public class LocalAgentProvisioningConfiguration {
      */
     private static final Duration MINIMUM_TIMEOUT = Duration.ofSeconds(1);
 
+    public static final String OPTION_JAVA_AGENT = "localAgentJava";
+    public static final String OPTION_NODE_AGENT = "localAgentNode";
+    public static final String OPTION_DOTNET_AGENT = "localAgentDotNet";
+    public static final String OPTION_MAX_TOKENS = "localAgentMaxTokens";
+
+    /**
+     * @return how to set the given option, to be used in the messages addressed to the user. It covers both the
+     * command line and the properties file: the Studio only takes these options from the latter.
+     */
+    public static String optionHint(String optionName, String valueLabel) {
+        return "the " + optionName + " option (--" + optionName + "=" + valueLabel + " on the command line, or "
+            + optionName + "=" + valueLabel + " in stepcli.properties)";
+    }
+
     private Path javaAgentPath;
     private Path nodeAgentPath;
     private Path dotNetAgentPath;

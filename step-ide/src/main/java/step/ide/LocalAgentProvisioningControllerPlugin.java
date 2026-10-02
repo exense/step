@@ -39,7 +39,8 @@ public class LocalAgentProvisioningControllerPlugin extends AbstractControllerPl
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
-        LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration();
+        // The local agent options of the CLI (--localAgent*), as configured in its properties
+        LocalAgentProvisioningConfiguration configuration = LocalIDEModel.get().localAgentConfiguration();
         LocalAgentWorkspace workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
 
         grid = LocalExecutionGrid.attach(context.require(GridImpl.class), context.get(SymmetricSecurityConfiguration.class),

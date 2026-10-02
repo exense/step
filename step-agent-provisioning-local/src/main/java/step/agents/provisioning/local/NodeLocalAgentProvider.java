@@ -108,8 +108,8 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
         if (!OsCommands.isExecutableAvailable(OsCommands.NODE)) {
             return "The Node.js agent runs on Node.js, which is not installed on this machine.";
         }
-        return "This CLI does not embed the Node.js agent: point --localAgentNode at an installed "
-            + NPM_PACKAGE_NAME + ".";
+        return "The Node.js agent is not shipped with this Step installation: set " + nodeAgentOptionHint()
+            + " to an installed " + NPM_PACKAGE_NAME + ".";
     }
 
     private static boolean isAgentEmbedded() {
@@ -193,8 +193,8 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
     private Path extractEmbeddedAgent() throws LocalAgentException {
         URL resource = embeddedAgentResource();
         if (resource == null) {
-            throw new LocalAgentException("This CLI does not embed the Node.js agent, and none was configured."
-                + " Point --localAgentNode at an installed " + NPM_PACKAGE_NAME + ".");
+            throw new LocalAgentException("The Node.js agent is not shipped with this Step installation, and none was configured."
+                + " Set " + nodeAgentOptionHint() + " to an installed " + NPM_PACKAGE_NAME + ".");
         }
 
         Path directory = workspace.getInstalledAgentDirectory(INSTALLED_EMBEDDED_AGENT_NAME, Constants.STEP_VERSION_STRING);
@@ -333,9 +333,13 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
             return projectScript;
         }
         throw new LocalAgentException("The configured Node.js agent " + configured + " does not look like an agent"
-            + " installation: neither " + packageScript + " nor " + projectScript + " exists. Point --localAgentNode"
-            + " at an installed " + NPM_PACKAGE_NAME + " package, or at a directory containing it in "
+            + " installation: neither " + packageScript + " nor " + projectScript + " exists. Set "
+            + nodeAgentOptionHint() + " to an installed " + NPM_PACKAGE_NAME + " package, or to a directory containing it in "
             + NODE_MODULES_DIRECTORY_NAME + ".");
+    }
+
+    private static String nodeAgentOptionHint() {
+        return LocalAgentProvisioningConfiguration.optionHint(LocalAgentProvisioningConfiguration.OPTION_NODE_AGENT, "<path>");
     }
 
     private static void deleteQuietly(Path directory) {
