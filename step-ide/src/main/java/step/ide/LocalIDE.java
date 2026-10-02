@@ -3,6 +3,7 @@ package step.ide;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.scheduler.ExecutionScheduler;
 import step.framework.server.ControllerServer;
 
 import java.io.File;
@@ -48,7 +49,8 @@ public class LocalIDE {
         }
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
         configuration.putProperty("ui.resource.root", model.getIdeResourcePath());
-        applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
+        // The schedules of the opened automation package are edited in the IDE, never triggered by it
+        configuration.putProperty(ExecutionScheduler.CONFIGURATION_SCHEDULING_ALLOWED, Boolean.FALSE.toString());
         server = new IDEControllerServer(configuration);
         model.setPort(server.getPort());
     }

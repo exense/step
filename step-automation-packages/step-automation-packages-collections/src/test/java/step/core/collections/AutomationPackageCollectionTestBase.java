@@ -65,8 +65,15 @@ public class AutomationPackageCollectionTestBase {
 
         // accessor is not required in this test - we only read the yaml and don't store the result anywhere
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
+        registerAdditionalEntities(serializationRegistry);
 
         this.reader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
+    }
+
+    /**
+     * Registers the entities read in addition to the keywords, plans and parameters. None by default
+     */
+    protected void registerAdditionalEntities(AutomationPackageSerializationRegistry serializationRegistry) {
     }
 
     @Before

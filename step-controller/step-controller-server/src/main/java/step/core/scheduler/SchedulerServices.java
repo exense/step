@@ -136,6 +136,9 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Secured(right = "scheduler-manage")
     public void enableAllExecutionTasksSchedule(@QueryParam("enabled") Boolean enabled) {
         if (enabled != null && enabled) {
+            if (!scheduler.isSchedulingAllowed()) {
+                throw new ControllerServiceException("The scheduler cannot be enabled: the scheduling is switched off by configuration");
+            }
             scheduler.enableAllExecutionTasksSchedule();
         } else {
             scheduler.disableAllExecutionTasksSchedule();

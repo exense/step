@@ -15,6 +15,7 @@ public class CurrentlyOpenedAutomationPackageCollectionFactory implements Collec
 
     private AutomationPackageCollectionFactory currentAPFactory;
     private final ConcurrentHashMap<String, DynamicallyDelegatingCollection<?>> collectionsByName = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, DynamicallyDelegatingCollection<?>> typedViewsByNameAndClass = new ConcurrentHashMap<>();
 
     public CurrentlyOpenedAutomationPackageCollectionFactory(Properties ignored) {
         if (INSTANCE == null) {
@@ -42,12 +43,22 @@ public class CurrentlyOpenedAutomationPackageCollectionFactory implements Collec
         }
         this.currentAPFactory = currentAPFactory;
         collectionsByName.values().forEach(collection -> collection.setFromCurrentFactory(currentAPFactory));
+        typedViewsByNameAndClass.values().forEach(collection -> collection.setFromCurrentFactory(currentAPFactory));
     }
 
+    /**
+     * A collection is held with the class it is first requested with. Requested with another class, the scheduler
+     * tasks and the wrapper their table lists them as for instance, it is returned as a view converting its entities.
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
-        return (Collection<T>) collectionsByName.computeIfAbsent(name, n -> new DynamicallyDelegatingCollection<T>(name, entityClass, currentAPFactory));
+        DynamicallyDelegatingCollection<?> collection = collectionsByName.computeIfAbsent(name, n -> new DynamicallyDelegatingCollection<T>(name, entityClass, currentAPFactory));
+        if (collection.getEntityClass() == entityClass) {
+            return (Collection<T>) collection;
+        }
+        return (Collection<T>) typedViewsByNameAndClass.computeIfAbsent(name + ":" + entityClass.getName(),
+            k -> new DynamicallyDelegatingCollection<T>(name, entityClass, collection.getEntityClass(), currentAPFactory));
     }
 
     @SuppressWarnings("rawtypes")
