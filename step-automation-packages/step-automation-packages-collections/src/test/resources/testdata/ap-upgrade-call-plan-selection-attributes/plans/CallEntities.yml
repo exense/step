@@ -1,0 +1,24 @@
+---
+plans:
+  - name: "CallEntities"
+    root:
+      testCase:
+        nodeName: "CallEntities"
+        children:
+          - sequence:
+              children:
+                - callPlan:
+                    selectionAttributes:
+                      - name: SubPlan
+                      - env: "T1"
+                - callPlan:
+                    selectionAttributes:
+                      - name: SubPlan
+                - callKeyword:
+                    nodeName: "Keyword call"
+                    keyword: Keyword
+                - callKeyword:
+                    nodeName: "Keyword call"
+                    keyword:
+                      name: Keyword
+                      type: java

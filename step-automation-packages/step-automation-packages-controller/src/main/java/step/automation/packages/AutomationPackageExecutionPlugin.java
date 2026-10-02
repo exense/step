@@ -15,6 +15,7 @@ import step.core.repositories.RepositoryObjectReference;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 
+import java.io.File;
 import java.util.Map;
 
 import static step.automation.packages.AutomationPackageLocks.*;
@@ -33,17 +34,25 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageExecutionPlugin.class);
     private final AutomationPackageLocks automationPackageLocks;
     private final AutomationPackageAccessor automationPackageAccessor;
+    private final File apResourceCacheRoot;
+    private final AutomationPackageReaderRegistry automationPackageReaderRegistry;
     private static final String EXECUTION_CONTEXT_LOCK_ID = "EXECUTION_CONTEXT_LOCK_ID";
 
-    public AutomationPackageExecutionPlugin(AutomationPackageLocks automationPackageLocks, AutomationPackageAccessor automationPackageAccessor) {
+    public AutomationPackageExecutionPlugin(AutomationPackageLocks automationPackageLocks,
+                                            AutomationPackageAccessor automationPackageAccessor,
+                                            File apResourceCacheRoot,
+                                            AutomationPackageReaderRegistry automationPackageReaderRegistry) {
         this.automationPackageLocks = automationPackageLocks;
         this.automationPackageAccessor = automationPackageAccessor;
+        this.apResourceCacheRoot = apResourceCacheRoot;
+        this.automationPackageReaderRegistry = automationPackageReaderRegistry;
     }
 
     @Override
     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
         super.initializeExecutionContext(executionEngineContext, executionContext);
         executionContext.computeIfAbsent(AutomationPackageAccessor.class, k -> automationPackageAccessor);
+        installApResourceProvider(executionContext);
         AutomationPackageExecutionContext automationPackageExecutionContext = new AutomationPackageExecutionContext(executionContext);
         if (shouldLock(automationPackageExecutionContext)) {
             try {
@@ -66,6 +75,24 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
                 logger.debug("No lock required for plan {}", automationPackageExecutionContext.planName);
             }
         }
+    }
+
+    /**
+     * Attaches the {@code apResource:} resolver to the execution context. The accessor is read lazily
+     * from the context (for isolated executions it is the pushed isolated accessor, not the global
+     * one). The archive reference (a {@code resource:} string) is resolved to a file through the
+     * context's own {@link step.attachments.FileResolver}, and the concrete archive type is chosen by
+     * the reader registry.
+     */
+    private void installApResourceProvider(ExecutionContext executionContext) {
+        if (apResourceCacheRoot == null || automationPackageReaderRegistry == null) {
+            return;
+        }
+        executionContext.setApResourceProvider(new AutomationPackageResourceProvider(
+            apResourceCacheRoot,
+            () -> executionContext.get(AutomationPackageAccessor.class),
+            archiveReference -> executionContext.getFileResolver().resolve(archiveReference),
+            file -> automationPackageReaderRegistry.getReaderForFile(file).createAutomationPackageArchive(file, null, null)));
     }
 
     @Override

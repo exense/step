@@ -23,7 +23,7 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.yaml.YamlModelUtils;
 import step.automation.packages.model.AbstractYamlFunction;
-import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.core.yaml.AutomationPackageKeywordsLookuper;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.JsonSchemaDefinitionAddOn;
@@ -61,7 +61,9 @@ public class YamlKeywordSchemaGenerator {
 
     protected List<JsonSchemaExtension> getDefinitionsExtensions() {
         List<JsonSchemaExtension> extensions = new ArrayList<>();
+        // sorted for the same reason as in YamlPlanJsonSchemaGenerator: the scan order is not stable across builds
         CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+            .sorted(Comparator.comparing(Class::getName))
             .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
         return extensions;
     }

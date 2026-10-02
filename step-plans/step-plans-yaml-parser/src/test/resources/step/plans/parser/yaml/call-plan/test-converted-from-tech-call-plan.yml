@@ -6,7 +6,6 @@ root:
     nodeName: "Plan1"
     children:
       - callPlan:
-          selectionAttributes:
-            - name: "Plan2"
+          plan: "Plan2"
           input:
             - inputtest: "some other value"

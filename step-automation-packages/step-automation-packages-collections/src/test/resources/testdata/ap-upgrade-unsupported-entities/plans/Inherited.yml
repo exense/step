@@ -1,0 +1,12 @@
+plans:
+  - name: "Inherited"
+    root:
+      testCase:
+        children:
+          - callPlan:
+              selectionAttributes:
+                - name: "Versioned"
+schedules:
+  - name: "inheritedSchedule"
+    cron: "0 0 18 * * ?"
+    planName: "Inherited"

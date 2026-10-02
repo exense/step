@@ -32,6 +32,7 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -83,7 +84,10 @@ public class YamlPlanJsonSchemaGenerator {
 
     protected List<JsonSchemaExtension> getDefinitionsExtensions() {
         List<JsonSchemaExtension> extensions = new ArrayList<>();
+        // the scanner returns the add-ons in no particular order, which would make the order of the definitions in
+        // the generated schema depend on the build. Sorting keeps the published schemas stable.
         CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+            .sorted(Comparator.comparing(Class::getName))
             .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
         return extensions;
     }
@@ -134,6 +138,8 @@ public class YamlPlanJsonSchemaGenerator {
             objectBuilder.add("categories", categoriesBuilder);
             //agents
             objectBuilder.add(AGENT_CONFIGURATION_YAML_NAME, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix));
+            //metadata
+            objectBuilder.add(YamlMetadata.METADATA_FIELD, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), YamlMetadata.METADATA_DEF));
         }
         objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
         return objectBuilder;

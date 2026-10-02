@@ -21,15 +21,22 @@ package step.cli;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.*;
-import step.automation.packages.junit.AbstractLocalPlanRunner;
-import step.automation.packages.library.AutomationPackageLibraryProvider;
-import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
-import step.automation.packages.library.NoAutomationPackageLibraryProvider;
 import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.agents.provisioning.local.LocalAgentProvisioningPlugin;
+import step.automation.packages.AutomationPackageFromInputStreamProvider;
+import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.AutomationPackageUpdateParameter;
+import step.automation.packages.AutomationPackageUpdateParameterBuilder;
+import step.automation.packages.junit.AbstractLocalPlanRunner;
+import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
+import step.automation.packages.library.NoAutomationPackageLibraryProvider;
+import step.artefacts.handlers.functions.AgentProvisioningExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.agents.provisioning.driver.AgentProvisioningStatusAccessor;
 import step.core.artefacts.Artefact;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
 import step.core.plans.Plan;
@@ -37,9 +44,12 @@ import step.core.plans.PlanFilter;
 import step.core.plans.runner.PlanRunnerResult;
 import step.junit.runner.StepClassParserResult;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -50,8 +60,8 @@ public class ApLocalExecuteCommandHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
-    public void execute(File apFile, File libFile, String includePlans, String excludePlans, String includeCategories,
-                        String excludeCategories, Map<String, String> executionParameters,
+    public void execute(File apFile, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
+                        List<String> excludeCategories, Map<String, String> executionParameters,
                         LocalAgentProvisioningConfiguration localAgentConfiguration) throws StepCliExecutionException {
         // The keywords run on real agents started as separate processes on this machine, so that a local execution
         // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
@@ -62,6 +72,7 @@ public class ApLocalExecuteCommandHandler {
              ExecutionEngine executionEngine = ExecutionEngine.builder()
                  .withOperationMode(OperationMode.CLI)
                  .withPlugin(localAgents)
+                 .withPlugin(new AgentProvisioningExecutionPlugin(new AgentProvisioningStatusAccessor(new InMemoryCollection<>())))
                  .withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
@@ -166,9 +177,5 @@ public class ApLocalExecuteCommandHandler {
 
     private static String getPlanName(Plan p) {
         return p.getAttribute(AbstractOrganizableObject.NAME);
-    }
-
-    private List<String> parseList(String string) {
-        return (string == null || string.isEmpty()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
     }
 }

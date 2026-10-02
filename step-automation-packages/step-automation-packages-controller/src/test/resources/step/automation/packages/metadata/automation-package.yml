@@ -1,0 +1,50 @@
+version: 1.3.0
+name: "package-with-metadata"
+metadata:
+  owner: "team-a"
+  tags: [ "smoke", "nightly" ]
+keywords:
+  - Composite:
+      name: "Composite keyword"
+      metadata:
+        origin:
+          tool: "generator"
+      plan:
+        root:
+          testCase:
+            children:
+              - echo:
+                  text: "Just echo"
+plans:
+  - name: "Plan with metadata"
+    metadata:
+      requirements:
+        - id: "REQ-1"
+          covered: true
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+  - name: "Plan without metadata"
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+plansPlainText:
+  - name: "Plain text plan with metadata"
+    file: "plan.plan"
+    metadata:
+      owner: "team-b"
+schedules:
+  - name: "Schedule with metadata"
+    cron: "0 15 10 ? * *"
+    planName: "Plan with metadata"
+    metadata:
+      owner: "team-c"
+parameters:
+  - key: "myKey"
+    value: "myValue"
+    metadata:
+      owner: "team-d"

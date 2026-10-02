@@ -1,0 +1,10 @@
+---
+keywords:
+  - Composite:
+      name: "Hello World Composite Function"
+      plan:
+        root:
+          sequence:
+            children:
+              - echo:
+                  text: "Hello World"

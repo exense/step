@@ -18,6 +18,14 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import step.core.yaml.PatchingContext;
+
 public class AutomationPackageFragmentYamlImpl extends AbstractAutomationPackageFragmentYaml {
+
+    public AutomationPackageFragmentYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
+        super(patchingContext);
+    }
 
 }

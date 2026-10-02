@@ -19,10 +19,19 @@
 
 package step.core.agents.provisioning.driver;
 
+import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.agents.provisioning.AgentPoolSpec;
+import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
+import step.grid.tokenpool.Interest;
 
 import java.io.Closeable;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public interface AgentProvisioningDriver extends Closeable {
 
@@ -72,6 +81,65 @@ public interface AgentProvisioningDriver extends Closeable {
      * @param agentPoolSpecs the specification of the remote agent pool to be registered
      */
     void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
+
+    /**
+     * Returns the agent pools to provision for a plan whose agent pools are configured manually. The default returns
+     * the configured list but custom implementation may override this behavior. Example local provisioning
+     * {@code LocalProcessAgentProvisioningDriver} will resolve to a list of agents actually required for the execution
+     *
+     * @param agentProvisioningConfiguration the agent pool configuration of the plan, empty when the plan disables
+     *                                       the provisioning
+     * @param forecasted                     the agent pool requirements calculated by the token forecasting
+     * @param criteriaWithoutMatch           the token selection criteria for which the token forecasting found no agent pool
+     * @return the agent pool requirements to be provisioned. By default, the configured ones, shall never return null.
+     */
+    default List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(AgentProvisioningConfiguration agentProvisioningConfiguration,
+                                                                       List<AgentPoolRequirementSpec> forecasted,
+                                                                       Set<Map<String, Interest>> criteriaWithoutMatch) {
+        Objects.requireNonNull(agentProvisioningConfiguration, "agentProvisioningConfiguration must not be null");
+        return (agentProvisioningConfiguration.enableAgentProvisioning()) ? agentProvisioningConfiguration.getAgentPoolRequirementSpecs() : List.of();
+    }
+
+    /**
+     * Some driver always provision agents even when the plan disable it in its configuration.
+     * Simple because the plan's configuration is mean for a deployed plan on a Step instance and
+     * does not necessarily apply in other context.
+     *
+     * @return whether the driver always provision agents, false by default
+     */
+    default boolean alwaysProvisionAgents() {
+        return false;
+    }
+
+    /**
+     * @param criteriaWithoutMatch the token selection criteria for which the token forecasting found no agent pool
+     * @return the message of the error raised when the agent pools are calculated automatically and some criteria
+     * have no matching agent pool
+     */
+    default String getUnmatchedCriteriaMessage(Set<Map<String, Interest>> criteriaWithoutMatch) {
+        String criteria = criteriaWithoutMatch.stream().map(Object::toString).collect(Collectors.joining(", "));
+        return "Some keywords of this plan cannot be executed: no agent pool matches their token selection criteria "
+            + criteria + ". Check the agent pools available for the agent provisioning, and the token selection"
+            + " criteria of these keywords.";
+    }
+
+    /**
+     * @return a new filter applied to the token selection criteria of the keywords of an execution provisioned by this
+     * driver, or null if the criteria are used as defined. Called once per execution.
+     */
+    default TokenSelectionCriteriaFilter createTokenSelectionCriteriaFilter() {
+        return null;
+    }
+
+    /**
+     * @return the directory of this machine in which libraries sent to the agents of this driver can be installed, kept
+     * across runs, or null if the agents do not run from this application, which is the default. A non-null value is
+     * what makes the libraries this application runs on, such as the script engines, be sent to the agents. Each set
+     * of libraries is installed in a directory of its own below it.
+     */
+    default Path getLocalLibrariesDirectory() {
+        return null;
+    }
 
     default void close() {
         // Default implementation does nothing

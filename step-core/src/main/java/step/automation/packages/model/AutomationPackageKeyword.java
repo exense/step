@@ -26,5 +26,4 @@ public interface AutomationPackageKeyword {
     String KEYWORDS_ENTITY_NAME = "keywords";
 
     Function prepareKeyword(StagingAutomationPackageContext context);
-
 }

@@ -1,0 +1,15 @@
+version: 1.2.0
+plans:
+  - name: "Versioned"
+    root:
+      testCase:
+        children:
+          - callPlan:
+              selectionAttributes:
+                - name: "Inherited"
+schedules:
+  - name: "versionedSchedule"
+    cron: "0 0 12 * * ?"
+    planName: "Versioned"
+unsupportedEntities:
+  - name: "versionedEntity"

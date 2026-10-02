@@ -21,13 +21,17 @@ package step.artefacts.automation;
 import step.artefacts.TokenSelector;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlTokenSelector<T extends TokenSelector> extends AbstractYamlArtefact<T> {
 
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.ROUTING)
     protected YamlDynamicInputs routing = new YamlDynamicInputs("{}");
-
+    
+    @YamlFieldOrder(YamlFieldPriority.ROUTING)
     protected DynamicValue<Boolean> remote = new DynamicValue<>(true);
 
     public YamlTokenSelector() {

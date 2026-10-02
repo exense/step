@@ -25,12 +25,14 @@ import step.core.agents.provisioning.AgentPoolProvisioningReport;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.agents.provisioning.AgentPoolSpec;
 import step.core.agents.provisioning.AgentProvisioningReport;
+import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
 import step.core.agents.provisioning.driver.AgentProvisioningDriver;
 import step.core.agents.provisioning.driver.AgentProvisioningDriverConfiguration;
 import step.core.agents.provisioning.driver.AgentProvisioningError;
 import step.core.agents.provisioning.driver.AgentProvisioningRequest;
 import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.execution.ProvisioningException;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTypes;
@@ -52,6 +54,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -155,6 +158,102 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
 
     static String agentPoolName(String agentType) {
         return AGENT_POOL_NAME_PREFIX + agentType;
+    }
+
+    /**
+     * A manual configuration names the pools of the Step instance the plan normally runs on ({@code windows-medium},
+     * {@code linux-large}, ...). Those names mean nothing here and cannot be mapped: they describe machines of an
+     * infrastructure, whereas a local execution has one machine and the agents this driver can start on it. The number
+     * of agents they ask for is just as meaningless, being a number of machines.
+     * <p>
+     * The same goes for a plan configuring no agent pool at all ({@code agents: []}), which disables the provisioning
+     * to run on the permanent agents of a Step instance: there is no such agent here.
+     * <p>
+     * What the requirement is turned into is therefore one agent per agent type the token forecasting found the plan
+     * needs, each with as many tokens as a local agent is allowed to have: the plan asked not to be sized
+     * automatically, so it is given everything the local execution can offer.
+     */
+    @Override
+    public List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(AgentProvisioningConfiguration agentProvisioningConfiguration,
+                                                                      List<AgentPoolRequirementSpec> forecasted,
+                                                                      Set<Map<String, Interest>> criteriaWithoutMatch) {
+        Objects.requireNonNull(agentProvisioningConfiguration, "agentProvisioningConfiguration must not be null");
+        if (agentProvisioningConfiguration.enableAutomaticTokenNumberCalculation()) {
+            throw new IllegalArgumentException("Resolve agent pools should not be invoked when automatic calculation is enabled.");
+        }
+        Objects.requireNonNull(forecasted, "forecasted must not be null");
+        Objects.requireNonNull(criteriaWithoutMatch, "criteriaWithoutMatch must not be null");
+        if (!criteriaWithoutMatch.isEmpty()) {
+            throw new ProvisioningException(getUnmatchedCriteriaMessage(criteriaWithoutMatch));
+        }
+        int maxTokensPerAgent = configuration.getMaxTokensPerAgent();
+        List<AgentPoolRequirementSpec> requiredAgentPools = forecasted.stream()
+            .map(requirement -> requirement.agentPoolTemplateName)
+            .distinct()
+            .map(poolName -> new AgentPoolRequirementSpec(poolName, maxTokensPerAgent))
+            .collect(Collectors.toList());
+
+        String planConfigurationMessage = agentProvisioningConfiguration.enableAgentProvisioning() ?
+            "This plan configures its agent pools manually" :
+            "This plan disables the agent provisioning";
+        logger.info("{}, this is ignored for local execution, agents are still started automatically.", planConfigurationMessage);
+        return requiredAgentPools;
+    }
+
+    @Override
+    public boolean alwaysProvisionAgents() {
+        return true;
+    }
+
+    /**
+     * Typically reports a keyword of a language whose agent this machine has no installation of.
+     */
+    @Override
+    public String getUnmatchedCriteriaMessage(Set<Map<String, Interest>> criteriaWithoutMatch) {
+        return unavailableAgentsMessage(criteriaWithoutMatch, this::getInstallationHint);
+    }
+
+    /**
+     * Turns the criteria no local agent pool matched into an error naming the agent types and, when their provider has
+     * one, what to do about them: the criteria as they are collected ({@code [{$agenttype=dotnet}]}) do say what is
+     * missing, but not that the .NET agent is the user's to install, nor how it is told where it is.
+     */
+    static String unavailableAgentsMessage(Set<Map<String, Interest>> criteriaWithoutMatch,
+                                           Function<String, String> installationHints) {
+        List<String> agentTypes = criteriaWithoutMatch.stream()
+            .map(criteria -> criteria.get(AgentTypes.AGENT_TYPE_KEY))
+            .filter(Objects::nonNull)
+            .map(Interest::getSelectionPattern)
+            .filter(Objects::nonNull)
+            .map(Pattern::pattern)
+            .distinct()
+            .collect(Collectors.toList());
+        if (agentTypes.isEmpty()) {
+            // Criteria which cannot be read as an agent type, reported as they were collected
+            return "This plan requires agents which are not available for local execution: " + criteriaWithoutMatch;
+        }
+        StringBuilder message = new StringBuilder("This plan requires agent types which are not available for local"
+            + " execution: " + String.join(", ", agentTypes) + ".");
+        agentTypes.stream().map(installationHints).filter(Objects::nonNull)
+            .forEach(hint -> message.append(" ").append(hint));
+        return message.toString();
+    }
+
+    /**
+     * @return a filter reducing the token selection criteria of the keywords to what a local execution can honour
+     */
+    @Override
+    public TokenSelectionCriteriaFilter createTokenSelectionCriteriaFilter() {
+        return new LocalTokenSelectionCriteriaFilter();
+    }
+
+    /**
+     * @return a directory of the local agent workspace: the agents are started from this application, whose class path
+     * they do not share
+     */
+    @Override
+    public Path getLocalLibrariesDirectory() {
+        return workspace.getInstalledLibrariesDirectory();
     }
 
     @Override

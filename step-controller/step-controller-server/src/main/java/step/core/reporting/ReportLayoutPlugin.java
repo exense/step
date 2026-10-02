@@ -20,6 +20,9 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +34,11 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
     public static final String DEFAULT_REPORT_LAYOUT = "Default";
     public static final String PRESET_FOLDER_PATH_CONFIG_KEY = "plugins.reporting.layouts.presets.folder";
     public static final String PRESET_FOLDER_PATH_DEFAULT = "../plugins/reporting/layouts";
+    /**
+     * Comma-separated classpath resource names of the preset layouts. When set, the presets are loaded from these
+     * resources instead of the presets folder, as for the Step IDE which is distributed as a single executable file.
+     */
+    public static final String PRESET_RESOURCES_CONFIG_KEY = "plugins.reporting.layouts.presets.resources";
     public static final String DEFAULT_LAYOUT_ID_CONFIG_KEY = "plugins.reporting.layouts.default.id";
     public static final String DEFAULT_LAYOUT_ID_DEFAULT = "69b010aeec94534eb48176db";
     public static final String CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY = "plugins.reporting.layouts.crossexecution.default.id";
@@ -74,27 +82,25 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
     @Override
     public void initializeData(GlobalContext context) throws Exception {
         super.initializeData(context);
-        // Drop all existing presets - the folder is the source of truth at startup
+        // Drop all existing presets - the presets source is the source of truth at startup
         reportLayoutAccessor.getCollectionDriver().remove(
             Filters.equals(ReportLayout.FIELD_VISIBILITY, ReportLayout.ReportLayoutVisibility.Preset.name()));
 
-        // Load presets from the configured folder
-        File presetsFolder = new File(context.getConfiguration().getProperty(PRESET_FOLDER_PATH_CONFIG_KEY, PRESET_FOLDER_PATH_DEFAULT));
+        String presetResources = context.getConfiguration().getProperty(PRESET_RESOURCES_CONFIG_KEY);
+        if (presetResources != null && !presetResources.isBlank()) {
+            loadPresetsFromClasspath(presetResources);
+        } else {
+            loadPresetsFromFolder(new File(context.getConfiguration().getProperty(PRESET_FOLDER_PATH_CONFIG_KEY, PRESET_FOLDER_PATH_DEFAULT)));
+        }
+    }
+
+    private void loadPresetsFromFolder(File presetsFolder) {
         if (presetsFolder.exists() && presetsFolder.isDirectory()) {
-            ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
             File[] jsonFiles = presetsFolder.listFiles((dir, name) -> name.endsWith(".json"));
             if (jsonFiles != null) {
                 for (File jsonFile : jsonFiles) {
-                    try {
-                        ReportLayoutJson layoutJson = objectMapper.readValue(jsonFile, ReportLayoutJson.class);
-                        if (ObjectId.isValid(layoutJson.id)) {
-                            ReportLayout reportLayout = new ReportLayout(layoutJson.layout, ReportLayout.ReportLayoutVisibility.Preset, layoutJson.reportType);
-                            reportLayout.addAttribute(AbstractOrganizableObject.NAME, layoutJson.name);
-                            reportLayout.setId(new ObjectId(layoutJson.id));
-                            reportLayoutAccessor.save(reportLayout);
-                        } else {
-                            logger.error("Invalid json file: {}, the id {} has been tempered with and is not a valid ObjectId", jsonFile.getAbsolutePath(), layoutJson.id);
-                        }
+                    try (InputStream inputStream = new FileInputStream(jsonFile)) {
+                        loadPreset(inputStream, jsonFile.getAbsolutePath());
                     } catch (Exception e) {
                         logger.error("Failed to load preset layout from file '{}'", jsonFile.getAbsolutePath(), e);
                     }
@@ -102,6 +108,41 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
             }
         } else {
             logger.warn("The configured presets folder '{}' does not exist or is not a directory.", presetsFolder.getAbsolutePath());
+        }
+    }
+
+    private void loadPresetsFromClasspath(String presetResources) {
+        for (String resource : presetResources.split(",")) {
+            String resourceName = resource.trim();
+            if (resourceName.isEmpty()) {
+                continue;
+            }
+            try (InputStream inputStream = ReportLayoutPlugin.class.getClassLoader().getResourceAsStream(resourceName)) {
+                if (inputStream == null) {
+                    logger.error("The preset layout resource '{}' could not be found on the classpath", resourceName);
+                } else {
+                    loadPreset(inputStream, resourceName);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to load preset layout from resource '{}'", resourceName, e);
+            }
+        }
+    }
+
+    private void loadPreset(InputStream inputStream, String source) throws IOException {
+        ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
+        ReportLayoutJson layoutJson = objectMapper.readValue(inputStream, ReportLayoutJson.class);
+        if (layoutJson == null) {
+            logger.error("Invalid json file: {} is empty", source);
+            return;
+        }
+        if (ObjectId.isValid(layoutJson.id)) {
+            ReportLayout reportLayout = new ReportLayout(layoutJson.layout, ReportLayout.ReportLayoutVisibility.Preset, layoutJson.reportType);
+            reportLayout.addAttribute(AbstractOrganizableObject.NAME, layoutJson.name);
+            reportLayout.setId(new ObjectId(layoutJson.id));
+            reportLayoutAccessor.save(reportLayout);
+        } else {
+            logger.error("Invalid json file: {}, the id {} has been tempered with and is not a valid ObjectId", source, layoutJson.id);
         }
     }
 }

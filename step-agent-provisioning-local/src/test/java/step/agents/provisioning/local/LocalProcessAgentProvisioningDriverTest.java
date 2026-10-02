@@ -56,7 +56,7 @@ public class LocalProcessAgentProvisioningDriverTest {
             new RecordingLocalAgentProvider(new JavaLocalAgentProvider(configuration, workspace));
         Assert.assertTrue("The Java agent should be embedded in the CLI", provider.isAvailable());
 
-        try (LocalExecutionGrid grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace)) {
+        try (LocalExecutionGrid grid = LocalExecutionGrid.startEmbedded(configuration.getAgentStartTimeout(), workspace)) {
             try (LocalProcessAgentProvisioningDriver driver = new LocalProcessAgentProvisioningDriver(grid, workspace,
                 configuration, List.of(provider, new UnavailableLocalAgentProvider()))) {
 
@@ -107,8 +107,9 @@ public class LocalProcessAgentProvisioningDriverTest {
         LocalAgentWorkspace workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
         RecordingLocalAgentProvider provider =
             new RecordingLocalAgentProvider(new JavaLocalAgentProvider(configuration, workspace));
+        Assert.assertTrue("The Java agent should be embedded in the CLI", provider.isAvailable());
 
-        try (LocalExecutionGrid grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace)) {
+        try (LocalExecutionGrid grid = LocalExecutionGrid.startEmbedded(configuration.getAgentStartTimeout(), workspace)) {
             try (LocalProcessAgentProvisioningDriver driver = new LocalProcessAgentProvisioningDriver(grid, workspace,
                 configuration, List.of(provider))) {
                 String javaPool = LocalProcessAgentProvisioningDriver.agentPoolName(AgentTypeConstants.AGENT_TYPE_JAVA);

@@ -36,7 +36,7 @@ public class UnavailableAgentsMessageTest {
 
     @Test
     public void namesTheAgentTypeAndWhatToDoAboutIt() {
-        String message = LocalAgentProvisioningPlugin.unavailableAgentsMessage(
+        String message = LocalProcessAgentProvisioningDriver.unavailableAgentsMessage(
             Set.of(agentTypeCriteria(AgentTypeConstants.AGENT_TYPE_DOTNET)),
             agentType -> "Point --localAgentDotNet at an installed Step .NET agent.");
 
@@ -49,7 +49,7 @@ public class UnavailableAgentsMessageTest {
      */
     @Test
     public void namesTheAgentTypeWhenThereIsNoHintForIt() {
-        String message = LocalAgentProvisioningPlugin.unavailableAgentsMessage(
+        String message = LocalProcessAgentProvisioningDriver.unavailableAgentsMessage(
             Set.of(agentTypeCriteria("aTypeNobodyProvides")), agentType -> null);
 
         Assert.assertEquals("This plan requires agent types which are not available for local execution:"
@@ -64,7 +64,7 @@ public class UnavailableAgentsMessageTest {
     public void fallsBackToTheCriteriaThemselves() {
         Map<String, Interest> criteria = Map.of("OS", new Interest(Pattern.compile("WINDOWS"), true));
 
-        String message = LocalAgentProvisioningPlugin.unavailableAgentsMessage(Set.of(criteria), agentType -> null);
+        String message = LocalProcessAgentProvisioningDriver.unavailableAgentsMessage(Set.of(criteria), agentType -> null);
 
         Assert.assertTrue(message, message.startsWith("This plan requires agents which are not available for local execution: "));
         Assert.assertTrue(message, message.contains("OS"));

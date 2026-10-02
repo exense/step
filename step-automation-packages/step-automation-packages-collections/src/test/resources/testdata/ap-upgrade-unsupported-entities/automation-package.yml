@@ -1,0 +1,16 @@
+version: 1.2.0
+name: "Upgrade with unsupported entities"
+parameters:
+  - key: "param"
+    value: "value"
+schedules:
+  - name: "descriptorSchedule"
+    cron: "0 15 10 ? * *"
+    planName: "Versioned"
+unsupportedEntities:
+  - name: "descriptorEntity"
+    description: "Entity of the descriptor"
+fragments:
+  - "schedules.yml"
+  - "unsupported.yml"
+  - "plans/*.yml"
