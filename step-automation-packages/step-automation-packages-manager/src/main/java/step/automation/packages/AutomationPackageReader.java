@@ -291,7 +291,12 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         if (!fragment.getFragments().isEmpty()) {
             for (PatchableYamlPrimitive<String> importedFragmentReference : fragment.getFragments()) {
-                List<URL> resources = archive.getResourcesByPattern(importedFragmentReference.toString());
+                List<URL> resources;
+                try {
+                    resources = archive.getResourcesByPattern(importedFragmentReference.toString());
+                } catch (IllegalArgumentException e) {
+                    throw new AutomationPackageReadingException("Invalid fragment reference '" + importedFragmentReference + "' in the automation package: " + e.getMessage(), e);
+                }
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
                         AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName(), packageVersion);
@@ -329,15 +334,24 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     private void readPlainTextPlans(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
         // parse plain - text plans
         for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
+            String invalidPlainTextPlanReference = "Invalid plain text plan reference '" + plainTextPlan.getFile() + "' in the automation package: ";
             try {
                 List<URL> urls;
                 boolean wildcard = false;
                 if (ResourcePathMatchingResolver.containsWildcard(plainTextPlan.getFile())) {
                     wildcard = true;
                     ResourcePathMatchingResolver resourceResolver = archive.getResourcePathMatchingResolver();
-                    urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
+                    try {
+                        urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
+                    } catch (IllegalArgumentException e) {
+                        throw new AutomationPackageReadingException(invalidPlainTextPlanReference + e.getMessage(), e);
+                    }
                 } else {
-                    urls = List.of(archive.getResource(plainTextPlan.getFile()));
+                    URL url = archive.getResource(plainTextPlan.getFile());
+                    if (url == null) {
+                        throw new AutomationPackageReadingException(invalidPlainTextPlanReference + "The file '" + plainTextPlan.getFile() + "' could not be found in the automation package. " + ResourcePathMatchingResolver.PATH_HINT);
+                    }
+                    urls = List.of(url);
                 }
 
                 if (urls.isEmpty()) {

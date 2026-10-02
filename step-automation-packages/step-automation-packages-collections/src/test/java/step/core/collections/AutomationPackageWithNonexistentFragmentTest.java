@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
@@ -30,8 +31,8 @@ public class AutomationPackageWithNonexistentFragmentTest {
         try {
             reader.getAutomationPackageYamlFragmentManager(new File("src/test/resources/testdata/ap-with-nonexisting-fragment"), new LocalResourceManagerImpl(tempFolder.getRoot()), false);
             Assert.fail("Expected exception");
-        } catch (IllegalArgumentException e) {
-            Assert.assertEquals("Illegal resource definition, resource cannot be found: nonexisting.yml", e.getMessage());
+        } catch (AutomationPackageReadingException e) {
+            Assert.assertEquals("Invalid fragment reference 'nonexisting.yml' in the automation package: The file 'nonexisting.yml' could not be found in the automation package. Paths must be relative to the root of the automation package; please check the spelling and case.", e.getMessage());
         }
     }
 }
