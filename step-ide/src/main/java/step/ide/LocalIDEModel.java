@@ -62,6 +62,7 @@ public class LocalIDEModel implements ExecutionDiversion {
     private ResourceManagerImpl resourceManager;
     private IDEDelegator delegator;
     private Path currentAutomationPackageDirectory;
+    private volatile List<String> currentAutomationPackageWarnings = List.of();
     private FileResolver fileResolver;
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
@@ -149,6 +150,8 @@ public class LocalIDEModel implements ExecutionDiversion {
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
         this.currentAutomationPackageDirectory = apDir.toAbsolutePath().normalize();
         this.fileResolver.setUnprefixedRoot(apDir);
+        this.currentAutomationPackageWarnings = List.copyOf(AutomationPackageProjectInspector.inspect(apDir));
+        currentAutomationPackageWarnings.forEach(logger::warn);
     }
 
     private Path findAutomationPackageDescriptorPath(Path apDirectory) {
@@ -193,7 +196,12 @@ public class LocalIDEModel implements ExecutionDiversion {
     public void validateExistingAutomationPackageDirectory(Path apDirectory) {
         Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, false);
         if (findAutomationPackageDescriptorPath(resolvedDir) == null) {
-            throw new IllegalArgumentException("Directory " + resolvedDir + " does not contain an automation package descriptor");
+            String message = "Directory " + resolvedDir + " does not contain an automation package descriptor.";
+            Path resourcesDirectory = AutomationPackageProjectInspector.findResourcesDirectoryWithDescriptor(resolvedDir).orElse(null);
+            if (resourcesDirectory != null) {
+                message += " One was found in " + resourcesDirectory + ": open that directory instead.";
+            }
+            throw new IllegalArgumentException(message);
         }
     }
 
@@ -260,6 +268,15 @@ public class LocalIDEModel implements ExecutionDiversion {
     public void closeCurrentAutomationPackage() {
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(null);
         this.currentAutomationPackageDirectory = null;
+        this.currentAutomationPackageWarnings = List.of();
+    }
+
+    /**
+     * @return what the user should be warned of regarding the currently opened automation package, for instance that
+     * it belongs to a Java project defining keywords in code. Empty if there is nothing to warn of
+     */
+    public List<String> getCurrentAutomationPackageWarnings() {
+        return currentAutomationPackageWarnings;
     }
 
     public void setDelegator(IDEDelegator delegator) {
