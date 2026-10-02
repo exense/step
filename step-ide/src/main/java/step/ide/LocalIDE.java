@@ -33,10 +33,17 @@ public class LocalIDE {
             // That's intentional, and the reason why they're called as early as possible.
             cfg.accept(configuration);
         }
-        var resourcesDirectory = Files.createTempDirectory("step-ide-resources-");
         var fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-");
-        model.addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
-        configuration.putProperty("resources.dir", resourcesDirectory.toString());
+        String configuredResourcesDirectory = configuration.getProperty("resources.dir");
+        if (configuredResourcesDirectory == null || configuredResourcesDirectory.isBlank()) {
+            // No resources directory configured: the resources only live as long as the IDE
+            var resourcesDirectory = Files.createTempDirectory("step-ide-resources-");
+            model.addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
+            configuration.putProperty("resources.dir", resourcesDirectory.toString());
+        } else {
+            logger.info("Using the configured resources directory: {}", new File(configuredResourcesDirectory).getAbsolutePath());
+            model.addDirectoriesToCleanupOnShutdown(List.of(fileManagerDirectory));
+        }
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
         configuration.putProperty("ui.resource.root", model.getIdeResourcePath());
         applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
