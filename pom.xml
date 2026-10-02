@@ -62,11 +62,10 @@
     <repository>
       <id>nexus-staging</id>
       <url>https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/</url>
-    </repository>
-    <!-- private nexus -->
-    <repository>
-      <id>nexus-exense</id>
-      <url>https://nexus-enterprise.exense.ch/repository/exense/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
     </repository>
   </repositories>
 
