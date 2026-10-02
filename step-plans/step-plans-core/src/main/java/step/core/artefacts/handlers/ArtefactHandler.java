@@ -68,6 +68,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
     public static final String TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED = "tec.execution.reportnodes.timeseries.enabled";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
     public static final String CTX_CANONICAL_PLAN_NAME = "$canonicalPlanName";
+    public static final String FILTER_CONSUMED = "$filterConsumed";
 
     protected ExecutionContext context;
     private ArtefactHandlerManager artefactHandlerManager;
@@ -120,7 +121,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
             Map<String, Object> bindings = getBindings();
             evaluateMandatoryFieldsEvenForSkippedArtefact(artefact, bindings);
             reportNode.setName(getReportNodeNameDynamically(artefact));
-            if (filterArtefact(artefact)) {
+            if (filterArtefact(reportNode, artefact)) {
                 reportNode.setStatus(ReportNodeStatus.SKIPPED);
             } else {
                 dynamicBeanResolver.evaluate(artefact, bindings);
@@ -188,7 +189,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
             reportNode.setArtefactInstance(artefact);
             reportNode.setResolvedArtefact(artefact);
 
-            if (filterArtefact(artefact)) {
+            if (filterArtefact(reportNode, artefact)) {
                 context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
                 reportNode.setStatus(ReportNodeStatus.SKIPPED);
             } else {
@@ -318,9 +319,34 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
         return results;
     }
 
-    private boolean filterArtefact(ARTEFACT artefact) {
+    /**
+     * @return true if the artefact has to be skipped, either because it isn't selected by the
+     * execution's {@link ArtefactFilter} or because its skipNode flag is set
+     */
+    private boolean filterArtefact(ReportNode node, ARTEFACT artefact) {
+        boolean isSelected;
         ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-        return (filter != null && !filter.isSelected(artefact)) || artefact.getSkipNode().get();
+        if (filter != null) {
+            if (!filter.applies(artefact)) {
+                // The filter doesn't apply to this artefact (e.g. not a TestCase): always selected
+                isSelected = true;
+            } else {
+                // If the filter applies to this artefact, we check if it has been already consumed in an ancestor node
+                boolean filterConsumed = context.getVariablesManager().getVariableAsBoolean(FILTER_CONSUMED, false);
+                if (filterConsumed) {
+                    // If the filter has been already consumed in an ancestor node, we ignore it
+                    isSelected = true;
+                } else {
+                    // First artefact of this branch the filter applies to: mark the filter as consumed for the whole subtree
+                    // to avoid reentrance. If the artefact isn't selected, it is skipped and its subtree isn't executed anyway.
+                    context.getVariablesManager().putVariable(node, FILTER_CONSUMED, true);
+                    isSelected = filter.isSelected(artefact);
+                }
+            }
+        } else {
+            isSelected = true;
+        }
+        return !isSelected || artefact.getSkipNode().get();
     }
 
     /**
