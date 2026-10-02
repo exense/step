@@ -7,9 +7,11 @@ import step.automation.packages.AutomationPackageReaderRegistry;
 import step.automation.packages.LocalApResourceProvider;
 import step.automation.packages.LocalAutomationPackageDirectoryProvider;
 import step.core.GlobalContext;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionDiversion;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.scheduler.ExecutionScheduler;
 import step.ide.api.LocalFileSystemServices;
 import step.ide.api.LocalIDEServices;
 import step.resources.ResourceManagerImpl;
@@ -38,6 +40,12 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
         context.setApResourceProvider(new LocalApResourceProvider(
             () -> LocalIDEModel.get().getCurrentAutomationPackageDirectory(),
             context.getApResourceProvider()));
+    }
+
+    @Override
+    public void initializeData(GlobalContext context) throws Exception {
+        // The scheduling is switched off by LocalIDE: the setting is aligned so that the scheduler is reported as disabled
+        context.require(ControllerSettingAccessor.class).updateOrCreateSetting(ExecutionScheduler.SETTING_SCHEDULER_ENABLED, Boolean.FALSE.toString());
     }
 
     @Override

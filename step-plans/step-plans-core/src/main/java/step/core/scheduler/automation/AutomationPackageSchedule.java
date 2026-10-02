@@ -22,17 +22,19 @@ import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.OptBoolean;
+import step.core.yaml.NamedPatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 
 import java.util.List;
 import java.util.Map;
 
-public class AutomationPackageSchedule extends PatchableYamlModelBase {
+public class AutomationPackageSchedule extends PatchableYamlModelBase implements NamedPatchableYamlModel {
 
     public static final String SCHEDULE_DEF = "ScheduleDef";
     public static final String FIELD_NAME_IN_AP = "schedules";
     private String name;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Boolean active = true;
     private String cron;
 
@@ -41,6 +43,7 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase {
     private String planName;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String assertionPlanName;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, String> executionParameters;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, Object> metadata;
@@ -62,6 +65,7 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase {
         return cron;
     }
 
+    @Override
     public String getName() {
         return name;
     }

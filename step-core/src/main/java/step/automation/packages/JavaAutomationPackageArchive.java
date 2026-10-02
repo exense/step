@@ -139,7 +139,7 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     @Override
     public InputStream getResourceAsStream(String resourcePath) throws IOException {
         URL url = getResource(resourcePath);
-        return url.openStream();
+        return openStreamWithoutCaching(url);
     }
 
     @Override

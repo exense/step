@@ -26,4 +26,12 @@ public interface YamlToBusinessObjectMapper<YO extends PatchableYamlModel, BO ex
     BO toBusinessObject(YO yamlModel);
 
     public String getCollectionName();
+
+    /**
+     * @return true if the business objects refer to the ones of other mappers, the plans a schedule runs for
+     * instance. Such a mapper is applied once the other ones have mapped the whole automation package.
+     */
+    default boolean dependsOnOtherEntities() {
+        return false;
+    }
 }
