@@ -18,16 +18,8 @@
  ******************************************************************************/
 package step.repositories;
 
-import step.artefacts.CallPlan;
-import step.artefacts.TestCase;
-import step.artefacts.TestSet;
-import step.artefacts.handlers.PlanLocator;
-import step.artefacts.handlers.SelectorHelper;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -42,14 +34,12 @@ import java.util.Set;
 public class LocalRepository extends AbstractRepository {
 
     private final PlanAccessor planAccessor;
-    private final PlanLocator planLocator;
+    private final TestSetTestRunsParser testSetTestRunsParser;
 
     public LocalRepository(PlanAccessor planAccessor, ExpressionHandler expressionHandler) {
         super(Set.of(RepositoryObjectReference.PLAN_ID));
         this.planAccessor = planAccessor;
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
-        SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-        planLocator = new PlanLocator(planAccessor, selectorHelper);
+        testSetTestRunsParser = new TestSetTestRunsParser(planAccessor, expressionHandler);
     }
 
     @Override
@@ -70,36 +60,12 @@ public class LocalRepository extends AbstractRepository {
         String planId = getPlanId(repositoryParameters);
         Plan plan = planAccessor.get(planId);
 
-        AbstractArtefact rootArtefact = plan.getRoot();
-
-        if (rootArtefact instanceof TestSet) {
-            // Perform a very basic parsing of the artefact tree to get a list of test cases referenced
-            // in this test set. Only direct children of the root node are considered
-            List<AbstractArtefact> children = rootArtefact.getChildren();
-            children.forEach(child -> {
-                if (child instanceof TestCase) {
-                    addTestRunStatus(testSetStatusOverview.getRuns(), child);
-                } else if (child instanceof CallPlan) {
-                    Plan referencedPlan = planLocator.selectPlan((CallPlan) child, objectPredicate, null);
-                    if (referencedPlan != null) {
-                        AbstractArtefact root = referencedPlan.getRoot();
-                        if (root instanceof TestCase) {
-                            addTestRunStatus(testSetStatusOverview.getRuns(), root);
-                        }
-                    }
-                }
-            });
-        }
+        testSetStatusOverview.setRuns(testSetTestRunsParser.getTestRuns(plan, objectPredicate));
         return testSetStatusOverview;
     }
 
     public static String getPlanId(Map<String, String> repositoryParameters) {
         return repositoryParameters.get(RepositoryObjectReference.PLAN_ID);
-    }
-
-    private void addTestRunStatus(List<TestRunStatus> testRunStatusList, AbstractArtefact abstractArtefact) {
-        testRunStatusList.add(new TestRunStatus(abstractArtefact.getId().toString(),
-            abstractArtefact.getAttributes().get(AbstractOrganizableObject.NAME), ReportNodeStatus.NORUN));
     }
 
     @Override
