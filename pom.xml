@@ -62,11 +62,10 @@
     <repository>
       <id>nexus-staging</id>
       <url>https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/</url>
-    </repository>
-    <!-- private nexus -->
-    <repository>
-      <id>nexus-exense</id>
-      <url>https://nexus-enterprise.exense.ch/repository/exense/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
     </repository>
   </repositories>
 
@@ -127,7 +126,67 @@
         <artifactId>groovy-all</artifactId>
         <version>${dep.groovy.version}</version>
         <type>pom</type>
+        <!-- Excluding some of the "bloat" that is not needed for our "just scripting" use case -->
         <exclusions>
+          <!-- CLI & Terminal REPL (removes jline, jansi, jna) -->
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-groovysh</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-cli-picocli</artifactId>
+          </exclusion>
+
+          <!-- Ant Integration (removes apache-ant, ant-junit, etc.) -->
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-ant</artifactId>
+          </exclusion>
+
+          <!-- Desktop GUI & IDE Console (removes javaparser, ivy, treelayout) -->
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-console</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-swing</artifactId>
+          </exclusion>
+
+          <!-- Documentation Tools (removes javaparser, qdox) -->
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-groovydoc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-docgenerator</artifactId>
+          </exclusion>
+
+          <!-- Enterprise Utilities -->
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-servlet</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-jmx</artifactId>
+          </exclusion>
+
+          <!-- Test Framework Bridges & Dependencies -->
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-test</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-test-junit5</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-testng</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
