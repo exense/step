@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.expressions.ExpressionHandler;
 import step.automation.packages.*;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
@@ -15,6 +14,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.repositories.ImportResult;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.type.FunctionTypeRegistry;
@@ -48,7 +48,7 @@ public class ResourceArtifactRepositoryTest {
         this.functionTypeRegistry = MavenArtifactRepositoryTest.prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), automationPackageReaderRegistry, hookRegistry);
-        this.repo = new ResourceArtifactRepository(resourceManager, apManager, functionTypeRegistry, functionAccessor, new ExpressionHandler());
+        this.repo = new ResourceArtifactRepository(resourceManager, apManager, functionTypeRegistry, functionAccessor, null, new ExpressionHandler());
     }
 
     @Test

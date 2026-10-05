@@ -19,7 +19,6 @@
 package step.automation.packages.execution;
 
 import org.bson.types.ObjectId;
-import step.expressions.ExpressionHandler;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
@@ -33,6 +32,7 @@ import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
 import step.core.repositories.TestSetStatusOverview;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
@@ -47,8 +47,8 @@ import java.util.Set;
  */
 public class LocalAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
-    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, ResourceManager resourceManager, ExpressionHandler expressionHandler) {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, resourceManager, expressionHandler);
+    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, PlanAccessor planAccessor, ResourceManager resourceManager, ExpressionHandler expressionHandler) {
+        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, planAccessor, resourceManager, expressionHandler);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
         PackageExecutionContext ctx = null;
         try {
             ctx = getOrRestorePackageExecutionContext(repositoryParameters, null, objectPredicate, actorUser);
-            testSetStatusOverview.setRuns(getTestRuns(ctx, repositoryParameters));
+            testSetStatusOverview.setRuns(getTestRuns(ctx, repositoryParameters, objectPredicate));
             return testSetStatusOverview;
         } finally {
             // getOrRestorePackageExecutionContext return an PackageExecutionContext than can be shared and reused, it should be only closed here if it's not shared
