@@ -39,6 +39,7 @@ import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanFilter;
@@ -49,6 +50,8 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
+import step.repositories.TestSetTestRunsParser;
+import step.expressions.ExpressionHandler;
 import step.resources.*;
 
 import java.io.*;
@@ -111,9 +114,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new ObjectId().toString(),
                 new AutomationPackageFile(artifact, null), false, null, actorUser);
             TestSetStatusOverview overview = new TestSetStatusOverview();
-            List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
-                .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
-            overview.setRuns(runs);
+            overview.setRuns(getTestRuns(ctx, repositoryParameters));
             return overview;
         } finally {
             if (ctx != null) {
@@ -313,6 +314,25 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     protected Stream<Plan> getFilteredPackagePlans(AutomationPackage ap, Map<String, String> repositoryParameters, AutomationPackageManager apManager) {
         PlanMultiFilter planFilter = getPlanFilter(repositoryParameters);
         return apManager.getPackagePlans(ap.getId()).stream().filter(p -> planFilter == null || planFilter.isSelected(p));
+    }
+
+    /**
+     * When plans are wrapped into a test set, each filtered plan of the package is a test case. Otherwise, if the single
+     * filtered plan is a {@link TestSet}, its test cases are parsed like for plans of the local repository.
+     */
+    protected List<TestRunStatus> getTestRuns(PackageExecutionContext ctx, Map<String, String> repositoryParameters) {
+        AutomationPackage ap = ctx.getAutomationPackage();
+        AutomationPackageManager apManager = ctx.getAutomationPackageManager();
+        List<Plan> plans = getFilteredPackagePlans(ap, repositoryParameters, apManager).collect(Collectors.toList());
+        if (!isWrapPlansIntoTestSet(repositoryParameters) && plans.size() == 1 && TestSetTestRunsParser.isTestSet(plans.get(0))) {
+            // Called plans are resolved within the package only
+            InMemoryPlanAccessor packagePlanAccessor = new InMemoryPlanAccessor();
+            apManager.getPackagePlans(ap.getId()).forEach(packagePlanAccessor::save);
+            try (ExpressionHandler expressionHandler = new ExpressionHandler()) {
+                return new TestSetTestRunsParser(packagePlanAccessor, expressionHandler).getTestRuns(plans.get(0), o -> true);
+            }
+        }
+        return plans.stream().map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
     }
 
     protected String getPlanName(Plan plan) {
