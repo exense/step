@@ -84,17 +84,20 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     protected final FunctionTypeRegistry functionTypeRegistry;
     protected final FunctionAccessor functionAccessor;
     protected final ResourceManager resourceManager;
+    protected final ExpressionHandler expressionHandler;
 
     public RepositoryWithAutomationPackageSupport(Set<String> canonicalRepositoryParameters,
                                                   AutomationPackageManager manager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
-                                                  ResourceManager resourceManager) {
+                                                  ResourceManager resourceManager,
+                                                  ExpressionHandler expressionHandler) {
         super(canonicalRepositoryParameters);
         this.manager = manager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
         this.resourceManager = resourceManager;
+        this.expressionHandler = expressionHandler;
     }
 
     protected boolean isLayeredAccessor(Accessor<?> accessor) {
@@ -307,9 +310,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             // Called plans are resolved within the package only
             InMemoryPlanAccessor packagePlanAccessor = new InMemoryPlanAccessor();
             apManager.getPackagePlans(ap.getId()).forEach(packagePlanAccessor::save);
-            try (ExpressionHandler expressionHandler = new ExpressionHandler()) {
-                return new TestSetTestRunsParser(packagePlanAccessor, expressionHandler).getTestRuns(plans.get(0), o -> true);
-            }
+            return new TestSetTestRunsParser(packagePlanAccessor, expressionHandler).getTestRuns(plans.get(0), o -> true);
         }
         return plans.stream().map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
     }

@@ -20,6 +20,7 @@ package step.repositories.artifact;
 
 import ch.exense.commons.app.Configuration;
 import org.mockito.Mockito;
+import step.expressions.ExpressionHandler;
 import step.automation.packages.*;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
@@ -86,7 +87,7 @@ public abstract class AbstractMavenArtifactRepositoryTest {
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
         this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), resourceManager, automationPackageReaderRegistry, hookRegistry);
-        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, resourceManager);
+        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, resourceManager, new ExpressionHandler());
 
         // mock the context, which is normally prepared via FunctionPlugin
         executionContext = ExecutionEngine.builder().build().newExecutionContext();

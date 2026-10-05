@@ -77,7 +77,8 @@ public class AutomationPackageRepositoriesPlugin extends AbstractControllerPlugi
                 ControllerSetting setting = controllerSettingAccessor.getSettingByKey(ISOLATED_AP_HOUSEKEEPING_TTL);
                 return setting == null ? null : setting.getValue();
             },
-            localRepository.toPath()
+            localRepository.toPath(),
+            context.getExpressionHandler()
         );
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
         context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
@@ -87,7 +88,8 @@ public class AutomationPackageRepositoriesPlugin extends AbstractControllerPlugi
             context.require(AutomationPackageManager.class),
             context.require(FunctionTypeRegistry.class),
             context.require(FunctionAccessor.class),
-            context.getResourceManager()
+            context.getResourceManager(),
+            context.getExpressionHandler()
         );
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.LOCAL_AUTOMATION_PACKAGE, localApRepository);
         context.put(LocalAutomationPackageRepository.class, localApRepository);

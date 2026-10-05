@@ -19,6 +19,7 @@
 package step.automation.packages.execution;
 
 import org.bson.types.ObjectId;
+import step.expressions.ExpressionHandler;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
@@ -46,8 +47,8 @@ import java.util.Set;
  */
 public class LocalAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
-    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, ResourceManager resourceManager) {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, resourceManager);
+    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, ResourceManager resourceManager, ExpressionHandler expressionHandler) {
+        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, resourceManager, expressionHandler);
     }
 
     @Override
