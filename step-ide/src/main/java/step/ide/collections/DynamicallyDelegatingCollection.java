@@ -30,7 +30,8 @@ public class DynamicallyDelegatingCollection<T> implements Collection<T> {
     /**
      * @param type       the class of the entities this collection returns
      * @param sourceType the class the collection of the current factory holds its entities as. When it differs from
-     *                   the type, a parent class of it for instance, the entities are converted when read
+     *                   the type, a parent class of it for instance, the entities are converted when read and the
+     *                   collection is a read-only view
      */
     public DynamicallyDelegatingCollection(String name, Class<T> type, Class<?> sourceType, CollectionFactory currentFactory) {
         this.name = name;
@@ -105,12 +106,22 @@ public class DynamicallyDelegatingCollection<T> implements Collection<T> {
 
     @Override
     public T save(T entity) {
+        requireWritable();
         return current().save(entity);
     }
 
     @Override
     public void save(Iterable<T> entities) {
+        requireWritable();
         current().save(entities);
+    }
+
+    private void requireWritable() {
+        if (sourceType != type) {
+            throw new UnsupportedOperationException("The collection '" + name + "' requested as " + type.getSimpleName() +
+                " is a read-only view of its " + sourceType.getSimpleName() + " entities. Entities must be saved through the collection requested as " +
+                sourceType.getSimpleName() + ".");
+        }
     }
 
     @Override

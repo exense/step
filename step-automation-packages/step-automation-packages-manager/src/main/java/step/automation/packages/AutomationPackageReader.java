@@ -334,6 +334,14 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     private void readPlainTextPlans(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
         // parse plain - text plans
         for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
+            // the schema does not require the file, and is not enforced by default
+            if (plainTextPlan == null || plainTextPlan.getFile() == null || plainTextPlan.getFile().isBlank()) {
+                String planName = plainTextPlan == null ? null : plainTextPlan.getName();
+                throw new AutomationPackageReadingException("Invalid plain text plan" +
+                        (planName == null ? "" : " '" + planName + "'") +
+                        " in the automation package: the 'file' property is missing. It must reference a plain text plan file, or a pattern such as 'plans/*.plan', " +
+                        "relative to the root of the automation package.");
+            }
             String invalidPlainTextPlanReference = "Invalid plain text plan reference '" + plainTextPlan.getFile() + "' in the automation package: ";
             try {
                 List<URL> urls;
