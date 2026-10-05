@@ -8,6 +8,7 @@ import step.framework.server.ControllerServer;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -142,8 +143,22 @@ public class LocalIDE {
      * directory and of the shell it was started from. Null if it cannot be determined.
      */
     private static Path getInstallationDirectory() {
+        // Started from the executable (step.exe, the step script or the jar), the class path is that single file. The
+        // classes of the IDE are then in a jar nested in it, whose location is not a file of the file system
+        String classPath = System.getProperty("java.class.path", "");
+        if (!classPath.isBlank() && !classPath.contains(File.pathSeparator)) {
+            Path executable = Path.of(classPath).toAbsolutePath().normalize();
+            if (Files.isRegularFile(executable)) {
+                return executable.getParent();
+            }
+        }
         try {
-            Path codeLocation = Path.of(LocalIDE.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toAbsolutePath().normalize();
+            URL codeLocationUrl = LocalIDE.class.getProtectionDomain().getCodeSource().getLocation();
+            if (!"file".equals(codeLocationUrl.getProtocol())) {
+                logger.warn("Unable to determine the installation directory of the IDE from {}, the overlay {} is only looked up in the working directory", codeLocationUrl, OVERLAY_FILE_NAME);
+                return null;
+            }
+            Path codeLocation = Path.of(codeLocationUrl.toURI()).toAbsolutePath().normalize();
             return Files.isDirectory(codeLocation) ? codeLocation : codeLocation.getParent();
         } catch (Exception e) {
             logger.warn("Unable to determine the installation directory of the IDE, the overlay {} is only looked up in the working directory", OVERLAY_FILE_NAME, e);
