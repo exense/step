@@ -22,6 +22,7 @@ import ch.exense.commons.app.Configuration;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
+import step.expressions.ExpressionHandler;
 import step.automation.packages.AutomationPackageManager;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
@@ -58,8 +59,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     private final Duration cleanupFrequency;
 
     public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, Configuration configuration,
-                                   ControllerSettingAccessor controllerSettingAccessor, ResourceManager resourceManager) {
-        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, resourceManager);
+                                   ControllerSettingAccessor controllerSettingAccessor, ResourceManager resourceManager, ExpressionHandler expressionHandler) {
+        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, resourceManager, expressionHandler);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
         maxAge = Duration.ofMinutes(configuration.getPropertyAsLong(CONFIGURATION_MAVEN_MAX_AGE, DEFAULT_MAVEN_MAX_AGE));

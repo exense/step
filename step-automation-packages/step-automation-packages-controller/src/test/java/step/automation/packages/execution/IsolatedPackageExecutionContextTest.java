@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import step.expressions.ExpressionHandler;
 import step.automation.packages.AbstractAutomationPackageManagerTest;
 import step.automation.packages.execution.RepositoryWithAutomationPackageSupport.AutomationPackageFile;
 import step.automation.packages.execution.RepositoryWithAutomationPackageSupport.IsolatedPackageExecutionContext;
@@ -73,7 +74,7 @@ public class IsolatedPackageExecutionContextTest extends AbstractAutomationPacka
         stagingRoot = temporaryFolder.newFolder("temp_staging_ap");
         manager.setIsolatedResourcesRoot(isolatedRoot);
         manager.setStagingResourcesRoot(stagingRoot);
-        repository = new IsolatedAutomationPackageRepository(manager, resourceManager, functionTypeRegistry, functionAccessor, () -> null, null) {
+        repository = new IsolatedAutomationPackageRepository(manager, resourceManager, functionTypeRegistry, functionAccessor, () -> null, null, new ExpressionHandler()) {
         };
         apFile = new AutomationPackageFile(new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME), null);
     }

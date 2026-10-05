@@ -20,6 +20,7 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.expressions.ExpressionHandler;
 import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.execution.RepositoryWithAutomationPackageSupport;
@@ -41,8 +42,8 @@ public abstract class AbstractArtifactRepository extends RepositoryWithAutomatio
 
     public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager,
                                       FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,
-                                      ResourceManager resourceManager) {
-        super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor, resourceManager);
+                                      ResourceManager resourceManager, ExpressionHandler expressionHandler) {
+        super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor, resourceManager, expressionHandler);
     }
 
     protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {

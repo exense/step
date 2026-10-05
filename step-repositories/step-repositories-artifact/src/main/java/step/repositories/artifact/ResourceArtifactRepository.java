@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.repositories.artifact;
 
+import step.expressions.ExpressionHandler;
 import step.automation.packages.AutomationPackageManager;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectPredicate;
@@ -37,8 +38,8 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
     protected static final String PARAM_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID;
 
-    public ResourceArtifactRepository(ResourceManager resourceManager, AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
-        super(Set.of(PARAM_RESOURCE_ID), manager, functionTypeRegistry, functionAccessor, resourceManager); // artifact_id = resource_id
+    public ResourceArtifactRepository(ResourceManager resourceManager, AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, ExpressionHandler expressionHandler) {
+        super(Set.of(PARAM_RESOURCE_ID), manager, functionTypeRegistry, functionAccessor, resourceManager, expressionHandler); // artifact_id = resource_id
     }
 
     @Override
