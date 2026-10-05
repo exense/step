@@ -22,7 +22,6 @@ import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.expressions.ExpressionHandler;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackageManager;
@@ -31,7 +30,9 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
@@ -72,10 +73,11 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                                                   ResourceManager resourceManager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
+                                                  PlanAccessor planAccessor,
                                                   Supplier<String> ttlValueSupplier,
                                                   Path mavenCachePath,
                                                   ExpressionHandler expressionHandler) {
-        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, resourceManager, expressionHandler);
+        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, planAccessor, resourceManager, expressionHandler);
         this.ttlValueSupplier = ttlValueSupplier;
         this.mavenCachePath = mavenCachePath;
     }
