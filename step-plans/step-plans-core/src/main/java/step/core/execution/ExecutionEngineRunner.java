@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.execution;
 
+import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,7 @@ import step.engine.execution.ExecutionVeto;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -69,6 +71,7 @@ public class ExecutionEngineRunner {
     private final RepositoryObjectManager repositoryObjectManager;
     private final PlanAccessor planAccessor;
     private final FunctionAccessor functionAccessor;
+    private final DateTimeFormatter dateTimeFormatter;
     // Temporary switch to disable the aggregated report. Remove as soon as SED-3464 is fixed
     private final boolean aggregatedReportEnabled;
 
@@ -80,7 +83,18 @@ public class ExecutionEngineRunner {
         this.repositoryObjectManager = executionContext.getRepositoryObjectManager();
         this.planAccessor = executionContext.getPlanAccessor();
         this.functionAccessor = executionContext.get(FunctionAccessor.class);
+        this.dateTimeFormatter = createFormatter(executionContext.getConfiguration());
         aggregatedReportEnabled = executionContext.getConfiguration().getPropertyAsBoolean("execution.engine.report.aggregated.enabled", true);
+    }
+
+    private static DateTimeFormatter createFormatter(Configuration configuration) {
+        String pattern = configuration.getProperty("timestampvariables.pattern", ExecutionTimings.DEFAULT_FORMATTER_PATTERN);
+        try {
+            return DateTimeFormatter.ofPattern(pattern);
+        } catch (Exception e) {
+            logger.warn("Exception while instantiating DateTimeFormatter with user-configured pattern \"{}\", falling back to default \"{}\"", pattern, ExecutionTimings.DEFAULT_FORMATTER_PATTERN, e);
+            return DateTimeFormatter.ofPattern(ExecutionTimings.DEFAULT_FORMATTER_PATTERN);
+        }
     }
 
     protected PlanRunnerResult execute() {
@@ -97,7 +111,7 @@ public class ExecutionEngineRunner {
                 saveFailureReportWithResult(ReportNodeStatus.VETOED);
             } else {
                 try {
-                    ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_IMPORT);
+                    ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_IMPORT, dateTimeFormatter);
                     Plan plan = getPlanFromExecutionParametersOrImport();
                     addPlanToContextAndUpdateExecution(plan);
 
@@ -128,7 +142,7 @@ public class ExecutionEngineRunner {
                     if (!executionContext.isSimulation()) {
                         logger.debug(messageWithId("Execution ended. Exporting report...."));
                         updateStatus(ExecutionStatus.EXPORTING);
-                        ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_EXPORT);
+                        ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_EXPORT, dateTimeFormatter);
                         exportExecution(executionContext);
                         logger.info(messageWithId("Execution report exported."));
                     } else {
@@ -257,10 +271,10 @@ public class ExecutionEngineRunner {
                 // Do not update the status if the execution was aborted
                 updateStatus(ExecutionStatus.RUNNING);
             }
-            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_START);
+            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_START, dateTimeFormatter);
             return artefactHandlerManager.execute(root, rootReportNode, ParentSource.MAIN);
         } finally {
-            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_END);
+            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_END, dateTimeFormatter);
             try {
                 //Flush report node TS
                 executionContext.require(ReportNodeTimeSeries.class).flush();
