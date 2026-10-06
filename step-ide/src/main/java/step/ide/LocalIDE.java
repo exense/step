@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 
 public class LocalIDE {
@@ -42,11 +41,11 @@ public class LocalIDE {
         if (configuredResourcesDirectory == null || configuredResourcesDirectory.isBlank()) {
             // No resources directory configured: the resources only live as long as the IDE
             var resourcesDirectory = Files.createTempDirectory("step-ide-resources-");
-            model.addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
+            model.addDirectoriesToCleanupOnShutdown(resourcesDirectory, fileManagerDirectory);
             configuration.putProperty("resources.dir", resourcesDirectory.toString());
         } else {
             logger.info("Using the configured resources directory: {}", new File(configuredResourcesDirectory).getAbsolutePath());
-            model.addDirectoriesToCleanupOnShutdown(List.of(fileManagerDirectory));
+            model.addDirectoriesToCleanupOnShutdown(fileManagerDirectory);
         }
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
         configuration.putProperty("ui.resource.root", model.getIdeResourcePath());
@@ -103,20 +102,20 @@ public class LocalIDE {
         String explicitLocation = System.getProperty(OVERLAY_FILE_NAME);
         if (explicitLocation != null && !explicitLocation.isBlank()) {
             Path explicitOverlay = Path.of(explicitLocation).toAbsolutePath().normalize();
-            logger.info("Looking for overlay {} at {} (system property {})", OVERLAY_FILE_NAME, explicitOverlay, OVERLAY_FILE_NAME);
+            logger.debug("Looking for overlay {} at {} (system property {})", OVERLAY_FILE_NAME, explicitOverlay, OVERLAY_FILE_NAME);
             return applicableOverlay(explicitOverlay, true);
         }
         Path workingDirectoryOverlay = Path.of(OVERLAY_FILE_NAME).toAbsolutePath().normalize();
         Path installationDirectory = getInstallationDirectory();
         Path installationOverlay = installationDirectory == null ? null : installationDirectory.resolve(OVERLAY_FILE_NAME);
         if (installationOverlay == null || installationOverlay.equals(workingDirectoryOverlay)) {
-            logger.info("Looking for overlay {} in {}", OVERLAY_FILE_NAME, workingDirectoryOverlay.getParent());
+            logger.debug("Looking for overlay {} in {}", OVERLAY_FILE_NAME, workingDirectoryOverlay.getParent());
             return applicableOverlay(workingDirectoryOverlay);
         }
-        logger.info("Looking for overlay {} in {} (working directory) and {} (installation directory)", OVERLAY_FILE_NAME, workingDirectoryOverlay.getParent(), installationDirectory);
+        logger.debug("Looking for overlay {} in {} (working directory) and {} (installation directory)", OVERLAY_FILE_NAME, workingDirectoryOverlay.getParent(), installationDirectory);
         if (Files.isRegularFile(workingDirectoryOverlay)) {
             if (Files.isRegularFile(installationOverlay)) {
-                logger.info("Overlay {} found in both locations. Applying the one of the working directory: {}. Ignoring: {}", OVERLAY_FILE_NAME, workingDirectoryOverlay, installationOverlay);
+                logger.info("Overlay {} found in two locations. Applying the one of the working directory: {}. Ignoring: {}", OVERLAY_FILE_NAME, workingDirectoryOverlay, installationOverlay);
                 return workingDirectoryOverlay;
             }
             return applicableOverlay(workingDirectoryOverlay);

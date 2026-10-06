@@ -35,7 +35,6 @@ import step.resources.ResourceManagerImpl;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -330,10 +329,10 @@ public class LocalIDEModel implements ExecutionDiversion {
         this.fileResolver = fileResolver;
     }
 
-    public void addDirectoriesToCleanupOnShutdown(Collection<Path> directories) {
-        this.directoriesToCleanupOnShutdown.addAll(Objects.requireNonNull(directories));
-        if (logger.isDebugEnabled()) {
-            for (Path directory : directoriesToCleanupOnShutdown) {
+    public void addDirectoriesToCleanupOnShutdown(Path... directories) {
+        for (Path directory : Objects.requireNonNull(directories)) {
+            this.directoriesToCleanupOnShutdown.add(Objects.requireNonNull(directory));
+            if (logger.isDebugEnabled()) {
                 logger.debug("Registering directory for cleanup on shutdown: {}", directory.toAbsolutePath());
             }
         }
