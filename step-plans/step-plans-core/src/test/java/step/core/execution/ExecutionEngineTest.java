@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.core.execution;
 
-import org.junit.Assert;
 import org.junit.Test;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.handlers.CheckArtefactHandler;
@@ -37,7 +36,11 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
-import step.core.repositories.*;
+import step.core.repositories.AbstractRepository;
+import step.core.repositories.ArtefactInfo;
+import step.core.repositories.ImportResult;
+import step.core.repositories.RepositoryObjectReference;
+import step.core.repositories.TestSetStatusOverview;
 import step.engine.execution.ExecutionVeto;
 import step.engine.execution.ExecutionVetoer;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
@@ -45,14 +48,23 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class ExecutionEngineTest {
 
@@ -350,8 +362,9 @@ public class ExecutionEngineTest {
         assertNotNull("import timestamp variable must be set", importIso.get());
         assertNotNull("exec start timestamp variable must be set", startIso.get());
 
-        Instant importTs = OffsetDateTime.parse(importIso.get()).toInstant();
-        Instant startTs = OffsetDateTime.parse(startIso.get()).toInstant();
+        DateTimeFormatter format = DateTimeFormatter.ofPattern(ExecutionTimings.DEFAULT_FORMATTER_PATTERN);
+        Instant importTs = OffsetDateTime.parse(importIso.get(), format).toInstant();
+        Instant startTs = OffsetDateTime.parse(startIso.get(), format).toInstant();
 
         assertTrue("test start must precede import", precedes(testStart, importTs));
         assertTrue("import must precede execution start", precedes(importTs, startTs));
