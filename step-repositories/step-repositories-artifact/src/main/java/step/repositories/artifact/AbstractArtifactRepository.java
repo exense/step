@@ -26,7 +26,9 @@ import step.automation.packages.execution.RepositoryWithAutomationPackageSupport
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManager;
@@ -40,9 +42,9 @@ public abstract class AbstractArtifactRepository extends RepositoryWithAutomatio
     protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
 
     public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager,
-                                      FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,
-                                      ResourceManager resourceManager) {
-        super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor, resourceManager);
+                                      FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, PlanAccessor planAccessor,
+                                      ResourceManager resourceManager, ExpressionHandler expressionHandler) {
+        super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor, planAccessor, resourceManager, expressionHandler);
     }
 
     protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {

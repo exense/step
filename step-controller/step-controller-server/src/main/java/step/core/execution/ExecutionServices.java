@@ -349,7 +349,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
         }
     }
 
-    @Operation(description = "Returns a flat aggregated report view for the provided execution and aggregation parameters.")
+    @Operation(description = "Returns a flat aggregated report view for the provided execution and aggregation parameters. When filtering by artefact classes, matching artefacts nested in another matching artefact are not returned.")
     @POST
     @Path("/{id}/report/aggregated/flat")
     @Consumes(MediaType.APPLICATION_JSON)

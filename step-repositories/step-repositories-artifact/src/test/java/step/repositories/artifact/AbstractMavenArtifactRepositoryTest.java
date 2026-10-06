@@ -28,6 +28,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.InMemoryPlanAccessor;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.type.AbstractFunctionType;
@@ -86,7 +87,7 @@ public abstract class AbstractMavenArtifactRepositoryTest {
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
         this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), resourceManager, automationPackageReaderRegistry, hookRegistry);
-        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, resourceManager);
+        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, null, configuration, controllerSettingAccessor, resourceManager, new ExpressionHandler());
 
         // mock the context, which is normally prepared via FunctionPlugin
         executionContext = ExecutionEngine.builder().build().newExecutionContext();

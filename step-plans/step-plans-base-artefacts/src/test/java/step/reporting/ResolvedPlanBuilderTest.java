@@ -161,6 +161,40 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
+    public void flatReportWithNestedTestCases() throws IOException {
+        Plan plan = PlanBuilder.create()
+            .startBlock(sequence())
+            .startBlock(testCase("TC1"))
+            .add(echo("'Echo1'"))
+            .startBlock(testCase("NestedTC"))
+            .add(echo("'Echo2'"))
+            .endBlock()
+            .endBlock()
+            .startBlock(sequence())
+            .startBlock(testCase("TC2"))
+            .add(echo("'Echo3'"))
+            .endBlock()
+            .endBlock()
+            .endBlock().build();
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, null, true, List.of("TestCase"));
+
+        // Nested test cases must not be returned in the flat report
+        FlatAggregatedReport flatAggregatedReport = aggregatedReportViewBuilder.buildFlatAggregatedReport(aggregatedReportViewRequest);
+        assertEquals("[TC1: 1x: PASSED\n" +
+                ", TC2: 1x: PASSED\n" +
+                "]",
+            flatAggregatedReport.aggregatedReportViews.toString());
+
+        // Without filtering, all nodes are returned
+        flatAggregatedReport = aggregatedReportViewBuilder.buildFlatAggregatedReport(new AggregatedReportViewRequest());
+        assertEquals(8, flatAggregatedReport.aggregatedReportViews.size());
+    }
+
+    @Test
     public void simpleTestWithErrors() throws IOException {
         Plan plan = PlanBuilder.create()
             .startBlock(BaseArtefacts.threadGroup(1, 4))
