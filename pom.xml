@@ -9,8 +9,6 @@
   <artifactId>step</artifactId>
   <version>0.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-
-  <!-- required metadata for maven central -->
   <name>${project.groupId}:${project.artifactId}</name>
   <description>Step: the first open-source automation platform for unified agile testing</description>
   <url>https://github.com/exense/step</url>
@@ -68,6 +66,11 @@
     <repository>
       <id>nexus-exense</id>
       <url>https://nexus-enterprise.exense.ch/repository/exense/</url>
+    </repository>
+    <!-- public nexus OSS -->
+    <repository>
+      <id>nexus-exense-oss</id>
+      <url>https://nexus-enterprise.exense.ch/repository/maven-oss/</url>
     </repository>
   </repositories>
 
@@ -394,12 +397,6 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!-- Central maven plugins versions management -->
-        <plugin>
-          <groupId>org.sonatype.central</groupId>
-          <artifactId>central-publishing-maven-plugin</artifactId>
-          <version>0.8.0</version>
-        </plugin>
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
@@ -750,25 +747,6 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin>
-
-          <!-- Disable old maven-deploy plugin -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-
-          <!-- Publish directly to central instead -->
-          <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <extensions>true</extensions>
-            <configuration>
-              <publishingServerId>sonatype</publishingServerId>
-            </configuration>
           </plugin>
         </plugins>
       </build>
