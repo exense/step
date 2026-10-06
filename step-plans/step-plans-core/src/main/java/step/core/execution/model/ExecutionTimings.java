@@ -31,8 +31,8 @@ import java.util.Objects;
  */
 public class ExecutionTimings {
     private static final Logger logger = LoggerFactory.getLogger(ExecutionTimings.class);
-    // Strict ISO-8601 with (always) exactly 3 digits for milliseconds, and timezone; e.g. 2026-09-08T13:09:54.740+02:00
-    private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    // Strict ISO-8601 with (always) exactly 3 digits for milliseconds, and timezone; e.g. 2026-09-08T13:09:54.740+0200
+    public static final String DEFAULT_FORMATTER_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSxx";
 
     private ExecutionTimings() {
     }
@@ -48,12 +48,12 @@ public class ExecutionTimings {
         STEP_EXEC_TIMESTAMP_EXPORT,
     }
 
-    public static void recordTimestamp(ExecutionContext context, TimestampVar timing) {
+    public static void recordTimestamp(ExecutionContext context, TimestampVar timing, DateTimeFormatter formatter) {
         // Won't happen with current code, but for good measure:
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(timing, "timing must not be null");
 
-        String isoLocal = formatTimestamp(OffsetDateTime.now());
+        String isoLocal = formatTimestamp(formatter, OffsetDateTime.now());
 
         // Variables are saved to the root node
         context.getVariablesManager().putVariable(context.getReport(), timing.name(), isoLocal);
@@ -63,7 +63,7 @@ public class ExecutionTimings {
     }
 
     // Exposed as package-private static method for unit tests
-    static String formatTimestamp(OffsetDateTime time) {
-        return time.truncatedTo(ChronoUnit.MILLIS).format(ISO_FORMATTER);
+    static String formatTimestamp(DateTimeFormatter formatter, OffsetDateTime time) {
+        return time.format(formatter);
     }
 }
