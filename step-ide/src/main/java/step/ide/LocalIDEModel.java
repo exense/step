@@ -35,7 +35,6 @@ import step.resources.ResourceManagerImpl;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -62,6 +61,7 @@ public class LocalIDEModel implements ExecutionDiversion {
     private ResourceManagerImpl resourceManager;
     private IDEDelegator delegator;
     private Path currentAutomationPackageDirectory;
+    private volatile List<String> currentAutomationPackageWarnings = List.of();
     private FileResolver fileResolver;
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
@@ -149,6 +149,8 @@ public class LocalIDEModel implements ExecutionDiversion {
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
         this.currentAutomationPackageDirectory = apDir.toAbsolutePath().normalize();
         this.fileResolver.setUnprefixedRoot(apDir);
+        this.currentAutomationPackageWarnings = List.copyOf(AutomationPackageProjectInspector.inspect(apDir));
+        currentAutomationPackageWarnings.forEach(logger::warn);
     }
 
     private Path findAutomationPackageDescriptorPath(Path apDirectory) {
@@ -193,7 +195,12 @@ public class LocalIDEModel implements ExecutionDiversion {
     public void validateExistingAutomationPackageDirectory(Path apDirectory) {
         Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, false);
         if (findAutomationPackageDescriptorPath(resolvedDir) == null) {
-            throw new IllegalArgumentException("Directory " + resolvedDir + " does not contain an automation package descriptor");
+            String message = "Directory " + resolvedDir + " does not contain an automation package descriptor.";
+            Path resourcesDirectory = AutomationPackageProjectInspector.findResourcesDirectoryWithDescriptor(resolvedDir).orElse(null);
+            if (resourcesDirectory != null) {
+                message += " One was found in " + resourcesDirectory + ": open that directory instead.";
+            }
+            throw new IllegalArgumentException(message);
         }
     }
 
@@ -260,6 +267,15 @@ public class LocalIDEModel implements ExecutionDiversion {
     public void closeCurrentAutomationPackage() {
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(null);
         this.currentAutomationPackageDirectory = null;
+        this.currentAutomationPackageWarnings = List.of();
+    }
+
+    /**
+     * @return what the user should be warned of regarding the currently opened automation package, for instance that
+     * it belongs to a Java project defining keywords in code. Empty if there is nothing to warn of
+     */
+    public List<String> getCurrentAutomationPackageWarnings() {
+        return currentAutomationPackageWarnings;
     }
 
     public void setDelegator(IDEDelegator delegator) {
@@ -313,10 +329,10 @@ public class LocalIDEModel implements ExecutionDiversion {
         this.fileResolver = fileResolver;
     }
 
-    public void addDirectoriesToCleanupOnShutdown(Collection<Path> directories) {
-        this.directoriesToCleanupOnShutdown.addAll(Objects.requireNonNull(directories));
-        if (logger.isDebugEnabled()) {
-            for (Path directory : directoriesToCleanupOnShutdown) {
+    public void addDirectoriesToCleanupOnShutdown(Path... directories) {
+        for (Path directory : Objects.requireNonNull(directories)) {
+            this.directoriesToCleanupOnShutdown.add(Objects.requireNonNull(directory));
+            if (logger.isDebugEnabled()) {
                 logger.debug("Registering directory for cleanup on shutdown: {}", directory.toAbsolutePath());
             }
         }
@@ -385,10 +401,11 @@ public class LocalIDEModel implements ExecutionDiversion {
     }
 
     /**
-     * Returns the local agent provisioning options configured in the CLI properties.
+     * Returns the local agent provisioning options configured in the CLI properties, or the default ones when the
+     * IDE was not started through the CLI launcher.
      */
     public LocalAgentProvisioningConfiguration localAgentConfiguration() {
-        return requireDelegator().localAgentConfiguration();
+        return delegator != null ? delegator.localAgentConfiguration() : new LocalAgentProvisioningConfiguration();
     }
 
     private IDEDelegator requireDelegator() {

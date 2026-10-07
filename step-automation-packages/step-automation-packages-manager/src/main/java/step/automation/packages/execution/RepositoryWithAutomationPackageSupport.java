@@ -82,6 +82,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
     public static final String PACKAGE_LIBRARY_MAVEN_SOURCE = "package-library-maven-source";
 
+    private static final List<String> PLAN_FILTER_PARAMETERS = List.of(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS, ArtifactRepositoryConstants.PARAM_INCLUDE_CATEGORIES,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES);
+    private static final int MAX_LISTED_PLANS = 10;
+
     // context id -> automation package manager (cache)
     protected final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
     protected final AutomationPackageManager manager;
@@ -156,16 +161,17 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             if (!isWrapPlansIntoTestSet(repositoryParameters)) {
                 // if we don't wrap into test set, we should have one and only filtered plan
                 List<Plan> filteredPlans = getFilteredPackagePlans(automationPackage, repositoryParameters, ctx.getAutomationPackageManager()).collect(Collectors.toList());
+                String packageName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
                 if (filteredPlans.isEmpty()) {
-                    result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no applicable plan to execute"));
+                    result.setErrors(List.of("No plan to execute was found in the automation package '" + packageName + "': "
+                        + describeNoMatchingPlan(repositoryParameters)));
                     return result;
                 }
                 if (filteredPlans.size() > 1) {
-                    result.setErrors(List.of("Automation package " +
-                        automationPackage.getAttribute(AbstractOrganizableObject.NAME) +
-                        " has ambiguous plan for execution: " +
-                        filteredPlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()))
-                    );
+                    result.setErrors(List.of("Unable to determine which plan to execute in the automation package '" + packageName + "': "
+                        + describeMatchingPlans(filteredPlans, repositoryParameters) + " An execution runs exactly one plan: refine the filters"
+                        + " so that a single plan matches, or set " + ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET
+                        + "=true to run all matching plans together in one test set."));
                     return result;
                 }
 
@@ -312,6 +318,42 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             multiFilter.add(new PlanByExcludedCategoriesFilter(parseList(repositoryParameters.get(ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES))));
         }
         return new PlanMultiFilter(multiFilter);
+    }
+
+    /**
+     * @return the plan filters set in the repository parameters, as "name=value" pairs. Null if none is set
+     */
+    private static String describePlanFilters(Map<String, String> repositoryParameters) {
+        String filters = PLAN_FILTER_PARAMETERS.stream()
+            .filter(parameter -> repositoryParameters.get(parameter) != null)
+            .map(parameter -> parameter + "=" + repositoryParameters.get(parameter))
+            .collect(Collectors.joining(", "));
+        return filters.isEmpty() ? null : filters;
+    }
+
+    private static String describeNoMatchingPlan(Map<String, String> repositoryParameters) {
+        String filters = describePlanFilters(repositoryParameters);
+        return filters == null ? "it contains no plan."
+            : "none of its plans match the filters of this execution (" + filters + ").";
+    }
+
+    private static String describeMatchingPlans(List<Plan> plans, Map<String, String> repositoryParameters) {
+        String filters = describePlanFilters(repositoryParameters);
+        List<String> names = plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList());
+        StringBuilder description = new StringBuilder();
+        description.append(plans.size());
+        description.append(filters == null ? " plans match, as no filter is set for this execution"
+            : " plans match the filters of this execution (" + filters + ")");
+        description.append(": ");
+        description.append(names.stream().limit(MAX_LISTED_PLANS).map(name -> "'" + name + "'").collect(Collectors.joining(", ")));
+        if (names.size() > MAX_LISTED_PLANS) {
+            description.append("... and ").append(names.size() - MAX_LISTED_PLANS).append(" more");
+        }
+        description.append(".");
+        if (new HashSet<>(names).size() < names.size()) {
+            description.append(" Several plans of the package have the same name.");
+        }
+        return description.toString();
     }
 
     private List<String> parseList(String string) {

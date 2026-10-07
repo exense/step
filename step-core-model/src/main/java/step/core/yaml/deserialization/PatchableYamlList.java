@@ -21,6 +21,7 @@ package step.core.yaml.deserialization;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
 import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 
 import java.util.ArrayList;
@@ -138,6 +139,13 @@ public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlM
 
     @Override
     public void onParsed(JsonLocation startLocation, PatchingParserDelegate parser) {
+        // The list is always written as a block sequence. Its items reuse their original lines, except the items of a
+        // flow sequence, which have no lines of their own and are serialized instead
+        for (T item : this) {
+            if (item instanceof PatchableYamlModelBase patchableItem && !patchingContext.claimedAsBlockSequenceItem(patchableItem)) {
+                patchableItem.setModified();
+            }
+        }
         bounds = patchingContext.claimChunk(startLocation, parser.getLastDistinctLocation(), this);
     }
 }

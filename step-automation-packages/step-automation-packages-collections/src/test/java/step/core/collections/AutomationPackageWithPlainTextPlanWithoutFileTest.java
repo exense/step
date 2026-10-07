@@ -17,7 +17,7 @@ import step.resources.LocalResourceManagerImpl;
 
 import java.io.File;
 
-public class AutomationPackageWithNonexistentFragmentTest {
+public class AutomationPackageWithPlainTextPlanWithoutFileTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -29,10 +29,10 @@ public class AutomationPackageWithNonexistentFragmentTest {
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
         var reader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
         try {
-            reader.getAutomationPackageYamlFragmentManager(new File("src/test/resources/testdata/ap-with-nonexisting-fragment"), new LocalResourceManagerImpl(tempFolder.getRoot()), false);
+            reader.getAutomationPackageYamlFragmentManager(new File("src/test/resources/testdata/ap-with-plain-text-plan-without-file"), new LocalResourceManagerImpl(tempFolder.getRoot()), false);
             Assert.fail("Expected exception");
         } catch (AutomationPackageReadingException e) {
-            Assert.assertEquals("Invalid fragment reference 'nonexisting.yml' in the automation package: The file 'nonexisting.yml' could not be found in the automation package. Paths must be relative to the root of the automation package; please check the spelling and case.", e.getMessage());
+            Assert.assertEquals("Invalid plain text plan 'My plain text plan' in the automation package: the 'file' property is missing. It must reference a plain text plan file, or a pattern such as 'plans/*.plan', relative to the root of the automation package.", e.getMessage());
         }
     }
 }

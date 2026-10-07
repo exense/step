@@ -161,7 +161,6 @@ public class PatchingContextTest {
             active: false
             cron: "*/5 * * * *"
             planName: "First Plan"
-            executionParameters: {}
         """;
 
 

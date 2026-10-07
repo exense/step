@@ -1,0 +1,27 @@
+---
+version: 1.3.0
+name: "step-demo-3"
+fragments: ["fragments/*.yaml"]
+plans:
+  # Functional test: a visitor goes to the exense.ch website.
+  - name: "Exense"
+#    metadata:
+#      origin: ai
+#      ai:
+#        executionId: "6abe4ee16fbc1475a79380b2"
+#        testCase: "Exense"
+    agents: auto_detect
+    root:
+      testCase:
+        nodeName: "Exense"
+        children:
+          - callKeyword:
+              nodeName: "Go to exense.ch"
+              keyword: "openHomePage"
+
+# Technical configuration shared by every plan of the package, passed to the
+# keywords as properties (strings). Business data stays in the keyword inputs.
+parameters:
+  # Set to "false" to watch the browser while the plan runs
+  - key: headless
+    value: "true"

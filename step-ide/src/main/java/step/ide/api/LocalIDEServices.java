@@ -122,7 +122,7 @@ public class LocalIDEServices extends AbstractStepServices {
 
     }
 
-    public record AutomationPackageDescriptor(String directory, String name) {
+    public record AutomationPackageDescriptor(String directory, String name, List<String> warnings) {
     }
 
     @GET
@@ -133,7 +133,7 @@ public class LocalIDEServices extends AbstractStepServices {
         if (dir == null) {
             return null;
         }
-        return new AutomationPackageDescriptor(dir.toString(), model().getCurrentAutomationPackageName());
+        return new AutomationPackageDescriptor(dir.toString(), model().getCurrentAutomationPackageName(), model().getCurrentAutomationPackageWarnings());
     }
 
     @POST

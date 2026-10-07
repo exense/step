@@ -35,7 +35,9 @@ import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
+import step.core.repositories.ImportResult;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManager;
 
 import java.io.File;
@@ -44,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -151,6 +154,58 @@ public class IsolatedPackageExecutionContextTest extends AbstractAutomationPacka
             assertNull(executionContext.get(PackageExecutionContext.class));
             assertNull(executionContext.getExecutionParameters().getSharedContextId());
             assertNull(executionContext.getExecutionAccessor().get(executionContext.getExecutionId()).getExecutionParameters().getSharedContextId());
+        } finally {
+            sharedContext.close();
+        }
+    }
+
+    @Test
+    public void importFailsWhenSeveralPlansMatch() throws IOException {
+        // No filter and no wrapping into a test set: all the plans of the package match
+        ImportResult result = importWithParameters(Map.of());
+
+        assertFalse(result.isSuccessful());
+        assertEquals(1, result.getErrors().size());
+        String error = result.getErrors().get(0);
+        assertTrue(error, error.startsWith("Unable to determine which plan to execute in the automation package '"));
+        assertTrue(error, error.contains(" plans match, as no filter is set for this execution: '"));
+        assertTrue(error, error.endsWith("An execution runs exactly one plan: refine the filters so that a single plan matches,"
+            + " or set wrapPlans=true to run all matching plans together in one test set."));
+    }
+
+    @Test
+    public void importFailsWhenNoPlanMatches() throws IOException {
+        ImportResult result = importWithParameters(Map.of(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, "No such plan",
+            ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES, "No such category"));
+
+        assertFalse(result.isSuccessful());
+        assertEquals(1, result.getErrors().size());
+        String error = result.getErrors().get(0);
+        assertTrue(error, error.startsWith("No plan to execute was found in the automation package '"));
+        assertTrue(error, error.endsWith("': none of its plans match the filters of this execution"
+            + " (includePlans=No such plan, excludeCategories=No such category)."));
+    }
+
+    /**
+     * Imports the plan to execute from the sample package, with the given repository parameters in addition to the
+     * ones designating the package
+     */
+    private ImportResult importWithParameters(Map<String, String> additionalRepositoryParameters) throws IOException {
+        ObjectId contextId = new ObjectId();
+        String sharedContextId = new ObjectId().toString();
+        IsolatedPackageExecutionContext sharedContext = createStoredSharedContext(contextId, sharedContextId);
+
+        try (ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext()) {
+            executionContext.put(FunctionAccessor.class, new InMemoryFunctionAccessorImpl());
+            executionContext.getExecutionParameters().setSharedContextId(sharedContextId);
+            Execution execution = new Execution();
+            execution.setId(new ObjectId(executionContext.getExecutionId()));
+            execution.setExecutionParameters(executionContext.getExecutionParameters());
+            executionContext.getExecutionAccessor().save(execution);
+
+            Map<String, String> repositoryParameters = new HashMap<>(getRepositoryParameters(contextId, sharedContext));
+            repositoryParameters.putAll(additionalRepositoryParameters);
+            return repository.importArtefact(executionContext, repositoryParameters);
         } finally {
             sharedContext.close();
         }

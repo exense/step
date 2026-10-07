@@ -195,8 +195,9 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
         logger.info("Extracting the Java agent to {}...", installedDirectory);
         try (InputStream embedded = JavaLocalAgentProvider.class.getClassLoader().getResourceAsStream(EMBEDDED_AGENT_RESOURCE)) {
             if (embedded == null) {
-                throw new LocalAgentException("This CLI does not embed the Java agent, and no Java agent was configured."
-                    + " Point --localAgentJava at an unpacked Step agent installation.");
+                throw new LocalAgentException("The Java agent is not shipped with this Step installation, and no Java agent was configured."
+                    + " Set " + LocalAgentProvisioningConfiguration.optionHint(LocalAgentProvisioningConfiguration.OPTION_JAVA_AGENT, "<path>")
+                    + " to an unpacked Step agent installation.");
             }
             Files.createDirectories(installedDirectory);
             // Written next to the target and moved into place, so that a CLI interrupted mid-extraction (or a
