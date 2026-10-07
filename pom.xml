@@ -69,8 +69,8 @@
     </repository>
     <!-- public nexus OSS -->
     <repository>
-      <id>nexus-exense-oss</id>
-      <url>https://nexus-enterprise.exense.ch/repository/maven-oss/</url>
+      <id>exense-oss</id>
+      <url>https://repository.exense.ch/maven-oss/</url>
     </repository>
   </repositories>
 
