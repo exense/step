@@ -33,6 +33,7 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.resources.ResourceManager;
@@ -73,7 +74,7 @@ public class IsolatedPackageExecutionContextTest extends AbstractAutomationPacka
         stagingRoot = temporaryFolder.newFolder("temp_staging_ap");
         manager.setIsolatedResourcesRoot(isolatedRoot);
         manager.setStagingResourcesRoot(stagingRoot);
-        repository = new IsolatedAutomationPackageRepository(manager, resourceManager, functionTypeRegistry, functionAccessor, () -> null, null) {
+        repository = new IsolatedAutomationPackageRepository(manager, resourceManager, functionTypeRegistry, functionAccessor, null, () -> null, null, new ExpressionHandler()) {
         };
         apFile = new AutomationPackageFile(new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME), null);
     }

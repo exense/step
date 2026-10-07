@@ -39,16 +39,20 @@ import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.InMemoryPlanAccessor;
+import step.core.plans.LayeredPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanFilter;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.filters.*;
 import step.core.repositories.*;
+import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
+import step.repositories.TestSetTestRunsParser;
 import step.resources.*;
 
 import java.io.*;
@@ -83,18 +87,24 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     protected final AutomationPackageManager manager;
     protected final FunctionTypeRegistry functionTypeRegistry;
     protected final FunctionAccessor functionAccessor;
+    protected final PlanAccessor planAccessor;
     protected final ResourceManager resourceManager;
+    protected final ExpressionHandler expressionHandler;
 
     public RepositoryWithAutomationPackageSupport(Set<String> canonicalRepositoryParameters,
                                                   AutomationPackageManager manager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
-                                                  ResourceManager resourceManager) {
+                                                  PlanAccessor planAccessor,
+                                                  ResourceManager resourceManager,
+                                                  ExpressionHandler expressionHandler) {
         super(canonicalRepositoryParameters);
         this.manager = manager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
+        this.planAccessor = planAccessor;
         this.resourceManager = resourceManager;
+        this.expressionHandler = expressionHandler;
     }
 
     protected boolean isLayeredAccessor(Accessor<?> accessor) {
@@ -111,9 +121,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new ObjectId().toString(),
                 new AutomationPackageFile(artifact, null), false, null, actorUser);
             TestSetStatusOverview overview = new TestSetStatusOverview();
-            List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
-                .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
-            overview.setRuns(runs);
+            overview.setRuns(getTestRuns(ctx, repositoryParameters, objectPredicate));
             return overview;
         } finally {
             if (ctx != null) {
@@ -313,6 +321,31 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     protected Stream<Plan> getFilteredPackagePlans(AutomationPackage ap, Map<String, String> repositoryParameters, AutomationPackageManager apManager) {
         PlanMultiFilter planFilter = getPlanFilter(repositoryParameters);
         return apManager.getPackagePlans(ap.getId()).stream().filter(p -> planFilter == null || planFilter.isSelected(p));
+    }
+
+    /**
+     * When plans are wrapped into a test set, each filtered plan of the package is a test case. Otherwise, if the single
+     * filtered plan is a {@link TestSet}, its test cases are parsed like for plans of the local repository.
+     */
+    protected List<TestRunStatus> getTestRuns(PackageExecutionContext ctx, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+        AutomationPackage ap = ctx.getAutomationPackage();
+        AutomationPackageManager apManager = ctx.getAutomationPackageManager();
+        List<Plan> plans = getFilteredPackagePlans(ap, repositoryParameters, apManager).collect(Collectors.toList());
+        if (!isWrapPlansIntoTestSet(repositoryParameters) && plans.size() == 1 && TestSetTestRunsParser.isTestSet(plans.get(0))) {
+            // Called plans are resolved within the package first, then among the globally available plans
+            InMemoryPlanAccessor packagePlanAccessor = new InMemoryPlanAccessor();
+            apManager.getPackagePlans(ap.getId()).forEach(packagePlanAccessor::save);
+            PlanAccessor testSetPlanAccessor = packagePlanAccessor;
+            ObjectPredicate planPredicate = o -> true;
+            if (planAccessor != null) {
+                testSetPlanAccessor = new LayeredPlanAccessor(List.of(packagePlanAccessor, planAccessor));
+                // Package plans are always visible, global plans only if they match the provided predicate
+                planPredicate = o -> (o instanceof Plan && packagePlanAccessor.get(((Plan) o).getId()) != null)
+                    || objectPredicate == null || objectPredicate.test(o);
+            }
+            return new TestSetTestRunsParser(testSetPlanAccessor, expressionHandler).getTestRuns(plans.get(0), planPredicate);
+        }
+        return plans.stream().map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
     }
 
     protected String getPlanName(Plan plan) {
