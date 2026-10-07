@@ -9,8 +9,6 @@
   <artifactId>step</artifactId>
   <version>0.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-
-  <!-- required metadata for maven central -->
   <name>${project.groupId}:${project.artifactId}</name>
   <description>Step: the first open-source automation platform for unified agile testing</description>
   <url>https://github.com/exense/step</url>
@@ -65,6 +63,14 @@
       <snapshots>
         <enabled>true</enabled>
         <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+    <!-- public nexus OSS -->
+    <repository>
+      <id>exense-oss</id>
+      <url>https://repository.exense.ch/maven-oss/</url>
+      <snapshots>
+        <enabled>false</enabled>
       </snapshots>
     </repository>
   </repositories>
@@ -454,12 +460,6 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!-- Central maven plugins versions management -->
-        <plugin>
-          <groupId>org.sonatype.central</groupId>
-          <artifactId>central-publishing-maven-plugin</artifactId>
-          <version>0.8.0</version>
-        </plugin>
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
@@ -818,29 +818,6 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin>
-
-          <!-- Disable old maven-deploy plugin -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-
-          <!-- Publish directly to central instead -->
-          <plugin>
-            <groupId>org.sonatype.central</groupId>
-            <artifactId>central-publishing-maven-plugin</artifactId>
-            <extensions>true</extensions>
-            <configuration>
-              <publishingServerId>sonatype</publishingServerId>
-              <!-- Build-time only, embedded in the CLI -->
-              <excludeArtifacts>
-                <excludeArtifact>step-agent-bundle</excludeArtifact>
-              </excludeArtifacts>
-            </configuration>
           </plugin>
         </plugins>
       </build>
