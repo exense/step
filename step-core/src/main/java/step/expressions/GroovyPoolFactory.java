@@ -20,13 +20,17 @@ package step.expressions;
 
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
+import groovy.lang.GroovySystem;
 import groovy.lang.Script;
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.codehaus.groovy.control.CompilerConfiguration;
+import org.codehaus.groovy.reflection.ClassInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.beans.Introspector;
 
 public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey, GroovyPoolEntry> {
 
@@ -74,6 +78,20 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
 
     @Override
     public void destroyObject(GroovyPoolKey groovyPoolKey, PooledObject<GroovyPoolEntry> pooledObject) throws Exception {
+        // This is not absolutely, strictly, required (these objects do eventually get properly garbage-collected),
+        // but it helps the system to remove unneeded objects/references swiftly.
+        if (pooledObject != null && pooledObject.getObject() != null) {
+            Script script = pooledObject.getObject().getScript();
+            if (script != null) {
+                Class<?> scriptClass = script.getClass();
+                GroovySystem.getMetaClassRegistry().removeMetaClass(scriptClass);
+                ClassInfo.remove(scriptClass);
+                Introspector.flushFromCaches(scriptClass);
+                if (scriptClass.getClassLoader() instanceof GroovyClassLoader groovyLoader) {
+                    groovyLoader.clearCache();
+                }
+            }
+        }
     }
 
     @Override

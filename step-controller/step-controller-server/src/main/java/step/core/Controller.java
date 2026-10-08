@@ -21,6 +21,7 @@ package step.core;
 import ch.exense.commons.app.Configuration;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.commons.activation.Activator;
 import step.core.access.User;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.AbstractAccessor;
@@ -68,7 +69,17 @@ import step.framework.server.access.AuthorizationManager;
 import step.framework.server.access.NoAuthorizationManager;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.resources.*;
+import step.resources.Resource;
+import step.resources.ResourceAccessor;
+import step.resources.ResourceAccessorImpl;
+import step.resources.ResourceEntity;
+import step.resources.ResourceImporter;
+import step.resources.ResourceManager;
+import step.resources.ResourceManagerControllerPlugin;
+import step.resources.ResourceManagerImpl;
+import step.resources.ResourceRevision;
+import step.resources.ResourceRevisionAccessor;
+import step.resources.ResourceRevisionAccessorImpl;
 
 import java.io.File;
 import java.io.IOException;
@@ -185,7 +196,19 @@ public class Controller {
             configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal", 1000),
             configuration.getPropertyAsInteger("tec.expressions.pool.maxTotalPerKey", 50),
             configuration.getPropertyAsInteger("tec.expressions.pool.maxIdlePerKey", -1),
-            configuration.getPropertyAsInteger("tec.expressions.pool.monitoringIntervalSeconds", 60)));
+            configuration.getPropertyAsInteger("tec.expressions.pool.monitoringIntervalSeconds", 60))
+        );
+
+        // Activator (used for evaluating activation expressions for instance of Parameters) gets its own ExpressionHandler instance;
+        // It's OK to set this static field from here, as Controller is effectively also a Singleton.
+        Activator.setGroovyExpressionHandler(new ExpressionHandler(null,
+            configuration.getPropertyAsInteger("tec.activationExpressions.warningthreshold", 200),
+            configuration.getPropertyAsInteger("tec.activationExpressions.pool.maxtotal", 1000),
+            configuration.getPropertyAsInteger("tec.activationExpressions.pool.maxTotalPerKey", 50),
+            configuration.getPropertyAsInteger("tec.activationExpressions.pool.maxIdlePerKey", -1),
+            configuration.getPropertyAsInteger("tec.activationExpressions.pool.monitoringIntervalSeconds", 60))
+        );
+
         context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 
         context.setEntityManager(new EntityManager());
