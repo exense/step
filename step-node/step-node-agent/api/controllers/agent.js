@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const {fork, spawn} = require("child_process");
 const Session = require('./session');
 const { OutputBuilder } = require('./output');
@@ -255,7 +256,10 @@ class Agent {
       return workspace.path;
     }
     const baseDir = path.resolve((this.agentContext.workingDir ?? '.'), 'npm-project-workspaces');
-    const workspacePath = path.join(baseDir, cacheKey);
+    // Name the folder with a short hash of the cache key: Windows cannot spawn executables whose path
+    // exceeds MAX_PATH (260 chars)
+    const workspaceName = crypto.createHash('sha256').update(cacheKey).digest('hex').substring(0, 16);
+    const workspacePath = path.join(baseDir, workspaceName);
     if (!fs.existsSync(workspacePath)) {
       logger.info(`Creating npm project workspace at ${workspacePath}`);
       await fs.promises.cp(keywordPackage.file, workspacePath, { recursive: true });
