@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.OptBoolean;
-import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.databind.JsonNode;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
@@ -63,11 +62,6 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
         if (!context.chunkClaimed(this)) {
             context.appendAndClaim(this, getCurrentYaml(""), PatchingContext.ChunkBounds.Portion.HEAD);
         }
-    }
-
-    @Override
-    public void onParsed(JsonLocation startLocation, PatchingParserDelegate parserDelegate) {
-        getPatchingContext().claimChunk(startLocation, startLocation, this);
     }
 
     @Override

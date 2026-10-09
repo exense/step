@@ -2,10 +2,12 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
+import step.core.yaml.deserialization.PatchingParserDelegate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -69,6 +71,25 @@ public class PatchingContext {
 
     public boolean chunkClaimed(PatchableYamlModel entity) {
         return getChunkBounds(entity).isPresent();
+    }
+
+    public String getUnclaimedChunkBefore(PatchableYamlModel item) {
+        Optional<ChunkBounds> chunkBoundsOptional = getChunkBounds(item);
+        if (chunkBoundsOptional.isEmpty()) {
+            return "";
+        }
+        ChunkBounds chunkBounds = chunkBoundsOptional.get();
+        ChunkBounds chunkBefore = chunks.lowerKey(chunkBounds);
+        if (chunkBefore == null) {
+            if (chunkBounds.startLineNumber > 1) {
+                return getChunk(new ChunkBounds(1, chunkBounds.startLineNumber - 1, ChunkBounds.Portion.BODY));
+            }
+            return "";
+        }
+        if (chunkBefore.endLineNumber + 1 < chunkBounds.startLineNumber) {
+            return getChunk(new ChunkBounds(chunkBefore.endLineNumber() + 1, chunkBounds.startLineNumber - 1, ChunkBounds.Portion.BODY));
+        }
+        return "";
     }
 
 
@@ -195,7 +216,7 @@ public class PatchingContext {
         String onlyIndent = contextIndent.replace('-', ' ');
         AtomicBoolean firstLine = new AtomicBoolean(true);
         return chunk.lines()
-            .map(line -> firstLine.getAndSet(false) ? contextIndent + line : onlyIndent + line)
+            .map(line -> firstLine.getAndSet(false) ? contextIndent + line : line.isEmpty() ? line : onlyIndent + line)
             .collect(Collectors.joining("\n", "", "\n"));
     }
 
@@ -252,9 +273,32 @@ public class PatchingContext {
     }
 
 
-    public ChunkBounds claimChunk(JsonLocation startLocation, JsonLocation endLocation, PatchableYamlModel entity) {
-        int startLineNumber = startLocation.getLineNr();
-        int endLineNumber = endLocation.getLineNr();
+    public ChunkBounds claimChunk(JsonLocation startLocation, PatchingParserDelegate parser, PatchableYamlModel entity) {
+        PatchingParserDelegate.TokenLocationPair pair = parser.getTokenLocationPair();
+
+        // Scan back to first token which does NOT indicate the end of an object or array,
+        // unless it is an empty object or array.
+        // This is so far the most generic way to find the last non-empty and non-comment line of an object
+        // of an empty object respectively array.
+        while ((pair.token() == JsonToken.END_OBJECT && pair.previous().token() != JsonToken.START_OBJECT)
+            || (pair.token() == JsonToken.END_ARRAY && pair.previous().token() != JsonToken.START_ARRAY)) {
+            pair = pair.previous();
+        }
+        int endLine = pair.location().getLineNr();
+
+        // Only exception found ist when the last scalar is a string defined via one of the block
+        // definition methods (|, |-, |+, >, >-, >+). In this case, there is no ending quote indicating the
+        // end of the string on its proper ending line, and so the parser location after parsing the
+        // VALUE_STRING token ends up on the next non-comment, non-empty line.
+        if (pair.token() == JsonToken.VALUE_STRING
+            && pair.location().getColumnNr() == 1 && startLocation.getLineNr() < endLine) {
+
+            endLine--;
+        }
+        return claimChunk(startLocation.getLineNr(), endLine, entity);
+    }
+
+    public ChunkBounds claimChunk(int startLineNumber, int endLineNumber, PatchableYamlModel entity) {
         ChunkBounds bounds = new ChunkBounds(startLineNumber, endLineNumber, ChunkBounds.Portion.BODY);
         chunks.put(bounds, entity);
         return bounds;

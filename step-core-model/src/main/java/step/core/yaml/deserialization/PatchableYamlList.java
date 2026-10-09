@@ -65,6 +65,7 @@ public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlM
         StringBuilder sb = new StringBuilder();
         sb.append(contextIndent).append(fieldName).append(":").append("\n");
         stream().map(item -> (PatchableYamlModel) item).forEach(item -> {
+            sb.append(patchingContext.getUnclaimedChunkBefore(item));
             sb.append(item.getCurrentYaml(childIndent));
         });
         return sb.toString();
@@ -138,6 +139,6 @@ public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlM
 
     @Override
     public void onParsed(JsonLocation startLocation, PatchingParserDelegate parser) {
-        bounds = patchingContext.claimChunk(startLocation, parser.getLastDistinctLocation(), this);
+        bounds = patchingContext.claimChunk(startLocation, parser, this);
     }
 }

@@ -25,14 +25,13 @@ import com.fasterxml.jackson.core.util.JsonParserDelegate;
 import step.core.yaml.PatchingContext;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class PatchingParserDelegate extends JsonParserDelegate {
 
-    private final Map<JsonToken, JsonLocation> locationForToken = new HashMap<>();
+    public record TokenLocationPair(JsonToken token, JsonLocation location, JsonLocation tokenLocation, TokenLocationPair previous) {
+    }
 
-    private JsonLocation lastDistinctLocation;
+    private TokenLocationPair tokenLocationPair = null;
 
     protected final PatchingContext patchingContext;
 
@@ -44,21 +43,16 @@ public class PatchingParserDelegate extends JsonParserDelegate {
 
     @Override
     public JsonToken nextToken() throws IOException {
-        JsonLocation preLocation = currentLocation();
-        JsonToken token = super.nextToken();
-        if (!preLocation.equals(currentLocation())) {
-            lastDistinctLocation = preLocation;
+        if (tokenLocationPair == null) {
+            tokenLocationPair = new TokenLocationPair(currentToken(), currentLocation(), currentTokenLocation(), null);
         }
-        locationForToken.put(token, currentLocation());
+        JsonToken token = super.nextToken();
+        tokenLocationPair = new TokenLocationPair(currentToken(), currentLocation(), currentTokenLocation(), tokenLocationPair);
         return token;
     }
 
-    protected JsonLocation getLastLocationForToken(JsonToken token) {
-        return locationForToken.get(token);
-    }
-
-    public JsonLocation getLastDistinctLocation() {
-        return lastDistinctLocation;
+    public TokenLocationPair getTokenLocationPair() {
+        return tokenLocationPair;
     }
 
     public PatchingContext getPatchingContext() {
