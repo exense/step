@@ -105,15 +105,13 @@ public class AutomationPackageYamlFragmentManager {
         businessObjectToYamlMappers = createBusinessObjectToYamlMappers(injectables);
         Collection<YamlToBusinessObjectMapper<?, ?>> yamlToBusinessObjectMappers = createYamlToBusinessObjectMappers(injectables);
 
-        initializeMaps(descriptorYaml, yamlToBusinessObjectMappers);
-
         importedFragments = fragments.stream()
             .filter(f -> f != descriptorYaml)
             .collect(Collectors.toList());
 
         // The mappers referring to other entities come last, each mapper being applied to the whole package
         yamlToBusinessObjectMappers.stream()
-            .sorted(Comparator.comparing((YamlToBusinessObjectMapper<?, ?> mapper) -> mapper.dependsOnOtherEntities()))
+            .sorted(Comparator.comparing(YamlToBusinessObjectMapper::dependsOnOtherEntities))
             .forEach(mapper -> {
                 descriptorYaml.initializeMaps(mapper, patchableMap, fragmentMap);
                 importedFragments.forEach(f -> f.initializeMaps(mapper, patchableMap, fragmentMap));
@@ -160,12 +158,6 @@ public class AutomationPackageYamlFragmentManager {
             return (T) constructor.newInstance(parameters);
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private void initializeMaps(AutomationPackageFragmentYaml fragment, Collection<YamlToBusinessObjectMapper<?, ?>> yamlObjectMappers) {
-        for (YamlToBusinessObjectMapper<?, ?> mapper : yamlObjectMappers) {
-            fragment.initializeMaps(mapper, patchableMap, fragmentMap);
         }
     }
 
