@@ -46,8 +46,13 @@ public class PatchableYamlListDeserializer extends CollectionDeserializer {
         if (p instanceof PatchingParserDelegate patchingParser) {
 
             PatchingParserDelegate.TokenLocationPair pair = patchingParser.getTokenLocationPair();
-            while (pair.token() != JsonToken.FIELD_NAME) {
+            while (pair != null && pair.token() != JsonToken.FIELD_NAME) {
                 pair = pair.previous();
+            }
+            if (pair == null) {
+                // Field name token not found, should never happen with current schema.
+                // would amount to having an array at root of the yaml document.
+                pair = patchingParser.getTokenLocationPair();
             }
             JsonLocation startLocation = pair.location();
 

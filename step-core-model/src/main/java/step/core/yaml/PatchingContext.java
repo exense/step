@@ -291,8 +291,9 @@ public class PatchingContext {
         // unless it is an empty object or array.
         // This is so far the most generic way to find the last non-empty and non-comment line of an object
         // of an empty object respectively array.
-        while ((pair.token() == JsonToken.END_OBJECT && pair.previous().token() != JsonToken.START_OBJECT)
-            || (pair.token() == JsonToken.END_ARRAY && pair.previous().token() != JsonToken.START_ARRAY)) {
+        while (pair.location() != startLocation && pair.previous() != null &&
+            ((pair.token() == JsonToken.END_OBJECT && pair.previous().token() != JsonToken.START_OBJECT)
+                || (pair.token() == JsonToken.END_ARRAY && pair.previous().token() != JsonToken.START_ARRAY))) {
             pair = pair.previous();
         }
         int endLine = pair.location().getLineNr();
