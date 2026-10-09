@@ -66,11 +66,6 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
     }
 
     @Override
-    public void onParsed(JsonLocation startLocation, PatchingParserDelegate parserDelegate) {
-        getPatchingContext().claimChunk(startLocation, startLocation, this);
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (!(o instanceof PatchableYamlPrimitive<?> that)) return false;
         return Objects.equals(value, that.value);

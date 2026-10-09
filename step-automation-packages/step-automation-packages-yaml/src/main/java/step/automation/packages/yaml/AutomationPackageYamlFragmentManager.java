@@ -111,7 +111,7 @@ public class AutomationPackageYamlFragmentManager {
 
         // The mappers referring to other entities come last, each mapper being applied to the whole package
         yamlToBusinessObjectMappers.stream()
-            .sorted(Comparator.comparing((YamlToBusinessObjectMapper<?, ?> mapper) -> mapper.dependsOnOtherEntities()))
+            .sorted(Comparator.comparing(YamlToBusinessObjectMapper::dependsOnOtherEntities))
             .forEach(mapper -> {
                 descriptorYaml.initializeMaps(mapper, patchableMap, fragmentMap);
                 importedFragments.forEach(f -> f.initializeMaps(mapper, patchableMap, fragmentMap));
