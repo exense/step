@@ -18,17 +18,23 @@
  ******************************************************************************/
 package step.expressions;
 
-import java.util.*;
-import java.util.Map.Entry;
-
-import groovy.lang.*;
+import groovy.lang.Binding;
+import groovy.lang.GString;
+import groovy.lang.MissingPropertyException;
+import groovy.lang.Script;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.commons.activation.GroovyExpressionHandler;
 
-public class ExpressionHandler implements AutoCloseable {
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+public class ExpressionHandler implements AutoCloseable, GroovyExpressionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
 

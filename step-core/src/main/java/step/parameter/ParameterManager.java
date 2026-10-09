@@ -18,16 +18,9 @@
  ******************************************************************************/
 package step.parameter;
 
-import java.util.*;
-
-import javax.script.Bindings;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
-
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ch.exense.commons.app.Configuration;
 import step.commons.activation.Activator;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -36,6 +29,14 @@ import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.exceptions.PluginCriticalException;
+
+import javax.script.Bindings;
+import javax.script.SimpleBindings;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ParameterManager {
 
@@ -125,11 +126,6 @@ public class ParameterManager {
                     parameterMap.put(p.key, parameters);
                 }
                 parameters.add(p);
-                try {
-                    Activator.compileActivationExpression(p, defaultScriptEngine);
-                } catch (ScriptException e) {
-                    logger.error("Error while compiling activation expression of parameter " + p, e);
-                }
             }
         });
 

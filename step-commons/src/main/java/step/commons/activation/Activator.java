@@ -18,10 +18,8 @@
  ******************************************************************************/
 package step.commons.activation;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -30,9 +28,10 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 public class Activator {
 
@@ -40,19 +39,7 @@ public class Activator {
 
     public static final Logger logger = LoggerFactory.getLogger(Activator.class);
 
-    public static <T extends ActivableObject> List<T> compileActivationExpressions(List<T> objects, String defaultScriptEngine) throws ScriptException {
-        for (ActivableObject object : objects) {
-            compileActivationExpression(object, defaultScriptEngine);
-        }
-        return objects;
-    }
-
-    public static void compileActivationExpression(ActivableObject object, String defaultScriptEngine) throws ScriptException {
-        Expression expression = object.getActivationExpression();
-        compileExpression(expression, defaultScriptEngine);
-    }
-
-    protected static void compileExpression(Expression expression, String defaultScriptEngine) throws ScriptException {
+    private static void compileExpression(Expression expression, String defaultScriptEngine) throws ScriptException {
         if (expression != null && expression.compiledScript == null) {
             String scriptEngine = expression.scriptEngine != null ? expression.scriptEngine : defaultScriptEngine;
 
@@ -68,9 +55,40 @@ public class Activator {
         }
     }
 
+    private static GroovyExpressionHandler groovyExpressionHandler;
+
+    public static void setGroovyExpressionHandler(GroovyExpressionHandler groovyExpressionHandler) {
+        Activator.groovyExpressionHandler = groovyExpressionHandler;
+    }
+
     public static Boolean evaluateActivationExpression(Bindings bindings, Expression activationExpression, String defaultScriptEngine) {
         Boolean expressionResult;
         if (activationExpression != null) {
+            // This block redirects Groovy evaluations to the groovyExpressionHandler because of a memory leak when using script.eval() with Groovy;
+            // the alternative implementation also provides much better performance by caching expressions.
+            // Other languages are unaffected, and if no handler is present it also uses the old path, but logs warnings on each evaluation.
+            if (activationExpression.script != null && !activationExpression.script.trim().isBlank()) {
+                String scriptEngine = activationExpression.scriptEngine != null ? activationExpression.scriptEngine : defaultScriptEngine;
+                if ("groovy".equals(scriptEngine)) {
+                    if (groovyExpressionHandler != null) {
+                        try {
+                            Object result = groovyExpressionHandler.evaluateGroovyExpression(activationExpression.getScript(), bindings);
+                            if (result instanceof Boolean bool) {
+                                return bool;
+                            } else {
+                                logger.warn("Groovy expression did not return a boolean result, interpreting as 'false': {} == {} ", activationExpression.script, result);
+                                return false;
+                            }
+                        } catch (Exception e) {
+                            // backward-compatible behavior
+                            logger.warn("Evaluation of Groovy expression threw an exception, returning 'false': {}", activationExpression.script, e);
+                            return false;
+                        }
+                    } else {
+                        logger.warn("No groovyExpressionHandler was found; using legacy code path that may leak memory over time; expression: {}", activationExpression.script);
+                    }
+                }
+            }
             try {
                 compileExpression(activationExpression, defaultScriptEngine);
             } catch (ScriptException e1) {
@@ -139,5 +157,8 @@ public class Activator {
         return result;
     }
 
+    public static GroovyExpressionHandler getGroovyExpressionHandler() {
+        return groovyExpressionHandler;
+    }
 }
 
