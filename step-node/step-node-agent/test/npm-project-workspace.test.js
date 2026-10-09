@@ -5,7 +5,7 @@ const Agent = require('../api/controllers/agent')
 
 // The workspace folder is named with a short hash rather than `${fileId}_${fileVersionId}_${tokenId}`: on
 // Windows, executables whose path exceeds MAX_PATH (260 chars) cannot be spawned, which the native binaries
-// installed in the workspace (e.g. claude.exe of the Claude Agent SDK) would otherwise easily do.
+// installed in the workspace would otherwise easily do.
 
 describe('npm project workspace', () => {
   const fileId = '6a7c3dd6-6b6e-43e7-8265-c1983cbe038e'
