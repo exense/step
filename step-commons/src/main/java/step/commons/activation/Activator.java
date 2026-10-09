@@ -39,19 +39,7 @@ public class Activator {
 
     public static final Logger logger = LoggerFactory.getLogger(Activator.class);
 
-    public static <T extends ActivableObject> List<T> compileActivationExpressions(List<T> objects, String defaultScriptEngine) throws ScriptException {
-        for (ActivableObject object : objects) {
-            compileActivationExpression(object, defaultScriptEngine);
-        }
-        return objects;
-    }
-
-    public static void compileActivationExpression(ActivableObject object, String defaultScriptEngine) throws ScriptException {
-        Expression expression = object.getActivationExpression();
-        compileExpression(expression, defaultScriptEngine);
-    }
-
-    protected static void compileExpression(Expression expression, String defaultScriptEngine) throws ScriptException {
+    private static void compileExpression(Expression expression, String defaultScriptEngine) throws ScriptException {
         if (expression != null && expression.compiledScript == null) {
             String scriptEngine = expression.scriptEngine != null ? expression.scriptEngine : defaultScriptEngine;
 
@@ -87,16 +75,17 @@ public class Activator {
                             Object result = groovyExpressionHandler.evaluateGroovyExpression(activationExpression.getScript(), bindings);
                             if (result instanceof Boolean bool) {
                                 return bool;
+                            } else {
+                                logger.warn("Groovy expression did not return a boolean result, interpreting as 'false': {} == {} ", activationExpression.script, result);
+                                return false;
                             }
-                            logger.warn("Groovy expression did not return a boolean result, interpreting as 'false': {} == {} ", activationExpression.script, result);
-                            return false;
                         } catch (Exception e) {
                             // backward-compatible behavior
                             logger.warn("Evaluation of Groovy expression threw an exception, returning 'false': {}", activationExpression.script, e);
                             return false;
                         }
                     } else {
-                        logger.warn("No groovyExpressionHandler was found; using legacy code path that may leak memory over time.");
+                        logger.warn("No groovyExpressionHandler was found; using legacy code path that may leak memory over time; expression: {}", activationExpression.script);
                     }
                 }
             }
@@ -168,5 +157,8 @@ public class Activator {
         return result;
     }
 
+    public static GroovyExpressionHandler getGroovyExpressionHandler() {
+        return groovyExpressionHandler;
+    }
 }
 

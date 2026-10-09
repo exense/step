@@ -255,6 +255,14 @@ public class Controller {
         if (reportNodeTimeSeries != null) {
             reportNodeTimeSeries.close();
         }
+        if (Activator.getGroovyExpressionHandler() != null) {
+            try {
+                Activator.getGroovyExpressionHandler().close();
+            } catch (Exception e) {
+                // no logger here, but this is extremely unlikely anyway
+                e.printStackTrace();
+            }
+        }
         serviceRegistrationCallback.stop();
     }
 
