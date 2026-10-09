@@ -31,7 +31,7 @@ describe('npm project workspace', () => {
     const workspacePath = await agent.getOrCreateNpmProjectWorkspace(tokenId, { fileId, fileVersionId, file: projectPath })
 
     expect(path.dirname(workspacePath)).toBe(path.join(workingDir, 'npm-project-workspaces'))
-    expect(path.basename(workspacePath)).toMatch(/^[0-9a-f]{16}$/)
+    expect(path.basename(workspacePath)).toMatch(/^[A-Za-z0-9_-]{12}$/)
     expect(fs.existsSync(path.join(workspacePath, 'package.json'))).toBe(true)
   })
 

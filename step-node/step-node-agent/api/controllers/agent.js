@@ -258,7 +258,7 @@ class Agent {
     const baseDir = path.resolve((this.agentContext.workingDir ?? '.'), 'npm-project-workspaces');
     // Name the folder with a short hash of the cache key: Windows cannot spawn executables whose path
     // exceeds MAX_PATH (260 chars)
-    const workspaceName = crypto.createHash('sha256').update(cacheKey).digest('hex').substring(0, 16);
+    const workspaceName = crypto.createHash('sha256').update(cacheKey).digest('base64url').substring(0, 12);
     const workspacePath = path.join(baseDir, workspaceName);
     if (!fs.existsSync(workspacePath)) {
       logger.info(`Creating npm project workspace at ${workspacePath}`);
