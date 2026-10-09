@@ -77,6 +77,7 @@ public class Activator {
         Boolean expressionResult;
         if (activationExpression != null) {
             // This block redirects Groovy evaluations to the groovyExpressionHandler because of a memory leak when using script.eval() with Groovy;
+            // the alternative implementation also provides much better performance by caching expressions.
             // Other languages are unaffected, and if no handler is present it also uses the old path, but logs warnings on each evaluation.
             if (activationExpression.script != null && !activationExpression.script.trim().isBlank()) {
                 String scriptEngine = activationExpression.scriptEngine != null ? activationExpression.scriptEngine : defaultScriptEngine;
@@ -92,6 +93,7 @@ public class Activator {
                         } catch (Exception e) {
                             // backward-compatible behavior
                             logger.warn("Evaluation of Groovy expression threw an exception, returning 'false': {}", activationExpression.script, e);
+                            return false;
                         }
                     } else {
                         logger.warn("No groovyExpressionHandler was found; using legacy code path that may leak memory over time.");
