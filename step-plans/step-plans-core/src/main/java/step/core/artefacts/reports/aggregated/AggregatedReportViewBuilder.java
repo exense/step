@@ -74,10 +74,13 @@ public class AggregatedReportViewBuilder {
     private static List<FlatAggregatedReportView> flattenAndFilterRecursively(AggregatedReportView aggregatedReportView, AggregatedReportViewRequest request) {
         List<FlatAggregatedReportView> result = new ArrayList<>();
         if (aggregatedReportView != null) {
-            if (shouldIncludeAggregatedReport(request, aggregatedReportView.artefact)) {
+            boolean included = shouldIncludeAggregatedReport(request, aggregatedReportView.artefact);
+            if (included) {
                 result.add(new FlatAggregatedReportView(aggregatedReportView));
             }
-            if (aggregatedReportView.children != null) {
+            // When filtering by artefact classes, descendants of a matching node are not returned (i.e. nested test cases)
+            boolean filtered = !request.filterArtefactClasses.isEmpty();
+            if (!(included && filtered) && aggregatedReportView.children != null) {
                 for (AggregatedReportView child : aggregatedReportView.children) {
                     result.addAll(flattenAndFilterRecursively(child, request));
                 }

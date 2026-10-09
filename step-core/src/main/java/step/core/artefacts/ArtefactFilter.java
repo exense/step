@@ -25,4 +25,6 @@ public abstract class ArtefactFilter {
 
     public abstract boolean isSelected(AbstractArtefact artefact);
 
+    public abstract boolean applies(AbstractArtefact artefact);
+
 }

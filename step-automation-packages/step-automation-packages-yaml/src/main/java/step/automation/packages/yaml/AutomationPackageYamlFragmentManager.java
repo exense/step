@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -99,6 +100,7 @@ public class AutomationPackageYamlFragmentManager {
 
         injectables.put(YamlPlanReader.class, descriptorReader.getPlanReader());
         injectables.put(StagingAutomationPackageContext.class, stagingContext);
+        injectables.put(AutomationPackageYamlFragmentManager.class, this);
 
         businessObjectToYamlMappers = createBusinessObjectToYamlMappers(injectables);
         Collection<YamlToBusinessObjectMapper<?, ?>> yamlToBusinessObjectMappers = createYamlToBusinessObjectMappers(injectables);
@@ -108,7 +110,14 @@ public class AutomationPackageYamlFragmentManager {
         importedFragments = fragments.stream()
             .filter(f -> f != descriptorYaml)
             .collect(Collectors.toList());
-        importedFragments.forEach(f -> initializeMaps(f, yamlToBusinessObjectMappers));
+
+        // The mappers referring to other entities come last, each mapper being applied to the whole package
+        yamlToBusinessObjectMappers.stream()
+            .sorted(Comparator.comparing((YamlToBusinessObjectMapper<?, ?> mapper) -> mapper.dependsOnOtherEntities()))
+            .forEach(mapper -> {
+                descriptorYaml.initializeMaps(mapper, patchableMap, fragmentMap);
+                importedFragments.forEach(f -> f.initializeMaps(mapper, patchableMap, fragmentMap));
+            });
     }
 
     private Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> createBusinessObjectToYamlMappers(Map<Class<?>, Object> injectables) {

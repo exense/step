@@ -1,0 +1,20 @@
+---
+version: 1.3.0
+name: "step-demo-3"
+fragments:
+  - "fragments/*.yaml"
+plans:
+  - name: "Exense"
+    root:
+      testCase:
+        nodeName: "Exense"
+        children:
+          - callKeyword:
+              nodeName: "Go to the exense website"
+              keyword: "openHomePage"
+
+# Technical configuration shared by every plan of the package, passed to the
+# keywords as properties (strings). Business data stays in the keyword inputs.
+parameters:
+  - key: headless
+    value: "true"

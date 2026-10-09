@@ -67,7 +67,8 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void afterInitializeData(GlobalContext context) throws Exception {
-        ExecutionScheduler scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
+        boolean schedulingAllowed = context.getConfiguration().getPropertyAsBoolean(ExecutionScheduler.CONFIGURATION_SCHEDULING_ALLOWED, true);
+        ExecutionScheduler scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context), schedulingAllowed);
         context.setScheduler(scheduler);
     }
 

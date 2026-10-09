@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class ResourcePathMatchingResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(ResourcePathMatchingResolver.class);
+    public static final String PATH_HINT = "Paths must be relative to the root of the automation package; please check the spelling and case.";
     private final ClassLoader classLoader;
 
     public ResourcePathMatchingResolver(ClassLoader classLoader) {
@@ -46,7 +47,7 @@ public class ResourcePathMatchingResolver {
             if (url != null) {
                 res.add(url);
             } else {
-                throw new IllegalArgumentException("Illegal resource definition, resource cannot be found: " + resourcePathPattern);
+                throw new IllegalArgumentException("The file '" + resourcePathPattern + "' could not be found in the automation package. " + PATH_HINT);
             }
         } else {
             for (URL resource : findPathMatchingResources(resourcePathPattern)) {
@@ -75,7 +76,7 @@ public class ResourcePathMatchingResolver {
             if (resource != null) {
                 findPathMatchingResourcesRecursive(pathArray, 0, resource, result);
             } else {
-                throw new IllegalArgumentException("Illegal resource definition, resource cannot be found: " + locationPattern);
+                throw new IllegalArgumentException("The pattern '" + locationPattern + "' could not be resolved: the automation package contains no folder or file named '" + rootPath + "'. " + PATH_HINT);
             }
         }
         return result;

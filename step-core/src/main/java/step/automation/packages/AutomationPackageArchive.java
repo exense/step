@@ -22,7 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.JarURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.Objects;
 
@@ -69,10 +71,22 @@ public abstract class AutomationPackageArchive implements Closeable {
             return null;
         }
         try {
-            return url.openStream();
+            return openStreamWithoutCaching(url);
         } catch (IOException e) {
             return null;
         }
+    }
+
+    /**
+     * Opens a stream on a resource of an automation package without caching. For a {@code jar:} URL the default
+     * {@link JarURLConnection} caches the underlying {@code JarFile} for the lifetime of the JVM, which keeps the
+     * archive open (and locked on Windows) even after the class loader of the archive is closed. Without caching
+     * the archive is released when the stream is closed.
+     */
+    public static InputStream openStreamWithoutCaching(URL url) throws IOException {
+        URLConnection connection = url.openConnection();
+        connection.setUseCaches(false);
+        return connection.getInputStream();
     }
 
     abstract public InputStream getResourceAsStream(String resourcePath) throws IOException;

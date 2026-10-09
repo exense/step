@@ -52,6 +52,11 @@ public class TestCaseFilter extends ArtefactFilter {
         }
     }
 
+    @Override
+    public boolean applies(AbstractArtefact artefact) {
+        return artefact instanceof TestCase;
+    }
+
     public List<String> getIncludedNames() {
         return includedNames;
     }

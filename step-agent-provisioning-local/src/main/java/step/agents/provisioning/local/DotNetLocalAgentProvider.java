@@ -95,8 +95,8 @@ public class DotNetLocalAgentProvider implements LocalAgentProvider {
     @Override
     public String getInstallationHint() {
         if (configuredAgentPath() == null) {
-            return "The .NET agent is a platform specific binary distribution and is not shipped with the CLI: point"
-                + " --localAgentDotNet or the " + AGENT_HOME_ENV_VAR + " environment variable at an installed Step .NET"
+            return "The .NET agent is a platform specific binary distribution and is not shipped with Step: set "
+                + dotNetAgentOptionHint() + " or the " + AGENT_HOME_ENV_VAR + " environment variable to an installed Step .NET"
                 + " agent for this platform.";
         }
         try {
@@ -181,18 +181,22 @@ public class DotNetLocalAgentProvider implements LocalAgentProvider {
      *
      * @return the {@code bin} directory of the installation, the one holding the agent executable
      */
+    private static String dotNetAgentOptionHint() {
+        return LocalAgentProvisioningConfiguration.optionHint(LocalAgentProvisioningConfiguration.OPTION_DOTNET_AGENT, "<path>");
+    }
+
     // Package private for the sake of the tests, which cover the layouts a user can point at without starting anything
     Path validateInstallation() throws LocalAgentException {
         Path configured = configuredAgentPath();
         if (configured == null) {
-            throw new LocalAgentException("No .NET agent is configured. Point --localAgentDotNet or the "
-                + AGENT_HOME_ENV_VAR + " environment variable at an installed Step .NET agent.");
+            throw new LocalAgentException("No .NET agent is configured. Set " + dotNetAgentOptionHint() + " or the "
+                + AGENT_HOME_ENV_VAR + " environment variable to an installed Step .NET agent.");
         }
         Path binDirectory = findBinDirectory(configured);
         if (binDirectory == null) {
             throw new LocalAgentException("The configured .NET agent " + configured + " contains no "
-                + AGENT_EXECUTABLE_NAME + ", neither directly nor in " + BIN_DIRECTORY_NAME + ". Point"
-                + " --localAgentDotNet at an installed Step .NET agent for this platform.");
+                + AGENT_EXECUTABLE_NAME + ", neither directly nor in " + BIN_DIRECTORY_NAME + ". Set "
+                + dotNetAgentOptionHint() + " to an installed Step .NET agent for this platform.");
         }
         Path worker = binDirectory.resolve(WORKER_DIRECTORY_NAME).resolve(WORKER_EXECUTABLE_NAME);
         if (!Files.isRegularFile(worker)) {

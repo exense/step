@@ -24,7 +24,6 @@ import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
@@ -32,8 +31,8 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
-import step.core.repositories.TestRunStatus;
 import step.core.repositories.TestSetStatusOverview;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
@@ -42,15 +41,14 @@ import step.resources.ResourceManager;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * The repository for artifacts already stored (deployed) in Step DB as automation packages
  */
 public class LocalAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
-    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, ResourceManager resourceManager) {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, resourceManager);
+    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, PlanAccessor planAccessor, ResourceManager resourceManager, ExpressionHandler expressionHandler) {
+        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, planAccessor, resourceManager, expressionHandler);
     }
 
     @Override
@@ -74,27 +72,18 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     @Override
     public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
         TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
-        if (isWrapPlansIntoTestSet(repositoryParameters)) {
-            PackageExecutionContext ctx = null;
-            try {
-                ctx = getOrRestorePackageExecutionContext(null, repositoryParameters, null, objectPredicate, actorUser);
-                //If wrap we return all plans of the AP
-                List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
-                    .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
-                testSetStatusOverview.setRuns(runs);
-                return testSetStatusOverview;
-            } finally {
-                // getOrRestorePackageExecutionContext return an PackageExecutionContext than can be shared and reused, it should be only closed here if it's not shared
-                // even if with current implementation Local context are never shared only non-wrapped isolated executions are
-                if (ctx != null && !ctx.isShared()) {
-                    ctx.close();
-                }
-            }
-        } else {
-            //We do not handle this case
+        PackageExecutionContext ctx = null;
+        try {
+            ctx = getOrRestorePackageExecutionContext(null, repositoryParameters, null, objectPredicate, actorUser);
+            testSetStatusOverview.setRuns(getTestRuns(ctx, repositoryParameters, objectPredicate));
             return testSetStatusOverview;
+        } finally {
+            // getOrRestorePackageExecutionContext return an PackageExecutionContext than can be shared and reused, it should be only closed here if it's not shared
+            // even if with current implementation Local context are never shared only non-wrapped isolated executions are
+            if (ctx != null && !ctx.isShared()) {
+                ctx.close();
+            }
         }
-
     }
 
     @Override

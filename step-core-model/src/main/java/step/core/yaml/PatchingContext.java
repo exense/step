@@ -92,6 +92,17 @@ public class PatchingContext {
         return "";
     }
 
+    /**
+     * @return whether the entity starts a line of its own with the item indicator ("- "), as the items of a block
+     * sequence do. The items of a flow sequence ("[a, b]") share their lines with the sequence and with each other:
+     * their claim may have been overridden by the one of the sequence, and their lines are not theirs alone
+     */
+    public boolean claimedAsBlockSequenceItem(PatchableYamlModel entity) {
+        return getChunkBounds(entity)
+            .map(bounds -> initialLines.get(bounds.startLineNumber - 1).stripLeading().startsWith("-"))
+            .orElse(false);
+    }
+
 
     public record ChunkBounds(int startLineNumber, int endLineNumber, Portion portion) implements Comparable<ChunkBounds> {
 

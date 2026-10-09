@@ -1,0 +1,7 @@
+keywords:
+  # role: Opens the website's home page as a visitor and verifies that it loaded successfully.
+  # inputs: url (string, optional) — defaults to "https://exense.ch/"; "exense.ch" is normalised to it
+  # outputs: pageTitle (string); finalUrl (string)
+  - Node:
+      name: openHomePage
+      jsfile: nodejs-keywords/

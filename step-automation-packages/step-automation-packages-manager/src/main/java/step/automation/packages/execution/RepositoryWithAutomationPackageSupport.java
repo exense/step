@@ -39,16 +39,20 @@ import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.InMemoryPlanAccessor;
+import step.core.plans.LayeredPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanFilter;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.filters.*;
 import step.core.repositories.*;
+import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
+import step.repositories.TestSetTestRunsParser;
 import step.resources.*;
 
 import java.io.*;
@@ -78,23 +82,34 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
     public static final String PACKAGE_LIBRARY_MAVEN_SOURCE = "package-library-maven-source";
 
+    private static final List<String> PLAN_FILTER_PARAMETERS = List.of(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS, ArtifactRepositoryConstants.PARAM_INCLUDE_CATEGORIES,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES);
+    private static final int MAX_LISTED_PLANS = 10;
+
     // context id -> automation package manager (cache)
     protected final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
     protected final AutomationPackageManager manager;
     protected final FunctionTypeRegistry functionTypeRegistry;
     protected final FunctionAccessor functionAccessor;
+    protected final PlanAccessor planAccessor;
     protected final ResourceManager resourceManager;
+    protected final ExpressionHandler expressionHandler;
 
     public RepositoryWithAutomationPackageSupport(Set<String> canonicalRepositoryParameters,
                                                   AutomationPackageManager manager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
-                                                  ResourceManager resourceManager) {
+                                                  PlanAccessor planAccessor,
+                                                  ResourceManager resourceManager,
+                                                  ExpressionHandler expressionHandler) {
         super(canonicalRepositoryParameters);
         this.manager = manager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
+        this.planAccessor = planAccessor;
         this.resourceManager = resourceManager;
+        this.expressionHandler = expressionHandler;
     }
 
     protected boolean isLayeredAccessor(Accessor<?> accessor) {
@@ -111,9 +126,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new ObjectId().toString(),
                 new AutomationPackageFile(artifact, null), false, null, actorUser);
             TestSetStatusOverview overview = new TestSetStatusOverview();
-            List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
-                .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
-            overview.setRuns(runs);
+            overview.setRuns(getTestRuns(ctx, repositoryParameters, objectPredicate));
             return overview;
         } finally {
             if (ctx != null) {
@@ -148,16 +161,17 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             if (!isWrapPlansIntoTestSet(repositoryParameters)) {
                 // if we don't wrap into test set, we should have one and only filtered plan
                 List<Plan> filteredPlans = getFilteredPackagePlans(automationPackage, repositoryParameters, ctx.getAutomationPackageManager()).collect(Collectors.toList());
+                String packageName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
                 if (filteredPlans.isEmpty()) {
-                    result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no applicable plan to execute"));
+                    result.setErrors(List.of("No plan to execute was found in the automation package '" + packageName + "': "
+                        + describeNoMatchingPlan(repositoryParameters)));
                     return result;
                 }
                 if (filteredPlans.size() > 1) {
-                    result.setErrors(List.of("Automation package " +
-                        automationPackage.getAttribute(AbstractOrganizableObject.NAME) +
-                        " has ambiguous plan for execution: " +
-                        filteredPlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()))
-                    );
+                    result.setErrors(List.of("Unable to determine which plan to execute in the automation package '" + packageName + "': "
+                        + describeMatchingPlans(filteredPlans, repositoryParameters) + " An execution runs exactly one plan: refine the filters"
+                        + " so that a single plan matches, or set " + ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET
+                        + "=true to run all matching plans together in one test set."));
                     return result;
                 }
 
@@ -306,6 +320,42 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new PlanMultiFilter(multiFilter);
     }
 
+    /**
+     * @return the plan filters set in the repository parameters, as "name=value" pairs. Null if none is set
+     */
+    private static String describePlanFilters(Map<String, String> repositoryParameters) {
+        String filters = PLAN_FILTER_PARAMETERS.stream()
+            .filter(parameter -> repositoryParameters.get(parameter) != null)
+            .map(parameter -> parameter + "=" + repositoryParameters.get(parameter))
+            .collect(Collectors.joining(", "));
+        return filters.isEmpty() ? null : filters;
+    }
+
+    private static String describeNoMatchingPlan(Map<String, String> repositoryParameters) {
+        String filters = describePlanFilters(repositoryParameters);
+        return filters == null ? "it contains no plan."
+            : "none of its plans match the filters of this execution (" + filters + ").";
+    }
+
+    private static String describeMatchingPlans(List<Plan> plans, Map<String, String> repositoryParameters) {
+        String filters = describePlanFilters(repositoryParameters);
+        List<String> names = plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList());
+        StringBuilder description = new StringBuilder();
+        description.append(plans.size());
+        description.append(filters == null ? " plans match, as no filter is set for this execution"
+            : " plans match the filters of this execution (" + filters + ")");
+        description.append(": ");
+        description.append(names.stream().limit(MAX_LISTED_PLANS).map(name -> "'" + name + "'").collect(Collectors.joining(", ")));
+        if (names.size() > MAX_LISTED_PLANS) {
+            description.append("... and ").append(names.size() - MAX_LISTED_PLANS).append(" more");
+        }
+        description.append(".");
+        if (new HashSet<>(names).size() < names.size()) {
+            description.append(" Several plans of the package have the same name.");
+        }
+        return description.toString();
+    }
+
     private List<String> parseList(String string) {
         return (string == null || string.isBlank()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
     }
@@ -313,6 +363,31 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     protected Stream<Plan> getFilteredPackagePlans(AutomationPackage ap, Map<String, String> repositoryParameters, AutomationPackageManager apManager) {
         PlanMultiFilter planFilter = getPlanFilter(repositoryParameters);
         return apManager.getPackagePlans(ap.getId()).stream().filter(p -> planFilter == null || planFilter.isSelected(p));
+    }
+
+    /**
+     * When plans are wrapped into a test set, each filtered plan of the package is a test case. Otherwise, if the single
+     * filtered plan is a {@link TestSet}, its test cases are parsed like for plans of the local repository.
+     */
+    protected List<TestRunStatus> getTestRuns(PackageExecutionContext ctx, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+        AutomationPackage ap = ctx.getAutomationPackage();
+        AutomationPackageManager apManager = ctx.getAutomationPackageManager();
+        List<Plan> plans = getFilteredPackagePlans(ap, repositoryParameters, apManager).collect(Collectors.toList());
+        if (!isWrapPlansIntoTestSet(repositoryParameters) && plans.size() == 1 && TestSetTestRunsParser.isTestSet(plans.get(0))) {
+            // Called plans are resolved within the package first, then among the globally available plans
+            InMemoryPlanAccessor packagePlanAccessor = new InMemoryPlanAccessor();
+            apManager.getPackagePlans(ap.getId()).forEach(packagePlanAccessor::save);
+            PlanAccessor testSetPlanAccessor = packagePlanAccessor;
+            ObjectPredicate planPredicate = o -> true;
+            if (planAccessor != null) {
+                testSetPlanAccessor = new LayeredPlanAccessor(List.of(packagePlanAccessor, planAccessor));
+                // Package plans are always visible, global plans only if they match the provided predicate
+                planPredicate = o -> (o instanceof Plan && packagePlanAccessor.get(((Plan) o).getId()) != null)
+                    || objectPredicate == null || objectPredicate.test(o);
+            }
+            return new TestSetTestRunsParser(testSetPlanAccessor, expressionHandler).getTestRuns(plans.get(0), planPredicate);
+        }
+        return plans.stream().map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
     }
 
     protected String getPlanName(Plan plan) {

@@ -50,7 +50,7 @@ public class PatchableYamlListDeserializer extends CollectionDeserializer {
                 pair = pair.previous();
             }
             JsonLocation startLocation = pair.location();
-            
+
             Collection<Object> entity = delegate.deserialize(p, ctxt, new ArrayList<>());
             PatchableYamlList<Object> patchableYamlList = new PatchableYamlList<>(entity, patchingParser.getPatchingContext(), patchingParser.currentName());
             patchableYamlList.onParsed(startLocation, patchingParser);

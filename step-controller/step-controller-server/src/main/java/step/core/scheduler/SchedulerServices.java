@@ -24,12 +24,16 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.bson.types.ObjectId;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.access.User;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityConstants;
+import step.core.execution.ExecutionDiversion;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
 import step.framework.server.audit.AuditLogger;
@@ -46,6 +50,7 @@ import java.util.*;
 public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskParameters> {
 
     private ExecutionScheduler scheduler;
+    private ExecutionDiversion executionDiversion;
 
     public SchedulerServices() {
         super(EntityConstants.tasks);
@@ -55,6 +60,8 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     public void init() throws Exception {
         super.init();
         scheduler = getScheduler();
+        // usually null, but the Studio diverts executions
+        executionDiversion = getContext().get(ExecutionDiversion.class);
     }
 
     @Operation(description = "Returns a new scheduler task instance as template. This instance will have to be saved using the dedicated service.")
@@ -117,7 +124,32 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Secured(right = "plan-execute")
     public String executeTask(@PathParam("id") String executionTaskID) {
         Session<User> session = getSession();
+        if (executionDiversion != null) {
+            return executionDiversion.divertExecution(getDivertedExecutionParameters(executionTaskID, session.getUser().getUsername()));
+        }
         return scheduler.executeExecutionTask(executionTaskID, session.getUser().getUsername());
+    }
+
+    /**
+     * The execution parameters of the task, as an execution of the task would use them. The diversion identifies the
+     * plan by its name, given as description: the name is taken from the plan the task refers to when it is found,
+     * from the description of the task otherwise.
+     */
+    private ExecutionParameters getDivertedExecutionParameters(String executionTaskID, String user) {
+        ExecutiontTaskParameters task = getEntity(executionTaskID);
+        ExecutionParameters executionParameters = task.getExecutionsParameters();
+        executionParameters.setUserID(user);
+        RepositoryObjectReference repositoryObject = executionParameters.getRepositoryObject();
+        if (repositoryObject != null && repositoryObject.getRepositoryParameters() != null) {
+            String planId = repositoryObject.getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID);
+            if (planId != null && ObjectId.isValid(planId)) {
+                Plan plan = getContext().getPlanAccessor().get(planId);
+                if (plan != null) {
+                    executionParameters.setDescription(plan.getAttribute(AbstractOrganizableObject.NAME));
+                }
+            }
+        }
+        return executionParameters;
     }
 
     @Operation(description = "Returns the next execution date of the given scheduler task as a timestamp.")
@@ -136,6 +168,9 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Secured(right = "scheduler-manage")
     public void enableAllExecutionTasksSchedule(@QueryParam("enabled") Boolean enabled) {
         if (enabled != null && enabled) {
+            if (!scheduler.isSchedulingAllowed()) {
+                throw new ControllerServiceException("The scheduler cannot be enabled: the scheduling is switched off by configuration");
+            }
             scheduler.enableAllExecutionTasksSchedule();
         } else {
             scheduler.disableAllExecutionTasksSchedule();

@@ -26,6 +26,8 @@ import step.automation.packages.AutomationPackageManager;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.PlanAccessor;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
@@ -57,9 +59,9 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     private final Duration maxAge;
     private final Duration cleanupFrequency;
 
-    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, Configuration configuration,
-                                   ControllerSettingAccessor controllerSettingAccessor, ResourceManager resourceManager) {
-        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, resourceManager);
+    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, PlanAccessor planAccessor, Configuration configuration,
+                                   ControllerSettingAccessor controllerSettingAccessor, ResourceManager resourceManager, ExpressionHandler expressionHandler) {
+        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, planAccessor, resourceManager, expressionHandler);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
         maxAge = Duration.ofMinutes(configuration.getPropertyAsLong(CONFIGURATION_MAVEN_MAX_AGE, DEFAULT_MAVEN_MAX_AGE));

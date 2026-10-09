@@ -41,13 +41,30 @@ public class ExecutionScheduler implements ExecutionLauncher {
     private List<ExecutionSchedulerHook> executionSchedulerHooks = new ArrayList<>();
 
     public static final String SETTING_SCHEDULER_ENABLED = "scheduler_enabled";
+    /**
+     * Configuration property to switch the scheduling off for good: no task is ever triggered, whatever the
+     * {@link #SETTING_SCHEDULER_ENABLED} setting, which cannot be enabled anymore. The tasks can still be edited.
+     */
+    public static final String CONFIGURATION_SCHEDULING_ALLOWED = "scheduler.scheduling.allowed";
+
+    private final boolean schedulingAllowed;
 
     public ExecutionScheduler(ControllerSettingAccessor controllerSettingAccessor,
                               ExecutionTaskAccessor executionTaskAccessor, Executor executor) {
+        this(controllerSettingAccessor, executionTaskAccessor, executor, true);
+    }
+
+    public ExecutionScheduler(ControllerSettingAccessor controllerSettingAccessor,
+                              ExecutionTaskAccessor executionTaskAccessor, Executor executor, boolean schedulingAllowed) {
         super();
         this.controllerSettingAccessor = controllerSettingAccessor;
         this.executionTaskAccessor = executionTaskAccessor;
         this.executor = executor;
+        this.schedulingAllowed = schedulingAllowed;
+    }
+
+    public boolean isSchedulingAllowed() {
+        return schedulingAllowed;
     }
 
     public Executor getExecutor() {
@@ -141,7 +158,7 @@ public class ExecutionScheduler implements ExecutionLauncher {
     }
 
     private boolean isSchedulerEnabled() {
-        return controllerSettingAccessor.getSettingAsBoolean(SETTING_SCHEDULER_ENABLED);
+        return schedulingAllowed && controllerSettingAccessor.getSettingAsBoolean(SETTING_SCHEDULER_ENABLED);
     }
 
     @Override
@@ -193,6 +210,9 @@ public class ExecutionScheduler implements ExecutionLauncher {
     }
 
     public void enableAllExecutionTasksSchedule() {
+        if (!schedulingAllowed) {
+            throw new IllegalStateException("The scheduler cannot be enabled: the scheduling is switched off by configuration (" + CONFIGURATION_SCHEDULING_ALLOWED + "=false)");
+        }
         // Save setting
         controllerSettingAccessor.updateOrCreateSetting(SETTING_SCHEDULER_ENABLED, Boolean.TRUE.toString());
 

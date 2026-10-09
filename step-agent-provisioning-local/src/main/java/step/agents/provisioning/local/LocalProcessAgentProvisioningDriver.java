@@ -334,8 +334,9 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             if (tokens > maxTokens) {
                 logger.warn("This execution requires {} {} tokens, more than the {} a local agent is allowed to "
                         + "provide. The agent is started with {} tokens: parallel steps will queue instead of running "
-                        + "side by side. Raise --localAgentMaxTokens if this machine can take more.",
-                    tokens, agentType, maxTokens, maxTokens);
+                        + "side by side. Raise {} if this machine can take more.",
+                    tokens, agentType, maxTokens, maxTokens,
+                    LocalAgentProvisioningConfiguration.optionHint(LocalAgentProvisioningConfiguration.OPTION_MAX_TOKENS, "<count>"));
                 return maxTokens;
             }
             // An agent without tokens would never become usable, and the execution would wait for it until it times

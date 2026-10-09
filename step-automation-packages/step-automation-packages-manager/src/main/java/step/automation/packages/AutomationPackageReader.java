@@ -197,7 +197,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive, ResourceManager resourceManager, boolean upgrade) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorUrl = archive.getDescriptorYamlUrl();
-        try (InputStream inputStream = descriptorUrl.openStream()) {
+        try (InputStream inputStream = AutomationPackageArchive.openStreamWithoutCaching(descriptorUrl)) {
             // A version must be declared in the descriptor. It is checked before reading the descriptor, which is
             // otherwise read as a current one and may fail the schema validation
             if (!upgrade && readDeclaredSchemaVersion(reader, descriptorUrl) == null) {
@@ -261,7 +261,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     }
 
     private static String readDeclaredSchemaVersion(AutomationPackageDescriptorReader reader, URL descriptorUrl) throws IOException {
-        try (InputStream inputStream = descriptorUrl.openStream()) {
+        try (InputStream inputStream = AutomationPackageArchive.openStreamWithoutCaching(descriptorUrl)) {
             return reader.readDeclaredSchemaVersion(inputStream);
         }
     }
@@ -291,9 +291,14 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         if (!fragment.getFragments().isEmpty()) {
             for (PatchableYamlPrimitive<String> importedFragmentReference : fragment.getFragments()) {
-                List<URL> resources = archive.getResourcesByPattern(importedFragmentReference.toString());
+                List<URL> resources;
+                try {
+                    resources = archive.getResourcesByPattern(importedFragmentReference.toString());
+                } catch (IllegalArgumentException e) {
+                    throw new AutomationPackageReadingException("Invalid fragment reference '" + importedFragmentReference + "' in the automation package: " + e.getMessage(), e);
+                }
                 for (URL resource : resources) {
-                    try (InputStream fragmentYamlStream = resource.openStream()) {
+                    try (InputStream fragmentYamlStream = AutomationPackageArchive.openStreamWithoutCaching(resource)) {
                         AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName(), packageVersion);
                         fragments.add(referencedFragment);
                         try {
@@ -329,15 +334,32 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     private void readPlainTextPlans(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
         // parse plain - text plans
         for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
+            // the schema does not require the file, and is not enforced by default
+            if (plainTextPlan == null || plainTextPlan.getFile() == null || plainTextPlan.getFile().isBlank()) {
+                String planName = plainTextPlan == null ? null : plainTextPlan.getName();
+                throw new AutomationPackageReadingException("Invalid plain text plan" +
+                        (planName == null ? "" : " '" + planName + "'") +
+                        " in the automation package: the 'file' property is missing. It must reference a plain text plan file, or a pattern such as 'plans/*.plan', " +
+                        "relative to the root of the automation package.");
+            }
+            String invalidPlainTextPlanReference = "Invalid plain text plan reference '" + plainTextPlan.getFile() + "' in the automation package: ";
             try {
                 List<URL> urls;
                 boolean wildcard = false;
                 if (ResourcePathMatchingResolver.containsWildcard(plainTextPlan.getFile())) {
                     wildcard = true;
                     ResourcePathMatchingResolver resourceResolver = archive.getResourcePathMatchingResolver();
-                    urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
+                    try {
+                        urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
+                    } catch (IllegalArgumentException e) {
+                        throw new AutomationPackageReadingException(invalidPlainTextPlanReference + e.getMessage(), e);
+                    }
                 } else {
-                    urls = List.of(archive.getResource(plainTextPlan.getFile()));
+                    URL url = archive.getResource(plainTextPlan.getFile());
+                    if (url == null) {
+                        throw new AutomationPackageReadingException(invalidPlainTextPlanReference + "The file '" + plainTextPlan.getFile() + "' could not be found in the automation package. " + ResourcePathMatchingResolver.PATH_HINT);
+                    }
+                    urls = List.of(url);
                 }
 
                 if (urls.isEmpty()) {
@@ -345,7 +367,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 }
 
                 for (URL url : urls) {
-                    try (InputStream is = url.openStream()) {
+                    try (InputStream is = AutomationPackageArchive.openStreamWithoutCaching(url)) {
                         Plan parsedPlan = planTextPlanParser.parse(is, plainTextPlan.getRootType() == null ? RootArtefactType.TestCase : plainTextPlan.getRootType());
                         String planNameInYaml = plainTextPlan.getName();
                         String finalPlanName;

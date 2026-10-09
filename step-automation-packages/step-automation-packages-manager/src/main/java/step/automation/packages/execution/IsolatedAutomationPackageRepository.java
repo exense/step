@@ -30,7 +30,9 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
+import step.expressions.ExpressionHandler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
@@ -71,9 +73,11 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                                                   ResourceManager resourceManager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
+                                                  PlanAccessor planAccessor,
                                                   Supplier<String> ttlValueSupplier,
-                                                  Path mavenCachePath) {
-        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, resourceManager);
+                                                  Path mavenCachePath,
+                                                  ExpressionHandler expressionHandler) {
+        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, planAccessor, resourceManager, expressionHandler);
         this.ttlValueSupplier = ttlValueSupplier;
         this.mavenCachePath = mavenCachePath;
     }
@@ -264,18 +268,12 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     private Resource saveApResource(String contextId, InputStream apStream, String fileName, String actorUser, String resourceType, ObjectEnricher enricher) {
         // store file in temporary storage to support rerun
         try {
-            // find by resource type and contextId (or apName and override)
-            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(resourceType, fileName, actorUser);
+            Resource resource = resourceManager.createResource(resourceType, apStream, fileName, enricher, actorUser);
 
-            Resource resource = resourceContainer.getResource();
+            // the context id is what the resource is found by for a re-execution
             resource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
             resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-            enricher.accept(resource);
-            resourceManager.saveResource(resource);
-
-            resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName, null, actorUser);
-
-            return resource;
+            return resourceManager.saveResource(resource);
         } catch (IOException | InvalidResourceFormatException ex) {
             throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName + ".", ex, true);
         }

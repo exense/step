@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 /**
@@ -29,6 +31,8 @@ import java.util.Objects;
  */
 public class ExecutionTimings {
     private static final Logger logger = LoggerFactory.getLogger(ExecutionTimings.class);
+    // Strict ISO-8601 with (always) exactly 3 digits for milliseconds, and timezone; e.g. 2026-09-08T13:09:54.740+0200
+    public static final String DEFAULT_FORMATTER_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSxx";
 
     private ExecutionTimings() {
     }
@@ -44,17 +48,22 @@ public class ExecutionTimings {
         STEP_EXEC_TIMESTAMP_EXPORT,
     }
 
-    public static void recordTimestamp(ExecutionContext context, TimestampVar timing) {
+    public static void recordTimestamp(ExecutionContext context, TimestampVar timing, DateTimeFormatter formatter) {
         // Won't happen with current code, but for good measure:
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(timing, "timing must not be null");
 
-        // ISO-8601 format with timezone, e.g. 2026-09-08T13:09:54.740868590+02:00
-        String isoLocal = OffsetDateTime.now().toString();
+        String isoLocal = formatTimestamp(formatter, OffsetDateTime.now());
+
         // Variables are saved to the root node
         context.getVariablesManager().putVariable(context.getReport(), timing.name(), isoLocal);
         if (logger.isDebugEnabled()) {
             logger.debug("Recorded timestamp variable: {}={}", timing, isoLocal);
         }
+    }
+
+    // Exposed as package-private static method for unit tests
+    static String formatTimestamp(DateTimeFormatter formatter, OffsetDateTime time) {
+        return time.format(formatter);
     }
 }
