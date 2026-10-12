@@ -26,29 +26,41 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
+import step.core.ReflectionUtils;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.YamlArtefactsLookuper;
 import step.core.yaml.YamlMetadata;
-import step.core.yaml.schema.*;
+import step.core.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.AggregatingFieldMetadataExtractor;
+import step.core.yaml.schema.JsonSchemaDefinitionAddOn;
+import step.core.yaml.schema.JsonSchemaExtension;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
-import step.core.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
-import step.core.yaml.model.AbstractYamlArtefact;
 
-import java.util.*;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration.AGENT_POOL_CONFIGURATION_ARRAY_DEF;
 import static step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration.AGENT_CONFIGURATION_YAML_NAME;
+import static step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration.AGENT_POOL_CONFIGURATION_ARRAY_DEF;
 import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlPlanJsonSchemaGenerator {
@@ -252,21 +264,23 @@ public class YamlPlanJsonSchemaGenerator {
                 String name = AbstractArtefact.getArtefactName(artefactClass);
                 String defName = name + SchemaDefSuffix;
 
+                String yamlName = YamlArtefactsLookuper.getYamlArtefactName(artefactClass);
+
                 JsonObjectBuilder def = schemaHelper.createNamedObjectImplDef(
-                    YamlArtefactsLookuper.getYamlArtefactName(artefactClass),
+                    yamlName,
                     yamlArtefactClass,
                     jsonSchemaCreator,
-                    true
+                    false
                 );
 
                 artefactDefinitions.allArtefactDefs.put(defName, def);
 
                 // for root artefacts we only support the subset of all artefact definitions
                 if (rootArtefactClasses.contains(yamlArtefactClass)) {
-                    artefactDefinitions.rootArtefactDefs.add(defName);
+                    artefactDefinitions.rootArtefactDefs.put(defName, yamlName);
                 }
                 if (controlArtefactClasses.contains(yamlArtefactClass)) {
-                    artefactDefinitions.controlArtefactDefs.add(defName);
+                    artefactDefinitions.controlArtefactDefs.put(defName, yamlName);
                 }
             }
         }
@@ -280,24 +294,20 @@ public class YamlPlanJsonSchemaGenerator {
                 String name = AbstractArtefact.getArtefactName(artefactClass);
                 String defName = name + SchemaDefSuffix;
 
+                String yamlName = YamlArtefactsLookuper.getYamlArtefactName(artefactClass);
                 JsonObjectBuilder def = createJsonSchemaForSimpleArtefact(simpleYamlModel);
 
                 artefactDefinitions.allArtefactDefs.put(defName, def);
 
                 // for root artefacts we only support the subset of all artefact definitions
                 if (rootArtefactClasses.contains(simpleYamlModel)) {
-                    artefactDefinitions.rootArtefactDefs.add(defName);
+                    artefactDefinitions.rootArtefactDefs.put(defName, yamlName);
                 }
                 if (controlArtefactClasses.contains(simpleYamlModel)) {
-                    artefactDefinitions.controlArtefactDefs.add(defName);
+                    artefactDefinitions.controlArtefactDefs.put(defName, yamlName);
                 }
             }
         }
-
-        // fixed artefact ordering in json schema
-        artefactDefinitions.rootArtefactDefs.sort(Comparator.naturalOrder());
-        artefactDefinitions.controlArtefactDefs.sort(Comparator.naturalOrder());
-
         return artefactDefinitions;
     }
 
@@ -317,8 +327,12 @@ public class YamlPlanJsonSchemaGenerator {
         List<String> requiredProperties = new ArrayList<>();
 
         // properties declared in AbstractArtefact are taken from AbstractYamlArtefact
-        schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
-        schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
+        // analyze the class hierarchy
+        List<Field> allFieldsInHierarchy = ReflectionUtils.getAllFieldsInHierarchy(AbstractYamlArtefact.class, null);
+        allFieldsInHierarchy.addAll(ReflectionUtils.getAllFieldsInHierarchy(simpleYamlArtefact, AbstractArtefact.class));
+        allFieldsInHierarchy = YamlJsonSchemaHelper.orderFieldsByPriority(allFieldsInHierarchy);
+
+        schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, allFieldsInHierarchy);
 
         // define the default node name explicitly
         // TODO: find some solution to apply default 'nodeName'
@@ -329,11 +343,15 @@ public class YamlPlanJsonSchemaGenerator {
         );
 
         propertiesBuilder.add("properties", classPropertiesBuilder);
+        propertiesBuilder.add("additionalProperties", false);
         schemaHelper.addRequiredProperties(requiredProperties, propertiesBuilder);
 
-        schemaBuilder.add(YamlArtefactsLookuper.getYamlArtefactName(simpleYamlArtefact), propertiesBuilder);
+        String yamlName = YamlArtefactsLookuper.getYamlArtefactName(simpleYamlArtefact);
+        schemaBuilder.add(yamlName, propertiesBuilder);
         res.add("properties", schemaBuilder);
         res.add("additionalProperties", false);
+
+        res.add("required", jsonProvider.createArrayBuilder().add(yamlName));
         return res;
     }
 
@@ -352,14 +370,18 @@ public class YamlPlanJsonSchemaGenerator {
         return yamlPlanDef;
     }
 
-    private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {
-        JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
-        builder.add("type", "object");
-        JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
-        for (String artefactImplReference : artefactImplReferences) {
-            arrayBuilder.add(YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
+    private JsonObjectBuilder createArtefactDef(Map<String, String> artefactImplReferences) {
+        JsonObjectBuilder elseClause = jsonProvider.createObjectBuilder().add("else", false);
+        JsonObjectBuilder clause;
+        for (Map.Entry<String, String> entry : artefactImplReferences.entrySet()) {
+            clause = jsonProvider.createObjectBuilder()
+                .add("if", jsonProvider.createObjectBuilder().add("required", jsonProvider.createArrayBuilder().add(entry.getValue())))
+                .add("then", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), entry.getKey()))
+                .addAll(elseClause);
+            elseClause = jsonProvider.createObjectBuilder().add("else", clause);
         }
-        builder.add("oneOf", arrayBuilder);
+        JsonObjectBuilder builder = jsonProvider.createObjectBuilder(elseClause.build().getJsonObject("else"));
+        builder.add("type", "object");
         return builder;
     }
 
@@ -370,8 +392,8 @@ public class YamlPlanJsonSchemaGenerator {
     private static class ArtefactDefinitions {
         private final Map<String, JsonObjectBuilder> allArtefactDefs = new HashMap<>();
 
-        private final List<String> controlArtefactDefs = new ArrayList<>();
-        private final List<String> rootArtefactDefs = new ArrayList<>();
+        private final Map<String, String> controlArtefactDefs = new TreeMap<>();
+        private final Map<String, String> rootArtefactDefs = new TreeMap<>();
     }
 
 }
