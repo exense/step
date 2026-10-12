@@ -72,7 +72,7 @@ import static step.core.Constants.STEP_YAML_SCHEMA_VERSION;
 public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
     public static final String AP_VERSION_SEPARATOR = ".";
-    public static final String PLAIN_TEXT_PLAN_READ_ONLY_REASON = "Plain text plans cannot be edited in the Studio. Edit the plain text file of the plan instead.";
+    public static final String PLAIN_TEXT_PLAN_READ_ONLY_REASON = "This plan is defined in its own file using the plain text plan syntax and cannot be edited in the Studio. To change it, edit the file directly.";
     private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
@@ -348,9 +348,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             if (plainTextPlan == null || plainTextPlan.getFile() == null || plainTextPlan.getFile().isBlank()) {
                 String planName = plainTextPlan == null ? null : plainTextPlan.getName();
                 throw new AutomationPackageReadingException("Invalid plain text plan" +
-                        (planName == null ? "" : " '" + planName + "'") +
-                        " in the automation package: the 'file' property is missing. It must reference a plain text plan file, or a pattern such as 'plans/*.plan', " +
-                        "relative to the root of the automation package.");
+                    (planName == null ? "" : " '" + planName + "'") +
+                    " in the automation package: the 'file' property is missing. It must reference a plain text plan file, or a pattern such as 'plans/*.plan', " +
+                    "relative to the root of the automation package.");
             }
             String invalidPlainTextPlanReference = "Invalid plain text plan reference '" + plainTextPlan.getFile() + "' in the automation package: ";
             try {
