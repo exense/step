@@ -49,8 +49,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +72,7 @@ import static step.core.Constants.STEP_YAML_SCHEMA_VERSION;
 public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
     public static final String AP_VERSION_SEPARATOR = ".";
+    public static final String PLAIN_TEXT_PLAN_READ_ONLY_REASON = "Plain text plans cannot be edited in the Studio. Edit the plain text file of the plan instead.";
     private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
@@ -212,11 +215,15 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 AutomationPackageContent content = newContentInstance();
                 // Keeps the order the fragments are read in, which decides the fragment reported as outdated
                 Set<AutomationPackageFragmentYaml> fragments = new LinkedHashSet<>();
-                fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
+                List<Plan> plainTextPlans = new ArrayList<>();
+                fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments, plainTextPlans, null);
+                // The plain text plans are not YAML entities the editor can write: they are read-only
+                Map<Plan, String> readOnlyPlans = new LinkedHashMap<>();
+                plainTextPlans.forEach(plan -> readOnlyPlans.put(plan, PLAIN_TEXT_PLAN_READ_ONLY_REASON));
                 AutomationPackage automationPackage = new AutomationPackage();
                 automationPackage.setStatus(AutomationPackageStatus.EDITING);
                 StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
-                AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
+                AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext, readOnlyPlans);
 
                 // The descriptor and each fragment may declare their own version, if any use a legacy version, upgrade is required
                 List<AutomationPackageFragmentYaml> outdatedFragments = fragmentManager.getOutdatedFragments();
@@ -267,7 +274,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     }
 
     private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments) throws AutomationPackageReadingException {
-        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragments, null);
+        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragments, new ArrayList<>(), null);
     }
 
 
@@ -277,14 +284,18 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
      * @param fragment         Fragment to read
      * @param archive          Automation package archive
      * @param fragments        Set of all automation package fragments collected during  recursive reading of fragments.
+     * @param plainTextPlans   List of the plans parsed from plain text collected during recursive reading of fragments.
      * @param inheritedVersion the schema version the fragment inherits from the descriptor or fragment importing it,
      *                         null for the descriptor. A fragment usually declares no version of its own, and the
      *                         fragments it imports then inherit this one. The version decides whether the migrations of
      *                         the automation package format apply to them
      * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
      */
-    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments, String inheritedVersion) throws AutomationPackageReadingException {
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments, List<Plan> plainTextPlans, String inheritedVersion) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
+        List<Plan> fragmentPlainTextPlans = readPlainTextPlans(fragment, archive);
+        targetPackage.getPlans().addAll(fragmentPlainTextPlans);
+        plainTextPlans.addAll(fragmentPlainTextPlans);
 
         String declaredVersion = fragment.getVersion().getValue();
         String packageVersion = declaredVersion != null ? declaredVersion : inheritedVersion;
@@ -308,7 +319,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                                 "This is likely due to loading the automation package as a jar and not as a file system folder. This is expected behaviour");
                         }
 
-                        fillAutomationPackageWithImportedFragments(targetPackage, referencedFragment, archive, fragments, packageVersion);
+                        fillAutomationPackageWithImportedFragments(targetPackage, referencedFragment, archive, fragments, plainTextPlans, packageVersion);
                     } catch (IOException | URISyntaxException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }
@@ -321,8 +332,6 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
 
-        readPlainTextPlans(targetPackage, fragment, archive);
-
         for (Map.Entry<String, PatchableYamlList<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {
@@ -331,7 +340,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         }
     }
 
-    private void readPlainTextPlans(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
+    private List<Plan> readPlainTextPlans(AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
+        List<Plan> plans = new ArrayList<>();
         // parse plain - text plans
         for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
             // the schema does not require the file, and is not enforced by default
@@ -392,7 +402,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                         YamlPlanReader.setPlanName(parsedPlan, finalPlanName);
                         parsedPlan.setCategories(plainTextPlan.getCategories());
                         YamlMetadata.applyTo(parsedPlan, plainTextPlan.getMetadata());
-                        targetPackage.getPlans().add(parsedPlan);
+                        plans.add(parsedPlan);
                     } catch (IOException ex) {
                         throw new AutomationPackageReadingException("Unable to read plain text plan from url: " + url.getFile(), ex);
                     }
@@ -402,6 +412,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 throw new AutomationPackageReadingException("Unable to read plain text plan: " + plainTextPlan.getFile(), e);
             }
         }
+        return plans;
     }
 
     protected synchronized AutomationPackageDescriptorReader getOrCreateDescriptorReader() {
