@@ -118,6 +118,8 @@ public class AutomationPackageYamlFragmentManager {
 
         // Registered first: the mappers referring to other entities, the schedules for instance, find them
         readOnlyBusinessObjects.forEach((businessObject, reason) -> {
+            Objects.requireNonNull(businessObject, "read-only business object must not be null");
+            Objects.requireNonNull(reason, "read-only reason must not be null");
             businessObject.addCustomField(CUSTOM_FIELD_READ_ONLY, true);
             businessObject.addCustomField(CUSTOM_FIELD_READ_ONLY_REASON, reason);
             this.readOnlyBusinessObjects.add(businessObject);
@@ -215,8 +217,9 @@ public class AutomationPackageYamlFragmentManager {
      */
     public static void requireEditable(AbstractOrganizableObject object) {
         if (isReadOnly(object)) {
-            throw new AutomationPackageReadOnlyEntityException(String.format("'%s' is read-only: %s",
-                object.getAttribute(AbstractOrganizableObject.NAME), object.getCustomField(CUSTOM_FIELD_READ_ONLY_REASON)));
+            String message = String.format("'%s' is read-only", object.getAttribute(AbstractOrganizableObject.NAME));
+            Object reason = object.getCustomField(CUSTOM_FIELD_READ_ONLY_REASON);
+            throw new AutomationPackageReadOnlyEntityException(reason == null ? message : message + ": " + reason);
         }
     }
 
