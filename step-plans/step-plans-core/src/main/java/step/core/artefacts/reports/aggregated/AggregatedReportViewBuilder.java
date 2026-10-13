@@ -321,7 +321,7 @@ public class AggregatedReportViewBuilder {
      * skipped once all their samples are compensated
      */
     private static boolean isNotEmptyBucket(Bucket bucket) {
-        return bucket.getCount() > 0;
+        return bucket != null && bucket.getCount() > 0;
     }
 
     private boolean hasDescendantInvocations(List<AggregatedReportView> children) {

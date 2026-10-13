@@ -101,8 +101,10 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         compensation.setSum(-ingestedSample.getSum());
         compensation.setPclPrecision(ingestedSample.getPclPrecision());
         //Compensate each distribution bracket (negate value)
-        compensation.setDistribution(ingestedSample.getDistribution().entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> -e.getValue())));
+        if (ingestedSample.getDistribution() != null) {
+            compensation.setDistribution(ingestedSample.getDistribution().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> -e.getValue())));
+        }
         // Neutral min and max, so that the compensation doesn't contribute to them
         compensation.setMin(Long.MAX_VALUE);
         compensation.setMax(Long.MIN_VALUE);

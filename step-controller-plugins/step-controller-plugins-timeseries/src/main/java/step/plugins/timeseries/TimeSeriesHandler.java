@@ -452,7 +452,7 @@ public class TimeSeriesHandler {
      * any sample once the report nodes they aggregate have been compensated
      */
     private boolean isNotEmptyBucket(Bucket bucket) {
-        return bucket.getCount() > 0;
+        return bucket != null && bucket.getCount() > 0;
     }
 
     private void validateFetchRequest(FetchBucketsRequest request) {
