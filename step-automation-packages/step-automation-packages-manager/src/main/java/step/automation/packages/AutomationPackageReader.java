@@ -52,7 +52,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +71,6 @@ import static step.core.Constants.STEP_YAML_SCHEMA_VERSION;
 public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
     public static final String AP_VERSION_SEPARATOR = ".";
-    public static final String PLAIN_TEXT_PLAN_READ_ONLY_REASON = "This plan is defined in its own file using the plain text plan syntax and cannot be edited in the Studio. To change it, edit the file directly.";
     private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
@@ -217,13 +215,10 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 Set<AutomationPackageFragmentYaml> fragments = new LinkedHashSet<>();
                 List<Plan> plainTextPlans = new ArrayList<>();
                 fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments, plainTextPlans, null);
-                // The plain text plans are not YAML entities the editor can write: they are read-only
-                Map<Plan, String> readOnlyPlans = new LinkedHashMap<>();
-                plainTextPlans.forEach(plan -> readOnlyPlans.put(plan, PLAIN_TEXT_PLAN_READ_ONLY_REASON));
                 AutomationPackage automationPackage = new AutomationPackage();
                 automationPackage.setStatus(AutomationPackageStatus.EDITING);
                 StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
-                AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext, readOnlyPlans);
+                AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext, plainTextPlans);
 
                 // The descriptor and each fragment may declare their own version, if any use a legacy version, upgrade is required
                 List<AutomationPackageFragmentYaml> outdatedFragments = fragmentManager.getOutdatedFragments();

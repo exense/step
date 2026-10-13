@@ -23,7 +23,6 @@ import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.Sequence;
-import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.AutomationPackageReadOnlyEntityException;
@@ -85,7 +84,7 @@ public class AutomationPackagePlainTextPlanCollectionTest extends AutomationPack
             boolean plainText = !name(plan).equals("Yaml Plan");
             assertEquals(name(plan), plainText, AutomationPackageYamlFragmentManager.isReadOnly(plan));
             if (plainText) {
-                assertEquals(AutomationPackageReader.PLAIN_TEXT_PLAN_READ_ONLY_REASON, plan.getCustomField(AutomationPackageYamlFragmentManager.CUSTOM_FIELD_READ_ONLY_REASON));
+                assertEquals(AutomationPackageYamlFragmentManager.PLAIN_TEXT_PLAN_READ_ONLY_REASON, plan.getCustomField(AutomationPackageYamlFragmentManager.CUSTOM_FIELD_READ_ONLY_REASON));
             } else {
                 assertNull(plan.getCustomField(AutomationPackageYamlFragmentManager.CUSTOM_FIELD_READ_ONLY));
                 assertNull(plan.getCustomField(AutomationPackageYamlFragmentManager.CUSTOM_FIELD_READ_ONLY_REASON));
@@ -104,7 +103,7 @@ public class AutomationPackagePlainTextPlanCollectionTest extends AutomationPack
         plan.getAttributes().put(AbstractOrganizableObject.NAME, "Renamed");
 
         AutomationPackageReadOnlyEntityException exception = assertThrows(AutomationPackageReadOnlyEntityException.class, () -> planCollection.save(plan));
-        assertTrue(exception.getMessage(), exception.getMessage().contains(AutomationPackageReader.PLAIN_TEXT_PLAN_READ_ONLY_REASON));
+        assertTrue(exception.getMessage(), exception.getMessage().contains(AutomationPackageYamlFragmentManager.PLAIN_TEXT_PLAN_READ_ONLY_REASON));
 
         // neither the collection nor the files of the package are changed
         assertEquals(1, planCollection.count(Filters.equals("attributes.name", SINGLE_PLAIN_TEXT_PLAN), null));
