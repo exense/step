@@ -283,11 +283,14 @@ public class AggregatedReportViewBuilder {
         //Get the count by error message for this artefact in all cases allow to pull the errors to parent
         Map<String, Bucket> bucketByErrorMessage = countByHashAndErrorMessage.getOrDefault(artefactHash, new HashMap<>());
         countByErrorMessage = bucketByErrorMessage.entrySet().stream()
-            .filter(e -> e.getKey() != null)
+            .filter(e -> e.getKey() != null && isNotEmptyBucket(e.getValue()))
             .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getCount()));
         //Skip generation of statistics for reports that are not included based on request filter, root node is always IN
         if (resolvedPlanNode.parentId == null || shouldIncludeAggregatedReport(request, resolvedPlanNode.artefact)) {
-            bucketsByStatus = bucketByHashAndStatus.getOrDefault(artefactHash, new HashMap<>());
+            //Buckets of report nodes removed from the report are compensated and have no sample left, they're skipped
+            bucketsByStatus = bucketByHashAndStatus.getOrDefault(artefactHash, new HashMap<>()).entrySet().stream()
+                .filter(e -> isNotEmptyBucket(e.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             countByStatus = bucketsByStatus.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getCount()));
             //enrich the count by status with running count, the buckets are not impacted
             Long runningCount = runningCountByArtefactHash.get(artefactHash);
@@ -310,6 +313,15 @@ public class AggregatedReportViewBuilder {
         return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, countByErrorMessage, countByChildrenErrorMessage,
             children, hasDescendantInvocations, resolvedPlanNode.parentSource, singleInstanceReportNode, bucketsByStatus,
             operationsByArtefactHash.getOrDefault(artefactHash, new ArrayList<>()));
+    }
+
+    /**
+     * @return whether the provided bucket still holds samples. The buckets of the report nodes removed from the report
+     * are compensated, see {@link ReportNodeTimeSeries#compensateReportNode(ReportNode, java.util.Map)}, and have to be
+     * skipped once all their samples are compensated
+     */
+    private static boolean isNotEmptyBucket(Bucket bucket) {
+        return bucket.getCount() > 0;
     }
 
     private boolean hasDescendantInvocations(List<AggregatedReportView> children) {

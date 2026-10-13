@@ -180,7 +180,7 @@ public class TimeSeriesHandler {
             TimeSeriesAggregationQuery query = mapToQuery(request);
             TimeSeriesAggregationResponse response = aggregationPipeline.collect(query);
 
-            return mapToApiResponse(request, response);
+            return mapToApiResponse(request, response, false);
         }
     }
 
@@ -242,14 +242,16 @@ public class TimeSeriesHandler {
         validateFetchRequest(request);
         TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = this.aggregationPipeline.collect(query);
-        return mapToApiResponse(request, response);
+        return mapToApiResponse(request, response, false);
     }
 
     public TimeSeriesAPIResponse getReportNodeTimeSeries(FetchBucketsRequest request) {
         validateFetchRequest(request);
         TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = this.reportNodeAggregationPipeline.collect(query);
-        return mapToApiResponse(request, response);
+        // Report nodes removed from the report are compensated in the report node time series and can leave buckets
+        // holding no sample, see ReportNodeTimeSeries.compensateReportNode. Such buckets are excluded from the response
+        return mapToApiResponse(request, response, true);
     }
 
     /**
@@ -392,21 +394,28 @@ public class TimeSeriesHandler {
         return timeSeriesAggregationQuery.build();
     }
 
-    private TimeSeriesAPIResponse mapToApiResponse(FetchBucketsRequest request, TimeSeriesAggregationResponse response) {
+    /**
+     * @param excludeEmptyBuckets if true, the buckets holding no sample are excluded from the response, as well as the
+     *                            series left without any bucket
+     */
+    private TimeSeriesAPIResponse mapToApiResponse(FetchBucketsRequest request, TimeSeriesAggregationResponse response, boolean excludeEmptyBuckets) {
         Map<BucketAttributes, Map<Long, Bucket>> series = response.getSeries();
         long intervalSize = response.getResolution();
         long start = response.getStart();
         long end = response.getEnd();
 
+        List<BucketAttributes> seriesKeys = series.entrySet().stream()
+            .filter(e -> !excludeEmptyBuckets || e.getValue().values().stream().anyMatch(this::isNotEmptyBucket))
+            .map(Map.Entry::getKey).collect(Collectors.toList());
         List<BucketAttributes> matrixKeys = new ArrayList<>();
         List<List<BucketResponse>> matrix = new ArrayList<>();
-        series.keySet().stream().limit(request.getMaxNumberOfSeries()).forEach(key -> {
+        seriesKeys.stream().limit(request.getMaxNumberOfSeries()).forEach(key -> {
             Map<Long, Bucket> currentSeries = series.get(key);
             List<BucketResponse> bucketResponses = new ArrayList<>();
             for (long index = start; index < end; index += response.getResolution()) {
                 Bucket b = currentSeries.get(index);
                 BucketResponse bucketResponse = null;
-                if (b != null) {
+                if (b != null && (!excludeEmptyBuckets || isNotEmptyBucket(b))) {
                     bucketResponse = new BucketResponseBuilder()
                         .withBegin(b.getBegin())
                         .withCount(b.getCount())
@@ -430,12 +439,20 @@ public class TimeSeriesHandler {
             .withInterval(intervalSize)
             .withMatrixKeys(matrixKeys)
             .withMatrix(matrix)
-            .withTruncated(series.size() > request.getMaxNumberOfSeries())
+            .withTruncated(seriesKeys.size() > request.getMaxNumberOfSeries())
             .withCollectionResolution(response.getCollectionResolution())
             .withCollectionIgnoredAttributes(response.getCollectionIgnoredAttributes())
             .withHigherResolutionUsed(response.isHigherResolutionUsed())
             .withTtlCovered(response.isTtlCovered())
             .build();
+    }
+
+    /**
+     * @return true if the bucket holds at least one sample. Buckets of the report node time series can end up without
+     * any sample once the report nodes they aggregate have been compensated
+     */
+    private boolean isNotEmptyBucket(Bucket bucket) {
+        return bucket.getCount() > 0;
     }
 
     private void validateFetchRequest(FetchBucketsRequest request) {

@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import step.controller.services.async.AsyncTaskManager;
+import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.collections.inmemory.InMemoryCollection;
@@ -26,6 +28,7 @@ import step.plugins.timeseries.api.OQLVerifyResponse;
 import step.plugins.timeseries.api.TimeSeriesAPIResponse;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
@@ -38,6 +41,7 @@ public class TimeSeriesHandlerTest {
     private static TimeSeriesHandler handler;
 
     private static InMemoryExecutionAccessor executionAccessor;
+    private static ReportNodeTimeSeries reportNodeTimeSeries;
     private static Collection<Bucket> bucketsCollection;
     private static Collection<Measurement> measurementsCollection;
     private static Collection<ExecutionMetricSample> metricSamplesCollection;
@@ -53,7 +57,7 @@ public class TimeSeriesHandlerTest {
             .registerCollection(tsCollection)
             .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
+        reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
         handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, metricSamplesCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT, 15000L);
     }
 
@@ -298,6 +302,45 @@ public class TimeSeriesHandlerTest {
         response.getMatrix().get(0).forEach(b -> {
             Assert.assertEquals(b.getThroughputPerHour(), b.getCount() * 1000 * 3600 / expectedResolution);
         });
+    }
+
+    @Test
+    public void fetchReportNodesExcludesCompensatedSeriesTest() {
+        String executionId = RandomStringUtils.randomAlphabetic(10);
+        reportNodeTimeSeries.ingestReportNode(reportNode(executionId, "keptError"), Map.of());
+        ReportNode compensated = reportNode(executionId, "compensatedError");
+        reportNodeTimeSeries.ingestReportNode(compensated, Map.of());
+        // The node is removed from the report, as the nodes of the iterations which aren't reported by a RetryIfFails
+        reportNodeTimeSeries.compensateReportNode(compensated, Map.of());
+        reportNodeTimeSeries.getTimeSeries().getCollections().forEach(c -> c.getIngestionPipeline().flush());
+
+        FetchBucketsRequest request = new FetchBucketsRequest();
+        request.setStart(0);
+        request.setEnd(100_000);
+        request.setGroupDimensions(Set.of(ReportNodeTimeSeries.ERROR_MESSAGE));
+        request.setNumberOfBuckets(1);
+        request.setPercentiles(List.of());
+        request.setOqlFilter("attributes." + ReportNodeTimeSeries.EXECUTION_ID + " = " + executionId);
+        request.setParams(Map.of());
+        request.setMaxNumberOfSeries(100);
+
+        TimeSeriesAPIResponse response = handler.getReportNodeTimeSeries(request);
+
+        // Only the error of the node left in the report is reported, the compensated series holding no sample anymore
+        Assert.assertEquals(List.of("keptError"), response.getMatrixKeys().stream()
+            .map(key -> key.get(ReportNodeTimeSeries.ERROR_MESSAGE)).collect(Collectors.toList()));
+        Assert.assertEquals(1, response.getMatrix().get(0).get(0).getCount());
+    }
+
+    private ReportNode reportNode(String executionId, String errorMessage) {
+        ReportNode reportNode = new ReportNode();
+        reportNode.setExecutionID(executionId);
+        reportNode.setArtefactHash(RandomStringUtils.randomAlphabetic(5));
+        reportNode.setStatus(ReportNodeStatus.FAILED);
+        reportNode.setError(errorMessage, 0, true);
+        reportNode.setExecutionTime(1000);
+        reportNode.setDuration(10);
+        return reportNode;
     }
 
     /**

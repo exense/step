@@ -34,8 +34,13 @@ import step.core.plans.runner.PlanRunnerResult;
 import step.core.views.ViewManager;
 import step.plugins.views.functions.ErrorDistribution;
 
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
+
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -123,6 +128,61 @@ public class RetryIfFailsHandlerTest extends AbstractPlanTest {
         // properly removed the errors of the failed iterations
         assertEquals(1, viewModel.getErrorCount());
         assertEquals(1, (int) viewModel.getCountByErrorCode().get("1"));
+
+        // Only the iteration kept in the report counts in the time series: the pruned ones are compensated
+        assertEquals(Map.of(ReportNodeStatus.FAILED.name(), 2L), countByStatus(result));
+    }
+
+    @Test
+    public void testTimeSeriesCompensationOnSuccessfulRetry() {
+        RetryIfFails block = new RetryIfFails();
+        block.setMaxRetries(new DynamicValue<>(3));
+        block.setReportLastTryOnly(new DynamicValue<>(true));
+        AtomicInteger executions = new AtomicInteger();
+        // Fails twice, then passes
+        block.addChild(new CheckArtefact(c -> {
+            if (executions.incrementAndGet() < 3) {
+                withFailedReportNode.accept(c);
+            } else {
+                withPassedReportNode.accept(c);
+            }
+        }));
+
+        PlanRunnerResult result = executeArtefact(block);
+
+        ReportNode retryNode = getFirstReportNode();
+        assertEquals(ReportNodeStatus.PASSED, retryNode.getStatus());
+        assertEquals(1, getChildren(retryNode).size());
+        // The RetryIfFails node and the keyword of the last iteration, the two failed tries being compensated
+        assertEquals(Map.of(ReportNodeStatus.PASSED.name(), 2L), countByStatus(result));
+    }
+
+    @Test
+    public void testTimeSeriesNotCompensatedWhenAllTriesAreReported() {
+        RetryIfFails block = new RetryIfFails();
+        block.setMaxRetries(new DynamicValue<>(3));
+        block.addChild(new CheckArtefact(withFailedReportNode));
+
+        PlanRunnerResult result = executeArtefact(block);
+
+        // Nothing is pruned, so all the tries keep counting as before
+        assertEquals(3, getChildren(getFirstReportNode()).size());
+        assertEquals(Map.of(ReportNodeStatus.FAILED.name(), 4L), countByStatus(result));
+    }
+
+    @Test
+    public void testTimeSeriesCompensationOfExecutedNodesWithStatusNorun() {
+        RetryIfFails block = new RetryIfFails();
+        block.setMaxRetries(new DynamicValue<>(3));
+        block.setReportLastTryOnly(new DynamicValue<>(true));
+        // Executed nodes can end with the status NORUN, like a Check which isn't evaluated because its keyword call failed
+        block.addChild(new CheckArtefact(c -> c.getCurrentReportNode().setStatus(ReportNodeStatus.NORUN)));
+
+        PlanRunnerResult result = executeArtefact(block);
+
+        assertEquals(1, getChildren(getFirstReportNode()).size());
+        // The RetryIfFails node and the node of the last iteration, the two pruned tries being compensated
+        assertEquals(Map.of(ReportNodeStatus.NORUN.name(), 2L), countByStatus(result));
     }
 
     @Test
@@ -199,6 +259,20 @@ public class RetryIfFailsHandlerTest extends AbstractPlanTest {
         ErrorDistribution viewModel = (ErrorDistribution) context.get(ViewManager.class).queryView(ERROR_DISTRIBUTION_VIEW, result.getExecutionId());
         assertEquals(0, viewModel.getCount());
         assertEquals(0, viewModel.getErrorCount());
+    }
+
+    /**
+     * @return the number of report nodes ingested into the report node time series, by status. Compensated nodes don't
+     * count anymore, their buckets holding no sample
+     */
+    private Map<String, Long> countByStatus(PlanRunnerResult result) {
+        ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
+        reportNodeTimeSeries.getTimeSeries().getCollections().forEach(c -> c.getIngestionPipeline().flush());
+        Map<String, Long> countByStatus = new HashMap<>();
+        reportNodeTimeSeries.queryByExecutionIdAndGroupBy(result.getExecutionId(), null, ReportNodeTimeSeries.ARTEFACT_HASH, ReportNodeTimeSeries.STATUS)
+            .values().forEach(byStatus -> byStatus.forEach((status, bucket) -> countByStatus.merge(status, bucket.getCount(), Long::sum)));
+        countByStatus.values().removeIf(count -> count == 0);
+        return countByStatus;
     }
 
     private final Consumer<ExecutionContext> withFailedReportNode = context -> {

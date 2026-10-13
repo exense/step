@@ -9,6 +9,7 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesOptimizationType;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
+import step.core.timeseries.bucket.BucketBuilder;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
 import java.util.LinkedHashSet;
@@ -70,11 +71,50 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     }
 
     public void ingestReportNode(ReportNode reportNode, Map<String, Object> customAttributes) {
-        ReportNodeStatus status = reportNode.getStatus();
+        ingestionPipeline.ingestPoint(buildBucketAttributes(reportNode, customAttributes), reportNode.getExecutionTime(), reportNode.getDuration());
+    }
+
+    /**
+     * Compensates the data ingested for the provided report node by ingesting the opposite of its contribution, with
+     * the same attributes and at the same timestamp, so that both cancel each other in the same time bucket of every
+     * resolution. It is used when report nodes are removed from the report and must stop counting in the time series,
+     * see {@link step.core.artefacts.handlers.ArtefactHandler}
+     * <p>
+     * The count, the sum and the distribution of the compensated buckets are exact. Their min and their max can not be
+     * restored and keep including the compensated samples.
+     *
+     * @param reportNode       the report node to be compensated, with the same arguments as used for its ingestion
+     * @param customAttributes the custom attributes used for its ingestion
+     */
+    public void compensateReportNode(ReportNode reportNode, Map<String, Object> customAttributes) {
+        BucketAttributes attributes = buildBucketAttributes(reportNode, customAttributes);
+        long timestamp = reportNode.getExecutionTime();
+        // The single sample this report node contributed, built the way it was ingested rather than computed, so that
+        // its distribution bracket is guaranteed to be the ingested one
+        Bucket ingestedSample = BucketBuilder.create(timestamp).withAttributes(attributes).ingest(reportNode.getDuration()).build();
+
+        // The opposite of that sample: merging it into the ingested data subtracts the sample from the count, from the
+        // sum and from its distribution bracket
+        Bucket compensation = new Bucket(timestamp);
+        compensation.setAttributes(attributes);
+        compensation.setCount(-ingestedSample.getCount());
+        compensation.setSum(-ingestedSample.getSum());
+        compensation.setPclPrecision(ingestedSample.getPclPrecision());
+        //Compensate each distribution bracket (negate value)
+        compensation.setDistribution(ingestedSample.getDistribution().entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> -e.getValue())));
+        // Neutral min and max, so that the compensation doesn't contribute to them
+        compensation.setMin(Long.MAX_VALUE);
+        compensation.setMax(Long.MIN_VALUE);
+
+        ingestionPipeline.ingestBucket(compensation);
+    }
+
+    private BucketAttributes buildBucketAttributes(ReportNode reportNode, Map<String, Object> customAttributes) {
         BucketAttributes nodeBucket = new BucketAttributes();
         nodeBucket.put(EXECUTION_ID, reportNode.getExecutionID());
         nodeBucket.put(ARTEFACT_HASH, reportNode.getArtefactHash());
-        nodeBucket.put(STATUS, status.toString());
+        nodeBucket.put(STATUS, reportNode.getStatus().toString());
         if (reportNode.getError() != null) {
             nodeBucket.put(ERROR_CODE, reportNode.getError().getCode() != null ? reportNode.getError().getCode() : 0);
             if (reportNode.getError().getMsg() != null) {
@@ -84,8 +124,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         if (customAttributes != null) {
             nodeBucket.putAll(customAttributes);
         }
-
-        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), reportNode.getDuration());
+        return nodeBucket;
     }
 
     public void flush() {
