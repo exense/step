@@ -404,15 +404,28 @@ public class TimeSeriesHandler {
         long start = response.getStart();
         long end = response.getEnd();
 
-        List<BucketAttributes> seriesKeys = series.entrySet().stream()
-            .filter(e -> !excludeEmptyBuckets || e.getValue().values().stream().anyMatch(this::isNotEmptyBucket))
-            .map(Map.Entry::getKey).collect(Collectors.toList());
+        int maxSeries = request.getMaxNumberOfSeries();
+
         List<BucketAttributes> matrixKeys = new ArrayList<>();
         List<List<BucketResponse>> matrix = new ArrayList<>();
-        seriesKeys.stream().limit(request.getMaxNumberOfSeries()).forEach(key -> {
-            Map<Long, Bucket> currentSeries = series.get(key);
+        boolean isTruncated = false;
+
+        for (Map.Entry<BucketAttributes, Map<Long, Bucket>> entry : series.entrySet()) {
+            Map<Long, Bucket> currentSeries = entry.getValue();
+
+            // Skip the series without any sample left
+            if (excludeEmptyBuckets && currentSeries.values().stream().noneMatch(this::isNotEmptyBucket)) {
+                continue;
+            }
+
+            // The response is truncated as soon as a series is left out because the maximum has been reached
+            if (matrixKeys.size() == maxSeries) {
+                isTruncated = true;
+                break;
+            }
+
             List<BucketResponse> bucketResponses = new ArrayList<>();
-            for (long index = start; index < end; index += response.getResolution()) {
+            for (long index = start; index < end; index += intervalSize) {
                 Bucket b = currentSeries.get(index);
                 BucketResponse bucketResponse = null;
                 if (b != null && (!excludeEmptyBuckets || isNotEmptyBucket(b))) {
@@ -422,7 +435,7 @@ public class TimeSeriesHandler {
                         .withMin(b.getMin())
                         .withMax(b.getMax())
                         .withSum(b.getSum())
-                        .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
+                        .withThroughputPerHour(3600L * 1000L * b.getCount() / (b.getEnd() - b.getBegin()))
                         .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile, (existing, replacement) -> existing)))
                         .withAttributes(b.getAttributes())
                         .build();
@@ -430,8 +443,8 @@ public class TimeSeriesHandler {
                 bucketResponses.add(bucketResponse);
             }
             matrix.add(bucketResponses);
-            matrixKeys.add(key);
-        });
+            matrixKeys.add(entry.getKey());
+        }
 
         return new TimeSeriesAPIResponseBuilder()
             .withStart(start)
@@ -439,7 +452,7 @@ public class TimeSeriesHandler {
             .withInterval(intervalSize)
             .withMatrixKeys(matrixKeys)
             .withMatrix(matrix)
-            .withTruncated(seriesKeys.size() > request.getMaxNumberOfSeries())
+            .withTruncated(isTruncated)
             .withCollectionResolution(response.getCollectionResolution())
             .withCollectionIgnoredAttributes(response.getCollectionIgnoredAttributes())
             .withHigherResolutionUsed(response.isHigherResolutionUsed())

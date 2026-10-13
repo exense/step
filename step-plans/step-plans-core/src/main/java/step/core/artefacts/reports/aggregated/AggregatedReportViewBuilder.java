@@ -281,14 +281,14 @@ public class AggregatedReportViewBuilder {
         Map<String, Bucket> bucketsByStatus = null;
         ReportNode singleInstanceReportNode = null;
         //Get the count by error message for this artefact in all cases allow to pull the errors to parent
-        Map<String, Bucket> bucketByErrorMessage = countByHashAndErrorMessage.getOrDefault(artefactHash, new HashMap<>());
+        Map<String, Bucket> bucketByErrorMessage = countByHashAndErrorMessage.getOrDefault(artefactHash, Collections.emptyMap());
         countByErrorMessage = bucketByErrorMessage.entrySet().stream()
             .filter(e -> e.getKey() != null && isNotEmptyBucket(e.getValue()))
             .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getCount()));
         //Skip generation of statistics for reports that are not included based on request filter, root node is always IN
         if (resolvedPlanNode.parentId == null || shouldIncludeAggregatedReport(request, resolvedPlanNode.artefact)) {
             //Buckets of report nodes removed from the report are compensated and have no sample left, they're skipped
-            bucketsByStatus = bucketByHashAndStatus.getOrDefault(artefactHash, new HashMap<>()).entrySet().stream()
+            bucketsByStatus = bucketByHashAndStatus.getOrDefault(artefactHash, Collections.emptyMap()).entrySet().stream()
                 .filter(e -> isNotEmptyBucket(e.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             countByStatus = bucketsByStatus.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getCount()));
@@ -299,7 +299,7 @@ public class AggregatedReportViewBuilder {
             }
             //Create a "ALL" bucket merging the count by statuses
             if (!bucketsByStatus.isEmpty()) {
-                Bucket bucket = bucketsByStatus.values().stream().findFirst().get();
+                Bucket bucket = bucketsByStatus.values().iterator().next();
                 BucketBuilder bucketBuilder = new BucketBuilder(bucket.getBegin(), bucket.getEnd());
                 bucketsByStatus.values().forEach(bucketBuilder::merge);
                 bucketsByStatus.put(MERGED_GROUPS_LABEL, bucketBuilder.build());
