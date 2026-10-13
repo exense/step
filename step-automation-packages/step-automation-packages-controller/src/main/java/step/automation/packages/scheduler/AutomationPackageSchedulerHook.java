@@ -130,6 +130,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             List<AutomationPackageCronExclusion> yamlCronExclusions = schedule.getCronExclusions();
             if (yamlCronExclusions != null && !yamlCronExclusions.isEmpty()) {
                 List<CronExclusion> cronExclusions = yamlCronExclusions.stream()
+                    .filter(Objects::nonNull)
                     .map(AutomationPackageCronExclusion::toCronExclusion).collect(Collectors.toList());
                 execTaskParameters.setCronExclusions(cronExclusions);
             }

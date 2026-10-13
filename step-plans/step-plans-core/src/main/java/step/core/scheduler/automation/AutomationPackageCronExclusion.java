@@ -64,6 +64,9 @@ public class AutomationPackageCronExclusion {
     }
 
     public CronExclusion toCronExclusion() {
+        if (cron == null || cron.isBlank()) {
+            throw new IllegalStateException("The cron expression of a cron exclusion is missing");
+        }
         return new CronExclusion(cron, hasDescription() ? description : "");
     }
 
@@ -113,17 +116,30 @@ public class AutomationPackageCronExclusion {
         public AutomationPackageCronExclusion deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonNode node = p.readValueAsTree();
             if (node.isTextual()) {
-                return new AutomationPackageCronExclusion(node.asText(), null);
+                return new AutomationPackageCronExclusion(requireCron(node, ctxt), null);
             } else if (node.isObject()) {
-                return new AutomationPackageCronExclusion(asText(node.get(CRON_FIELD)), asText(node.get(DESCRIPTION_FIELD)));
+                String cron = requireCron(node.get(CRON_FIELD), ctxt);
+                JsonNode description = node.get(DESCRIPTION_FIELD);
+                if (description == null || description.isNull()) {
+                    return new AutomationPackageCronExclusion(cron, null);
+                } else if (description.isTextual()) {
+                    return new AutomationPackageCronExclusion(cron, description.asText());
+                } else {
+                    return ctxt.reportInputMismatch(AutomationPackageCronExclusion.class,
+                        "The field '%s' of a cron exclusion must be a string", DESCRIPTION_FIELD);
+                }
             } else {
                 return ctxt.reportInputMismatch(AutomationPackageCronExclusion.class,
                     "A cron exclusion is either a cron expression or an object with the fields '%s' and '%s'", CRON_FIELD, DESCRIPTION_FIELD);
             }
         }
 
-        private static String asText(JsonNode node) {
-            return node == null || node.isNull() ? null : node.asText();
+        private static String requireCron(JsonNode cron, DeserializationContext ctxt) throws IOException {
+            if (cron == null || !cron.isTextual() || cron.asText().isBlank()) {
+                return ctxt.reportInputMismatch(AutomationPackageCronExclusion.class,
+                    "The cron expression of a cron exclusion must be a non-empty string");
+            }
+            return cron.asText();
         }
     }
 }
