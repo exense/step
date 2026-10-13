@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import ch.exense.commons.io.FileHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -30,18 +29,26 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.StreamingOutput;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
@@ -68,12 +75,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.Map;
 
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
@@ -1062,7 +1068,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         LocalAutomationPackageDirectoryProvider provider = getContext().get(LocalAutomationPackageDirectoryProvider.class);
         if (provider == null) {
             throw badRequest("'" + FileResolver.LOCAL_AP_ID + "' is not a valid automation package id here. "
-                + "It addresses the automation package open in the Step IDE.");
+                + "It references the automation package open in Step Studio.");
         }
         java.nio.file.Path directory = provider.getCurrentAutomationPackageDirectory();
         if (directory == null) {

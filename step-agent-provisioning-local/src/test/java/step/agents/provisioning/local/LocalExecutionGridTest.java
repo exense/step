@@ -59,7 +59,7 @@ public class LocalExecutionGridTest {
     }
 
     /**
-     * The grid of the IDE is owned by the IDE: closing the attachment must leave it running and its files in place.
+     * The Studio grid of the owned by the Studio: closing the attachment must leave it running and its files in place.
      */
     @Test
     public void leavesAnAttachedGridRunningWhenClosed() throws Exception {
