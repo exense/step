@@ -118,6 +118,10 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
 
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
+            String description = schedule.getDescription();
+            if (description != null && !description.isEmpty()) {
+                execTaskParameters.addAttribute(ExecutiontTaskParameters.DESCRIPTION, description);
+            }
             YamlMetadata.applyTo(execTaskParameters, schedule.getMetadata());
 
             execTaskParameters.setCronExpression(schedule.getCron());

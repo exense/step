@@ -70,6 +70,10 @@ public class ScheduleMapper implements
     public ExecutiontTaskParameters toBusinessObject(AutomationPackageSchedule schedule) {
         ExecutiontTaskParameters task = new ExecutiontTaskParameters();
         task.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
+        String description = schedule.getDescription();
+        if (description != null && !description.isEmpty()) {
+            task.addAttribute(ExecutiontTaskParameters.DESCRIPTION, description);
+        }
         task.setActive(schedule.getActive() == null || schedule.getActive());
         task.setCronExpression(schedule.getCron());
         List<String> cronExclusions = schedule.getCronExclusions();
@@ -97,6 +101,8 @@ public class ScheduleMapper implements
     public AutomationPackageSchedule toYamlObject(ExecutiontTaskParameters task) {
         AutomationPackageSchedule schedule = new AutomationPackageSchedule(null);
         schedule.setName(task.getAttribute(AbstractOrganizableObject.NAME));
+        String description = task.getAttribute(ExecutiontTaskParameters.DESCRIPTION);
+        schedule.setDescription(description == null || description.isEmpty() ? null : description);
         // a schedule is active unless stated otherwise
         schedule.setActive(task.isActive() ? null : false);
         schedule.setCron(task.getCronExpression());

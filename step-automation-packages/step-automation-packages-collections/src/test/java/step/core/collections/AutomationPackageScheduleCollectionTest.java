@@ -92,6 +92,25 @@ public class AutomationPackageScheduleCollectionTest extends AutomationPackageCo
     }
 
     @Test
+    public void testScheduleDescription() throws IOException {
+        ExecutiontTaskParameters schedule = findSchedule("firstSchedule");
+        assertFalse(schedule.hasAttribute(ExecutiontTaskParameters.DESCRIPTION));
+        assertFalse(readSchedulesFragment().contains("description"));
+
+        // The description is an attribute of the task and a field of its own in YAML
+        schedule.addAttribute(ExecutiontTaskParameters.DESCRIPTION, "My schedule description");
+        scheduleCollection.save(schedule);
+        String yaml = readSchedulesFragment();
+        assertTrue(yaml, yaml.contains("description: \"My schedule description\""));
+        assertEquals("My schedule description", findSchedule("firstSchedule").getAttribute(ExecutiontTaskParameters.DESCRIPTION));
+
+        schedule = findSchedule("firstSchedule");
+        schedule.getAttributes().remove(ExecutiontTaskParameters.DESCRIPTION);
+        scheduleCollection.save(schedule);
+        assertFalse(readSchedulesFragment().contains("description"));
+    }
+
+    @Test
     public void testScheduleAddAndRemove() throws IOException {
         Plan plan = findPlan("Test Plan with Composite");
         Map<String, String> repositoryParameters = new HashMap<>();

@@ -35,6 +35,8 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
     public static final String FIELD_NAME_IN_AP = "schedules";
     private String name;
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String description;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Boolean active = true;
     private String cron;
 
@@ -77,6 +79,14 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void setCron(String cron) {
@@ -131,6 +141,7 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
     public String toString() {
         return "AutomationPackageSchedule{" +
             "name='" + name + '\'' +
+            ", description='" + description + '\'' +
             ", active=" + active +
             ", cron='" + cron + '\'' +
             ", cronExclusions=" + cronExclusions +
