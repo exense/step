@@ -41,7 +41,7 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
     private String cron;
 
     @JsonInclude(JsonInclude.Include.NON_NULL) // otherwise fails schema check after re-reading serialized value
-    private List<String> cronExclusions;
+    private List<AutomationPackageCronExclusion> cronExclusions;
     private String planName;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String assertionPlanName;
@@ -93,11 +93,11 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
         this.cron = cron;
     }
 
-    public List<String> getCronExclusions() {
+    public List<AutomationPackageCronExclusion> getCronExclusions() {
         return cronExclusions;
     }
 
-    public void setCronExclusions(List<String> cronExclusions) {
+    public void setCronExclusions(List<AutomationPackageCronExclusion> cronExclusions) {
         this.cronExclusions = cronExclusions;
     }
 

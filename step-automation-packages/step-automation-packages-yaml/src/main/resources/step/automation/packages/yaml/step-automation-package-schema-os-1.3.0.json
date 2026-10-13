@@ -2836,7 +2836,26 @@
         "cronExclusions": {
           "type": "array",
           "items": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "cron": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "cron"
+                ],
+                "additionalProperties": false
+              }
+            ]
           }
         },
         "cron": {

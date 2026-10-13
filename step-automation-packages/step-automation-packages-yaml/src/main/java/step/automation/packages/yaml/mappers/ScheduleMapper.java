@@ -32,6 +32,7 @@ import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.automation.AutomationPackageCronExclusion;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.yaml.YamlMetadata;
 
@@ -76,9 +77,9 @@ public class ScheduleMapper implements
         }
         task.setActive(schedule.getActive() == null || schedule.getActive());
         task.setCronExpression(schedule.getCron());
-        List<String> cronExclusions = schedule.getCronExclusions();
+        List<AutomationPackageCronExclusion> cronExclusions = schedule.getCronExclusions();
         if (cronExclusions != null && !cronExclusions.isEmpty()) {
-            task.setCronExclusions(cronExclusions.stream().map(e -> new CronExclusion(e, "")).collect(Collectors.toList()));
+            task.setCronExclusions(cronExclusions.stream().map(AutomationPackageCronExclusion::toCronExclusion).collect(Collectors.toList()));
         }
         YamlMetadata.applyTo(task, schedule.getMetadata());
 
@@ -108,7 +109,7 @@ public class ScheduleMapper implements
         schedule.setCron(task.getCronExpression());
         List<CronExclusion> cronExclusions = task.getCronExclusions();
         if (cronExclusions != null && !cronExclusions.isEmpty()) {
-            schedule.setCronExclusions(cronExclusions.stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
+            schedule.setCronExclusions(cronExclusions.stream().map(AutomationPackageCronExclusion::fromCronExclusion).collect(Collectors.toList()));
         }
         schedule.setMetadata(YamlMetadata.extractFrom(task));
 
