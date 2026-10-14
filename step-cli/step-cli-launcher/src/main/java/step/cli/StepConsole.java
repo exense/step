@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
     description = "The command-line interface (CLI) to interact with Step",
     version = Constants.STEP_VERSION_STRING,
     mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
-    subcommands = {ApCommand.class, LibraryCommand.class, IdeCommands.IdeCommand.class, CommandLine.HelpCommand.class}
+    subcommands = {ApCommand.class, LibraryCommand.class, StudioCommands.StudioCommand.class, CommandLine.HelpCommand.class}
 )
 public class StepConsole extends BaseCommand {
 
@@ -236,13 +236,13 @@ public class StepConsole extends BaseCommand {
 
         List<String> customConfigFiles = null;
 
-        // Only the "ap", "library" and "ide" command trees accept custom configuration files. The option sits at a
-        // different depth in each of them ("ap deploy", "library deploy", but "ide" as well as "ide open"), so it is
+        // Only the "ap", "library" and "studio" command trees accept custom configuration files. The option sits at a
+        // different depth in each of them ("ap deploy", "library deploy", but "studio" as well as "studio open"), so it is
         // read from the deepest command that was parsed.
         CommandLine.ParseResult subcommand1 = parseResult.subcommand();
         if (subcommand1 != null && (Objects.equals(subcommand1.commandSpec().name(), ApCommand.COMMAND_NAME) ||
             Objects.equals(subcommand1.commandSpec().name(), LibraryCommand.COMMAND_NAME) ||
-            Objects.equals(subcommand1.commandSpec().name(), IdeCommands.COMMAND_NAME))) {
+            Objects.equals(subcommand1.commandSpec().name(), StudioCommands.COMMAND_NAME))) {
             CommandLine.ParseResult subcommand2 = subcommand1.subcommand();
             customConfigFiles = findCustomConfigFiles(subcommand2 == null ? subcommand1 : subcommand2);
         }

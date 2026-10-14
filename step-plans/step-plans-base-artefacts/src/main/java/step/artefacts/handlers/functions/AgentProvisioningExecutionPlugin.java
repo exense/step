@@ -54,7 +54,7 @@ import static step.core.plans.agents.configuration.AutomaticAgentProvisioningCon
  * and provisioning of the agents to the {@link AgentProvisioningDriver} of the execution engine context.
  * <p>
  * It is not auto-discovered: it is added to the execution engine together with the driver, by the Step controller when
- * a driver is configured, and by the CLI and the IDE for local executions.
+ * a driver is configured, and by the CLI and the Studio for local executions.
  */
 @Plugin
 @IgnoreDuringAutoDiscovery
