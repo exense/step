@@ -22,7 +22,7 @@ import step.studio.exceptions.InvalidRequestException;
 
 import java.util.List;
 
-@Path("/local/ide")
+@Path("/local/studio")
 @Tag(name = "Studio")
 public class LocalStudioServices extends AbstractStepServices {
 
