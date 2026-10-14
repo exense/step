@@ -66,6 +66,6 @@ public class PatchableYamlModelBase extends AbstractYamlModel implements Patchab
 
     @Override
     public void onParsed(JsonLocation startLocation, PatchingParserDelegate parser) {
-        context.claimChunk(startLocation, parser.getLastDistinctLocation(), this);
+        context.claimChunk(startLocation, parser, this);
     }
 }

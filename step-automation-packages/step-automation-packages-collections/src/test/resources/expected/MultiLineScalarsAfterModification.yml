@@ -1,0 +1,67 @@
+---
+plans:
+  - name: "MultiLineScalars - Single Line Field with empty line"
+    root:
+      testCase:
+        nodeName: "MultiLineScalars - Single Line Field with empty line"
+        children:
+          - script:
+              description: "This is a single line description"
+
+              script: "something"
+              skipNode: true
+
+  - name: "MultiLineScalars - Before single line field"
+    root:
+      testCase:
+        nodeName: "MultiLineScalars - Before single line field"
+        children:
+          - script:
+              description: |
+                This description was expanded upon and now stretches...
+
+                ...over multiple lines
+              script: |-
+                def parser=new JSONParser();
+
+                parser.parse("""
+                {
+                  "key":"value"
+                }
+                """);
+              skipNode: true
+          - placeholder: {}
+  - name: "MultiLineScalars - End of Object with empty line"
+    root:
+      testCase:
+        nodeName: "MultiLineScalars - End of Object with empty line"
+        children:
+          - script:
+              description: "The new description fits one line"
+              script: "nothing"
+  - name: "MultiLineScalars - End of Object"
+    root:
+      testCase:
+        nodeName: "MultiLineScalars - End of Object"
+        children:
+          - script:
+              script: |-
+                def parser=new JSONParser();
+                parser.parse("""
+                {
+                  "key":"value"
+                }
+                """);
+  - name: "MultiLineScalars - End of File"
+    root:
+      testCase:
+        nodeName: "MultiLineScalars - End of File"
+        children:
+          - script:
+              script: |-
+                def parser=new JSONParser();
+                parser.parse("""
+                {
+                  "key":"value"
+                }
+                """);
