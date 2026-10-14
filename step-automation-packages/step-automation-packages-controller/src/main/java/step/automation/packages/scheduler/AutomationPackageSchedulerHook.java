@@ -34,6 +34,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.*;
+import step.core.scheduler.automation.AutomationPackageCronExclusion;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.yaml.YamlMetadata;
 
@@ -118,14 +119,19 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
 
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
+            String description = schedule.getDescription();
+            if (description != null && !description.isEmpty()) {
+                execTaskParameters.addAttribute(ExecutiontTaskParameters.DESCRIPTION, description);
+            }
             YamlMetadata.applyTo(execTaskParameters, schedule.getMetadata());
 
             execTaskParameters.setCronExpression(schedule.getCron());
 
-            List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
-            if (cronExclusionsAsStrings != null && !cronExclusionsAsStrings.isEmpty()) {
-                List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream()
-                    .map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
+            List<AutomationPackageCronExclusion> yamlCronExclusions = schedule.getCronExclusions();
+            if (yamlCronExclusions != null && !yamlCronExclusions.isEmpty()) {
+                List<CronExclusion> cronExclusions = yamlCronExclusions.stream()
+                    .filter(Objects::nonNull)
+                    .map(AutomationPackageCronExclusion::toCronExclusion).collect(Collectors.toList());
                 execTaskParameters.setCronExclusions(cronExclusions);
             }
             String assertionPlanName = schedule.getAssertionPlanName();
