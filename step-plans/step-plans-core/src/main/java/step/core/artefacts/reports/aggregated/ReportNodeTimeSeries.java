@@ -9,7 +9,6 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesOptimizationType;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
-import step.core.timeseries.bucket.BucketBuilder;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
 import java.util.LinkedHashSet;
@@ -43,6 +42,9 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesConfig timeSeriesConfig, boolean ingestionEnabled) {
         timeSeries = new TimeSeriesBuilder()
             .withConfig(timeSeriesConfig, collectionFactory, TIME_SERIES_MAIN_COLLECTION, Set.of(EXECUTION_ID))
+            // The report nodes removed from the report are compensated, see compensateReportNode, and leave buckets
+            // holding no sample. They are excluded from the queries of every consumer of this time series
+            .withAggregationConfig(new TimeSeriesAggregationConfig().setExcludeEmptyBuckets(true))
             .build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
@@ -75,41 +77,19 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     }
 
     /**
-     * Compensates the data ingested for the provided report node by ingesting the opposite of its contribution, with
-     * the same attributes and at the same timestamp, so that both cancel each other in the same time bucket of every
-     * resolution. It is used when report nodes are removed from the report and must stop counting in the time series,
-     * see {@link step.core.artefacts.handlers.ArtefactHandler}
+     * Compensates the data ingested for the provided report node, i.e. removes its contribution from the buckets it
+     * has been ingested into, at every resolution. It is used when report nodes are removed from the report and must
+     * stop counting in the time series, see {@link step.core.artefacts.handlers.ArtefactHandler}
      * <p>
      * The count, the sum and the distribution of the compensated buckets are exact. Their min and their max can not be
-     * restored and keep including the compensated samples.
+     * restored and keep including the compensated samples. The buckets left without any sample are excluded from the
+     * queries of this time series, see {@link TimeSeriesAggregationConfig#setExcludeEmptyBuckets(boolean)}
      *
      * @param reportNode       the report node to be compensated, with the same arguments as used for its ingestion
      * @param customAttributes the custom attributes used for its ingestion
      */
     public void compensateReportNode(ReportNode reportNode, Map<String, Object> customAttributes) {
-        BucketAttributes attributes = buildBucketAttributes(reportNode, customAttributes);
-        long timestamp = reportNode.getExecutionTime();
-        // The single sample this report node contributed, built the way it was ingested rather than computed, so that
-        // its distribution bracket is guaranteed to be the ingested one
-        Bucket ingestedSample = BucketBuilder.create(timestamp).withAttributes(attributes).ingest(reportNode.getDuration()).build();
-
-        // The opposite of that sample: merging it into the ingested data subtracts the sample from the count, from the
-        // sum and from its distribution bracket
-        Bucket compensation = new Bucket(timestamp);
-        compensation.setAttributes(attributes);
-        compensation.setCount(-ingestedSample.getCount());
-        compensation.setSum(-ingestedSample.getSum());
-        compensation.setPclPrecision(ingestedSample.getPclPrecision());
-        //Compensate each distribution bracket (negate value)
-        if (ingestedSample.getDistribution() != null) {
-            compensation.setDistribution(ingestedSample.getDistribution().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> -e.getValue())));
-        }
-        // Neutral min and max, so that the compensation doesn't contribute to them
-        compensation.setMin(Long.MAX_VALUE);
-        compensation.setMax(Long.MIN_VALUE);
-
-        ingestionPipeline.ingestBucket(compensation);
+        ingestionPipeline.compensatePoint(buildBucketAttributes(reportNode, customAttributes), reportNode.getExecutionTime(), reportNode.getDuration());
     }
 
     private BucketAttributes buildBucketAttributes(ReportNode reportNode, Map<String, Object> customAttributes) {

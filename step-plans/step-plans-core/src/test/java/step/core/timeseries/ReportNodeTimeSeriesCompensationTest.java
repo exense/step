@@ -65,9 +65,8 @@ public class ReportNodeTimeSeriesCompensationTest {
             reportNodeTimeSeries.compensateReportNode(failed, Map.of());
             flush(reportNodeTimeSeries);
 
-            // The compensated samples are gone at every resolution, the other ones are untouched
-            assertEquals(Map.of(ReportNodeStatus.FAILED.name(), 0L, ReportNodeStatus.PASSED.name(), 1L),
-                countByStatus(reportNodeTimeSeries));
+            // The series left without any sample is excluded from the queries, the other ones are untouched
+            assertEquals(Map.of(ReportNodeStatus.PASSED.name(), 1L), countByStatus(reportNodeTimeSeries));
             reportNodeTimeSeries.getTimeSeries().getCollections().forEach(collection -> {
                 Bucket failedBucket = buckets(collection).stream()
                     .filter(b -> ReportNodeStatus.FAILED.name().equals(b.getAttributes().get(STATUS)))
@@ -125,7 +124,7 @@ public class ReportNodeTimeSeriesCompensationTest {
             reportNodeTimeSeries.compensateReportNode(failed, Map.of());
             flush(reportNodeTimeSeries);
 
-            assertEquals(Map.of(ReportNodeStatus.FAILED.name(), 0L), countByStatus(reportNodeTimeSeries));
+            assertEquals(Map.of(), countByStatus(reportNodeTimeSeries));
             // The compensation is saved as an additional bucket of the same series and window
             TimeSeriesCollection collection = reportNodeTimeSeries.getTimeSeries().getDefaultCollection();
             List<Bucket> buckets = buckets(collection);
@@ -160,7 +159,6 @@ public class ReportNodeTimeSeriesCompensationTest {
     private Map<String, Long> countByErrorMessage(ReportNodeTimeSeries reportNodeTimeSeries) {
         return reportNodeTimeSeries.queryByExecutionIdAndGroupBy(EXECUTION, null, ARTEFACT_HASH, ERROR_MESSAGE)
             .values().stream().flatMap(byMessage -> byMessage.entrySet().stream())
-            .filter(e -> e.getValue().getCount() > 0)
             .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getCount(), Long::sum));
     }
 }

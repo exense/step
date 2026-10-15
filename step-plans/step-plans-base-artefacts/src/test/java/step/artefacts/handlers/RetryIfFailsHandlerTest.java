@@ -262,8 +262,8 @@ public class RetryIfFailsHandlerTest extends AbstractPlanTest {
     }
 
     /**
-     * @return the number of report nodes ingested into the report node time series, by status. Compensated nodes don't
-     * count anymore, their buckets holding no sample
+     * @return the number of report nodes ingested into the report node time series, by status. The series of the
+     * compensated nodes hold no sample anymore and are excluded from the queries
      */
     private Map<String, Long> countByStatus(PlanRunnerResult result) {
         ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
@@ -271,7 +271,6 @@ public class RetryIfFailsHandlerTest extends AbstractPlanTest {
         Map<String, Long> countByStatus = new HashMap<>();
         reportNodeTimeSeries.queryByExecutionIdAndGroupBy(result.getExecutionId(), null, ReportNodeTimeSeries.ARTEFACT_HASH, ReportNodeTimeSeries.STATUS)
             .values().forEach(byStatus -> byStatus.forEach((status, bucket) -> countByStatus.merge(status, bucket.getCount(), Long::sum)));
-        countByStatus.values().removeIf(count -> count == 0);
         return countByStatus;
     }
 

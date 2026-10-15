@@ -42,7 +42,8 @@
     <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
     <step-grid.version>3.0.4</step-grid.version>
-    <step-framework.version>3.0.4</step-framework.version>
+    <!-- TODO SED-5014: to be set to the Step 30 framework patch release before merging -->
+    <step-framework.version>0.0.0-SED-5014-SNAPSHOT</step-framework.version>
 
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.4</dep.groovy.version>
