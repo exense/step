@@ -398,23 +398,12 @@ public class TimeSeriesHandler {
         long start = response.getStart();
         long end = response.getEnd();
 
-        int maxSeries = request.getMaxNumberOfSeries();
-
         List<BucketAttributes> matrixKeys = new ArrayList<>();
         List<List<BucketResponse>> matrix = new ArrayList<>();
-        boolean isTruncated = false;
-
-        for (Map.Entry<BucketAttributes, Map<Long, Bucket>> entry : series.entrySet()) {
-            Map<Long, Bucket> currentSeries = entry.getValue();
-
-            // The response is truncated as soon as a series is left out because the maximum has been reached
-            if (matrixKeys.size() == maxSeries) {
-                isTruncated = true;
-                break;
-            }
-
+        series.keySet().stream().limit(request.getMaxNumberOfSeries()).forEach(key -> {
+            Map<Long, Bucket> currentSeries = series.get(key);
             List<BucketResponse> bucketResponses = new ArrayList<>();
-            for (long index = start; index < end; index += intervalSize) {
+            for (long index = start; index < end; index += response.getResolution()) {
                 Bucket b = currentSeries.get(index);
                 BucketResponse bucketResponse = null;
                 if (b != null) {
@@ -424,7 +413,7 @@ public class TimeSeriesHandler {
                         .withMin(b.getMin())
                         .withMax(b.getMax())
                         .withSum(b.getSum())
-                        .withThroughputPerHour(3600L * 1000L * b.getCount() / (b.getEnd() - b.getBegin()))
+                        .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
                         .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile, (existing, replacement) -> existing)))
                         .withAttributes(b.getAttributes())
                         .build();
@@ -432,8 +421,8 @@ public class TimeSeriesHandler {
                 bucketResponses.add(bucketResponse);
             }
             matrix.add(bucketResponses);
-            matrixKeys.add(entry.getKey());
-        }
+            matrixKeys.add(key);
+        });
 
         return new TimeSeriesAPIResponseBuilder()
             .withStart(start)
@@ -441,7 +430,7 @@ public class TimeSeriesHandler {
             .withInterval(intervalSize)
             .withMatrixKeys(matrixKeys)
             .withMatrix(matrix)
-            .withTruncated(isTruncated)
+            .withTruncated(series.size() > request.getMaxNumberOfSeries())
             .withCollectionResolution(response.getCollectionResolution())
             .withCollectionIgnoredAttributes(response.getCollectionIgnoredAttributes())
             .withHigherResolutionUsed(response.isHigherResolutionUsed())
