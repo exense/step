@@ -7,6 +7,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import step.controller.services.async.AsyncTaskManager;
+import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.collections.inmemory.InMemoryCollection;
@@ -26,6 +28,7 @@ import step.plugins.timeseries.api.OQLVerifyResponse;
 import step.plugins.timeseries.api.TimeSeriesAPIResponse;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
@@ -38,6 +41,7 @@ public class TimeSeriesHandlerTest {
     private static TimeSeriesHandler handler;
 
     private static InMemoryExecutionAccessor executionAccessor;
+    private static ReportNodeTimeSeries reportNodeTimeSeries;
     private static Collection<Bucket> bucketsCollection;
     private static Collection<Measurement> measurementsCollection;
     private static Collection<ExecutionMetricSample> metricSamplesCollection;
@@ -53,7 +57,7 @@ public class TimeSeriesHandlerTest {
             .registerCollection(tsCollection)
             .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
+        reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
         handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, metricSamplesCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT, 15000L);
     }
 
@@ -298,6 +302,118 @@ public class TimeSeriesHandlerTest {
         response.getMatrix().get(0).forEach(b -> {
             Assert.assertEquals(b.getThroughputPerHour(), b.getCount() * 1000 * 3600 / expectedResolution);
         });
+    }
+
+    @Test
+    public void fetchReportNodesExcludesCompensatedSeriesTest() {
+        String executionId = RandomStringUtils.randomAlphabetic(10);
+        ingestReportNodes(executionId, "keptError");
+        ingestAndCompensateReportNode(executionId, "compensatedError");
+
+        TimeSeriesAPIResponse response = handler.getReportNodeTimeSeries(reportNodesRequest(executionId, 100));
+
+        // Only the error of the node left in the report is reported, the compensated series holding no sample anymore
+        Assert.assertEquals(List.of("keptError"), response.getMatrixKeys().stream()
+            .map(key -> key.get(ReportNodeTimeSeries.ERROR_MESSAGE)).collect(Collectors.toList()));
+        Assert.assertEquals(1, response.getMatrix().get(0).get(0).getCount());
+        Assert.assertFalse(response.isTruncated());
+    }
+
+    @Test
+    public void fetchReportNodesTruncatedTest() {
+        String executionId = RandomStringUtils.randomAlphabetic(10);
+        ingestReportNodes(executionId, "error1", "error2", "error3");
+
+        TimeSeriesAPIResponse response = handler.getReportNodeTimeSeries(reportNodesRequest(executionId, 2));
+
+        Assert.assertEquals(2, response.getMatrixKeys().size());
+        Assert.assertEquals(2, response.getMatrix().size());
+        Assert.assertTrue(response.isTruncated());
+    }
+
+    @Test
+    public void fetchReportNodesNotTruncatedByCompensatedSeriesTest() {
+        String executionId = RandomStringUtils.randomAlphabetic(10);
+        ingestReportNodes(executionId, "error1", "error2");
+        ingestAndCompensateReportNode(executionId, "compensatedError");
+
+        TimeSeriesAPIResponse response = handler.getReportNodeTimeSeries(reportNodesRequest(executionId, 2));
+
+        // The compensated series is excluded and doesn't count towards the maximum number of series
+        Assert.assertEquals(2, response.getMatrixKeys().size());
+        Assert.assertFalse(response.isTruncated());
+    }
+
+    @Test
+    public void fetchBucketsTruncatedTest() {
+        String key = RandomStringUtils.randomAlphabetic(5);
+        String key2 = RandomStringUtils.randomAlphabetic(5);
+        bucketsCollection.save(generateBuckets(key, 2));
+        bucketsCollection.save(generateBuckets(key2, 2));
+        FetchBucketsRequest request = new FetchBucketsRequest();
+        request.setStart(0);
+        request.setEnd(10_000);
+        request.setGroupDimensions(Set.of("key"));
+        request.setNumberOfBuckets(1);
+        request.setPercentiles(List.of());
+        request.setOqlFilter("attributes.key = " + key + " or attributes.key = " + key2);
+        request.setMaxNumberOfSeries(1);
+
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
+        Assert.assertEquals(1, response.getMatrixKeys().size());
+        Assert.assertTrue(response.isTruncated());
+
+        // Not truncated as soon as the maximum covers all the series
+        request.setMaxNumberOfSeries(2);
+        response = handler.fetchBucketsWithFallback(request);
+        Assert.assertEquals(2, response.getMatrixKeys().size());
+        Assert.assertFalse(response.isTruncated());
+    }
+
+    private FetchBucketsRequest reportNodesRequest(String executionId, int maxNumberOfSeries) {
+        FetchBucketsRequest request = new FetchBucketsRequest();
+        request.setStart(0);
+        request.setEnd(100_000);
+        request.setGroupDimensions(Set.of(ReportNodeTimeSeries.ERROR_MESSAGE));
+        request.setNumberOfBuckets(1);
+        request.setPercentiles(List.of());
+        request.setOqlFilter("attributes." + ReportNodeTimeSeries.EXECUTION_ID + " = " + executionId);
+        request.setParams(Map.of());
+        request.setMaxNumberOfSeries(maxNumberOfSeries);
+        return request;
+    }
+
+    private void ingestReportNodes(String executionId, String... errorMessages) {
+        for (String errorMessage : errorMessages) {
+            reportNodeTimeSeries.ingestReportNode(reportNode(executionId, errorMessage), Map.of());
+        }
+        flushReportNodeTimeSeries();
+    }
+
+    /**
+     * Ingest a report node and compensate it, as done for the report nodes of the iterations which aren't reported
+     * by a RetryIfFails
+     */
+    private void ingestAndCompensateReportNode(String executionId, String errorMessage) {
+        ReportNode compensated = reportNode(executionId, errorMessage);
+        reportNodeTimeSeries.ingestReportNode(compensated, Map.of());
+        reportNodeTimeSeries.compensateReportNode(compensated, Map.of());
+        flushReportNodeTimeSeries();
+    }
+
+    private void flushReportNodeTimeSeries() {
+        reportNodeTimeSeries.getTimeSeries().getCollections().forEach(c -> c.getIngestionPipeline().flush());
+    }
+
+    private ReportNode reportNode(String executionId, String errorMessage) {
+        ReportNode reportNode = new ReportNode();
+        reportNode.setExecutionID(executionId);
+        reportNode.setArtefactHash(RandomStringUtils.randomAlphabetic(5));
+        reportNode.setStatus(ReportNodeStatus.FAILED);
+        reportNode.setError(errorMessage, 0, true);
+        reportNode.setExecutionTime(1000);
+        reportNode.setDuration(10);
+        return reportNode;
     }
 
     /**
