@@ -55,7 +55,7 @@ public class LocalAgentSizingTest {
     @Test
     public void sizesTheAgentOnTheForecast() throws Exception {
         withDriver(10, driver -> Assert.assertEquals(Map.of(AgentTypeConstants.AGENT_TYPE_JAVA, 3),
-            driver.calculateTokensByAgentType(List.of(new AgentPoolRequirementSpec(JAVA_POOL, 3)))));
+            driver.calculateRequiredTokensByAgentType(List.of(new AgentPoolRequirementSpec(JAVA_POOL, 3)))));
     }
 
     /**
@@ -65,7 +65,7 @@ public class LocalAgentSizingTest {
     @Test
     public void sumsTheRequirementsOfTheSameAgentType() throws Exception {
         withDriver(10, driver -> Assert.assertEquals(Map.of(AgentTypeConstants.AGENT_TYPE_JAVA, 5),
-            driver.calculateTokensByAgentType(List.of(
+            driver.calculateRequiredTokensByAgentType(List.of(
                 new AgentPoolRequirementSpec(JAVA_POOL, 2),
                 new AgentPoolRequirementSpec(JAVA_POOL, 3)))));
     }
@@ -73,7 +73,7 @@ public class LocalAgentSizingTest {
     @Test
     public void capsTheNumberOfTokensToTheConfiguredMaximum() throws Exception {
         withDriver(5, driver -> Assert.assertEquals(Map.of(AgentTypeConstants.AGENT_TYPE_JAVA, 5),
-            driver.calculateTokensByAgentType(List.of(new AgentPoolRequirementSpec(JAVA_POOL, 12)))));
+            driver.calculateRequiredTokensByAgentType(List.of(new AgentPoolRequirementSpec(JAVA_POOL, 12)))));
     }
 
     /**
@@ -82,7 +82,7 @@ public class LocalAgentSizingTest {
     @Test
     public void alwaysSizesTheAgentWithAtLeastOneToken() throws Exception {
         withDriver(5, driver -> Assert.assertEquals(Map.of(AgentTypeConstants.AGENT_TYPE_JAVA, 1),
-            driver.calculateTokensByAgentType(List.of(new AgentPoolRequirementSpec(JAVA_POOL, 0)))));
+            driver.calculateRequiredTokensByAgentType(List.of(new AgentPoolRequirementSpec(JAVA_POOL, 0)))));
     }
 
     /**
@@ -93,7 +93,7 @@ public class LocalAgentSizingTest {
     public void rejectsAPoolWhichIsNotAvailableLocally() throws Exception {
         withDriver(5, driver -> {
             ProvisioningException exception = Assert.assertThrows(ProvisioningException.class,
-                () -> driver.calculateTokensByAgentType(List.of(new AgentPoolRequirementSpec("windows-medium", 1))));
+                () -> driver.calculateRequiredTokensByAgentType(List.of(new AgentPoolRequirementSpec("windows-medium", 1))));
             Assert.assertTrue("Should list the available pools: " + exception.getMessage(),
                 exception.getMessage().contains(JAVA_POOL));
         });
