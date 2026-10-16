@@ -34,6 +34,7 @@ import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.execution.ProvisioningException;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.grid.AgentRef;
+import step.grid.GridImpl;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTypes;
 import step.grid.client.AbstractGridClientImpl;
@@ -279,7 +280,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
     }
 
     @Override
-    public AgentProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) throws Exception {
+    public AgentProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
         ProvisioningSession session = requireSession(provisioningRequestId);
         AgentProvisioningStatus status = session.status;
         AgentProvisioningReport report = new AgentProvisioningReport();
@@ -287,7 +288,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
 
         // The number of tokens per type only matters to warn about an execution needing more than an agent provides:
         // the agents are shared by all executions and always started with the maximum number of tokens.
-        Set<String> agentTypes = calculateTokensByAgentType(session.request.agentPoolRequirementSpecs).keySet();
+        Set<String> agentTypes = calculateRequiredTokensByAgentType(session.request.agentPoolRequirementSpecs).keySet();
         status.statusDescription = "Preparing " + agentTypes.size() + " local agent(s)...";
 
         try {
@@ -308,7 +309,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
                 }
             }
 
-            List<AgentPoolProvisioningReport> failedPools = report.pools.stream().filter(p -> !p.success).collect(Collectors.toList());
+            List<AgentPoolProvisioningReport> failedPools = report.pools.stream().filter(p -> !p.success).toList();
             if (!failedPools.isEmpty()) {
                 String message = failedPools.stream().map(p -> p.error.errorMessage).collect(Collectors.joining("; "));
                 status.error = new AgentProvisioningError(message);
@@ -326,7 +327,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
      * Returns the running agent of the given type, starting it if there is none yet or if the previous one is no
      * longer usable.
      */
-    private StartedAgent ensureAgentRunning(String agentType) throws LocalAgentException {
+    private void ensureAgentRunning(String agentType) throws LocalAgentException {
         Object lock = agentLocks.computeIfAbsent(agentType, t -> new Object());
         synchronized (lock) {
             if (closed) {
@@ -336,7 +337,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             if (existing != null) {
                 if (isUsable(existing)) {
                     logger.debug("Reusing the running local {} agent", agentType);
-                    return existing;
+                    return;
                 }
                 logger.warn("The local {} agent is no longer reachable and will be restarted. Last output of the agent:{}{}",
                     agentType, System.lineSeparator(), String.join(System.lineSeparator(), existing.process.getLastOutputLines()));
@@ -351,7 +352,6 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
                 throw new LocalAgentException("The local agent provisioning has been closed");
             }
             agentsByType.put(agentType, startedAgent);
-            return startedAgent;
         }
     }
 
@@ -371,7 +371,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
      * Folds the forecast, expressed in numbers of agents per pool, into a number of tokens per agent type.
      */
     // Package private for the sake of the tests, which cover the sizing without starting any agent
-    Map<String, Integer> calculateTokensByAgentType(List<AgentPoolRequirementSpec> requirementSpecs) {
+    Map<String, Integer> calculateRequiredTokensByAgentType(List<AgentPoolRequirementSpec> requirementSpecs) {
         Map<String, AgentPoolSpec> availablePools = getAvailableAgentPoolSpecs().stream()
             .collect(Collectors.toMap(s -> s.name, s -> s));
 
@@ -562,10 +562,12 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             return;
         }
         String agentId = startedAgent.agentRef.getAgentId();
-        for (TokenWrapper token : grid.getGrid().getTokens()) {
-            if (token.getAgent() != null && agentId.equals(token.getAgent().getAgentId())) {
+
+        GridImpl gridImpl = grid.getGrid();
+        for (TokenWrapper token : gridImpl.getTokens()) {
+            if (token.getAgent() != null && Objects.equals(token.getAgent().getAgentId(), agentId)) {
                 try {
-                    grid.getGrid().invalidateToken(token.getID());
+                    gridImpl.invalidateToken(token.getID());
                 } catch (Exception e) {
                     logger.warn("Unable to remove the token {} of the stopped local agent {} from the grid", token.getID(), agentId, e);
                 }
