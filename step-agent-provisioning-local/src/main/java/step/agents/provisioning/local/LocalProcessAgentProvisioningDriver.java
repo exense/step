@@ -172,6 +172,11 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         return provider != null ? provider.getInstallationHint() : null;
     }
 
+    private String displayName(String agentType) {
+        LocalAgentProvider provider = allProvidersByAgentType.get(agentType);
+        return provider != null ? provider.getDisplayName() : agentType;
+    }
+
     static String agentPoolName(String agentType) {
         return AGENT_POOL_NAME_PREFIX + agentType;
     }
@@ -212,7 +217,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         String planConfigurationMessage = agentProvisioningConfiguration.enableAgentProvisioning() ?
             "This plan configures its agent pools manually" :
             "This plan disables the agent provisioning";
-        logger.info("{}, this is ignored for local execution, agents are still started automatically.", planConfigurationMessage);
+        logger.info("{}, this is ignored for local execution: the local agents of the required types are used.", planConfigurationMessage);
         return requiredAgentPools;
     }
 
@@ -302,7 +307,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
                     ensureAgentRunning(agentType);
                     poolReport.success = true;
                 } catch (LocalAgentException e) {
-                    logger.error("Error while starting the local {} agent", agentType, e);
+                    logger.error("Unable to provide the local {} agent", displayName(agentType), e);
                     poolReport.error = new AgentProvisioningError(e.getMessage());
                 } finally {
                     poolReport.completed = true;
@@ -336,11 +341,11 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             StartedAgent existing = agentsByType.get(agentType);
             if (existing != null) {
                 if (isUsable(existing)) {
-                    logger.debug("Reusing the running local {} agent", agentType);
+                    logger.info("Reusing the local {} agent already running.", displayName(agentType));
                     return;
                 }
                 logger.warn("The local {} agent is no longer reachable and will be restarted. Last output of the agent:{}{}",
-                    agentType, System.lineSeparator(), String.join(System.lineSeparator(), existing.process.getLastOutputLines()));
+                    displayName(agentType), System.lineSeparator(), String.join(System.lineSeparator(), existing.process.getLastOutputLines()));
                 agentsByType.remove(agentType);
                 discardAgent(existing);
             }
@@ -430,7 +435,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             process.stop(configuration.getAgentShutdownTimeout().toMillis());
             throw e;
         }
-        logger.info("The local {} agent is ready.", provider.getDisplayName());
+        logger.info("The local {} agent is ready. It is kept running for the next executions.", provider.getDisplayName());
         return startedAgent;
     }
 
@@ -594,6 +599,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             synchronized (entry.getValue()) {
                 StartedAgent startedAgent = agentsByType.remove(entry.getKey());
                 if (startedAgent != null) {
+                    logger.info("Stopping the local {} agent...", displayName(entry.getKey()));
                     stopAgent(startedAgent);
                 }
             }
