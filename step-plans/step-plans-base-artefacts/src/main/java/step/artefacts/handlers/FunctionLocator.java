@@ -116,8 +116,10 @@ public class FunctionLocator {
                 //No active version provided, we simply return the ordered function by priorities
                 return orderedFunctions;
             }
-        } else {
+        } else if (strictMode) {
             throw new NoSuchElementException("No selection attribute defined");
+        } else {
+            return List.of();
         }
     }
 

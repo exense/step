@@ -47,6 +47,10 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
 
         if (this.plan != null) {
             res.setSelectionAttributes(this.plan.toDynamicValue());
+        } else if (res.getPlanId() == null || res.getPlanId().isBlank()) {
+            String nodeNameInfo = (getNodeName() != null && !getNodeName().isDynamic() && getNodeName().get() != null) ? " '" + getNodeName().get() + "'" : "";
+            throw new IllegalArgumentException("The callPlan" + nodeNameInfo + " must define either 'plan' or 'planId'. " +
+                "Note that since the version 1.3.0 of the yaml format, the 'selectionAttributes' field has been replaced by the 'plan' field.");
         }
 
         // for call plans, if nodeName is not defined or using dynamic name, we use the called plan name as default artefact name

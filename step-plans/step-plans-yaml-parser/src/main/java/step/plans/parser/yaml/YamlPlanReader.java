@@ -355,7 +355,13 @@ public class YamlPlanReader {
     }
 
     public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
-        Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
+        Plan plan;
+        try {
+            plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
+        } catch (RuntimeException e) {
+            // include the plan name, the conversion errors don't know which plan is being read
+            throw new RuntimeException("Unable to read the plan '" + yamlPlan.getName() + "': " + e.getMessage(), e);
+        }
         setPlanName(plan, yamlPlan.getName());
         plan.setCategories(yamlPlan.getCategories());
         YamlMetadata.applyTo(plan, yamlPlan.getMetadata());

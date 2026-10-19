@@ -13,9 +13,12 @@ import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.planbuilder.FunctionArtefacts;
 
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class FunctionLocatorTest {
 
@@ -79,6 +82,20 @@ public class FunctionLocatorTest {
         bindings2.put(FunctionLocator.KEYWORD_ACTIVE_VERSIONS, "v3");
         function5 = functionLocator.getFunction(callFunction5, predicate(), bindings2);
         assertEquals(expectedFunction2_noversion, function5);
+    }
+
+    @Test
+    public void testWithoutSelectionCriteria() {
+        newFunction("function1", null);
+
+        FunctionLocator functionLocator = new FunctionLocator(functionAccessor,
+            new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())))
+        );
+
+        CallFunction callFunction = new CallFunction();
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () -> functionLocator.getFunction(callFunction, predicate(), null));
+        assertEquals("No selection attribute defined", exception.getMessage());
+        assertTrue(functionLocator.getMatchingFunctions(callFunction, predicate(), null).isEmpty());
     }
 
     private Function newFunction(String name, String version) {

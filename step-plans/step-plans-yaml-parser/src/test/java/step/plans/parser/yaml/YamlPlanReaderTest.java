@@ -159,6 +159,16 @@ public class YamlPlanReaderTest {
     }
 
     @Test
+    public void callPlanWithLegacySelectionAttributes() throws IOException {
+        // The selectionAttributes field isn't migrated for plans declaring the version 1.3.0, the call plan has then neither plan nor planId
+        try (FileInputStream is = new FileInputStream("src/test/resources/step/plans/parser/yaml/call-plan/test-call-plan-legacy-selection-attributes.yml")) {
+            RuntimeException exception = Assert.assertThrows(RuntimeException.class, () -> yamlReader.readYamlPlan(is));
+            Assert.assertEquals("Unable to read the plan 'Plan1': The callPlan 'Call Plan2' must define either 'plan' or 'planId'. " +
+                "Note that since the version 1.3.0 of the yaml format, the 'selectionAttributes' field has been replaced by the 'plan' field.", exception.getMessage());
+        }
+    }
+
+    @Test
     public void testReturn() throws YamlPlanValidationException {
         convertFromYamlToPlan(
             "src/test/resources/step/plans/parser/yaml/return/test-return-plan.yml",

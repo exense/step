@@ -102,6 +102,25 @@ public class ReferenceFinderTest {
 
     }
 
+    @Test
+    public void findReferencesWithoutSelectionCriteria() {
+        Plan calledPlan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
+        calledPlan.addAttribute(AbstractOrganizableObject.NAME, CALLED_PLAN_NAME);
+        context.getPlanAccessor().save(calledPlan);
+
+        Function function = new Function();
+        function.addAttribute(AbstractOrganizableObject.NAME, CALLED_FUNCTION_NAME);
+        functionAccessor.save(function);
+
+        // Call plan and call keyword without any selection criteria don't reference any plan or keyword
+        Plan planWithoutSelectionCriteria = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(new CallPlan()).add(new CallFunction()).endBlock().build();
+        planWithoutSelectionCriteria.addAttribute(AbstractOrganizableObject.NAME, "PLAN WITHOUT SELECTION CRITERIA");
+        context.getPlanAccessor().save(planWithoutSelectionCriteria);
+
+        assertTrue(referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.PLAN_NAME, CALLED_PLAN_NAME)).isEmpty());
+        assertTrue(referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.KEYWORD_NAME, CALLED_FUNCTION_NAME)).isEmpty());
+    }
+
     private static void assertPlansAndCompositesAreFound(List<FindReferencesResponse> findReferencesResponse, Plan planCallingPlanById,
                                                          Plan planCallingPlanByName, CompositeFunction compositeFunction) {
         assertFirstResponseReference(3, findReferencesResponse, planCallingPlanById, CALLING_PLAN_BY_ID);
