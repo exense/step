@@ -103,7 +103,21 @@ public class PatchingContext {
             .orElse(false);
     }
 
-
+    /**
+     * Record of Chunk bounds to define the location of a chunk of yaml as stored in the initialLines array. The initialLines array
+     * stores the lines as read from the original file, thus preserving the formatting of the entities which were not marked as modified
+     * when saving.
+     * New entities which were not part of the yaml when reading are added to the end of initialLines. However, sometimes this ordering is
+     * far from ideal, such as when adding a "version: " field. intuitively these fields are expected to be at the very top of the file.
+     * For this reason, a "Portion" attribute was added to the ChunkBounds record. This controls to which portion of the file (HEAD or BODY)
+     * The field gets attached. The BODY starts where the very first yaml object was deserialized in the original yaml file
+     * (i.e. first non-comment, non-empty line). The portion attribute is only used in the final processing order of the chunks when the
+     * new yaml file is written.
+     *
+     * @param startLineNumber the line number of the first line belonging to the object (starting with 1) in initialLines
+     * @param endLineNumber   the line number of the last line belonging to the object in initialLines
+     * @param portion         portion to adjust the final order of appearance of the chunk in the new yaml.
+     */
     public record ChunkBounds(int startLineNumber, int endLineNumber, Portion portion) implements Comparable<ChunkBounds> {
 
         public enum Portion {
