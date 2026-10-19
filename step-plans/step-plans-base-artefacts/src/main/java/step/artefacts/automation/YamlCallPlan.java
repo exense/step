@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import step.artefacts.CallPlan;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -34,8 +36,18 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
     @YamlFieldCustomCopy
     protected YamlDynamicInputs input = new YamlDynamicInputs("{}");
 
+    // Whether the 'selectionAttributes' field replaced by 'plan' in the version 1.3.0 is used. Being ignored, this field is
+    // neither part of the json schema nor serialized, nor copied to the CallPlan
+    @JsonIgnore
+    private boolean legacySelectionAttributesDefined = false;
+
     public YamlCallPlan() {
         super(CallPlan.class);
+    }
+
+    @JsonProperty("selectionAttributes")
+    private void setLegacySelectionAttributes(Object selectionAttributes) {
+        this.legacySelectionAttributesDefined = true;
     }
 
     @Override
@@ -47,7 +59,8 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
 
         if (this.plan != null) {
             res.setSelectionAttributes(this.plan.toDynamicValue());
-        } else if (res.getPlanId() == null || res.getPlanId().isBlank()) {
+        } else if (legacySelectionAttributesDefined && (res.getPlanId() == null || res.getPlanId().isBlank())) {
+            // A call plan without selection criteria is valid (not configured yet), only the legacy syntax is rejected
             String nodeNameInfo = (getNodeName() != null && !getNodeName().isDynamic() && getNodeName().get() != null) ? " '" + getNodeName().get() + "'" : "";
             throw new IllegalArgumentException("The callPlan" + nodeNameInfo + " must define either 'plan' or 'planId'. " +
                 "Note that since the version 1.3.0 of the yaml format, the 'selectionAttributes' field has been replaced by the 'plan' field.");

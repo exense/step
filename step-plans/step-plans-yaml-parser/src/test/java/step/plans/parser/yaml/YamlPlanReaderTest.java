@@ -28,8 +28,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.CallPlan;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
+import step.core.plans.builder.PlanBuilder;
+import step.planbuilder.BaseArtefacts;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
 import step.plans.parser.yaml.model.YamlPlanVersions;
@@ -156,6 +159,22 @@ public class YamlPlanReaderTest {
         convertPlanToYaml("src/test/resources/step/plans/parser/yaml/call-plan/test-expected-call-tech-plan.yml",
             "src/test/resources/step/plans/parser/yaml/call-plan/test-converted-from-tech-call-plan.yml"
         );
+    }
+
+    @Test
+    public void callPlanWithoutSelectionCriteria() throws IOException, YamlPlanValidationException {
+        // A call plan not configured yet (i.e. added in the Studio) is written without selection criteria and can be read back
+        Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(new CallPlan()).endBlock().build();
+        YamlPlanReader.setPlanName(plan, "Plan1");
+        ByteArrayOutputStream yaml = new ByteArrayOutputStream();
+        yamlReader.writeYamlPlan(yaml, plan);
+        String yamlPlan = yaml.toString(StandardCharsets.UTF_8);
+        Assert.assertTrue(yamlPlan, yamlPlan.contains("- callPlan: {}"));
+
+        Plan readPlan = yamlReader.readYamlPlan(new ByteArrayInputStream(yaml.toByteArray()));
+        CallPlan readCallPlan = (CallPlan) readPlan.getRoot().getChildren().get(0);
+        Assert.assertNull(readCallPlan.getPlanId());
+        Assert.assertEquals("{}", readCallPlan.getSelectionAttributes().get());
     }
 
     @Test
