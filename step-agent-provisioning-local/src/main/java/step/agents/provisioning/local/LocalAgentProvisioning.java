@@ -23,7 +23,7 @@ import java.util.Objects;
 
 /**
  * Builds the pieces of the local agent provisioning shared by every application offering it: the CLI, which runs its
- * own grid, and the Step IDE, which attaches to the grid it already runs.
+ * own grid, and Step Studio, which attaches to the grid it already runs.
  */
 public final class LocalAgentProvisioning {
 

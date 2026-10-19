@@ -39,7 +39,7 @@ import java.util.Objects;
  * <p>
  * It is the very same {@link GridImpl} a Step controller runs. It is either embedded, started on an ephemeral port
  * for the lifetime of one CLI invocation (see {@link #startEmbedded}), or the grid of the application the local
- * agents are started from, typically the one of the Step IDE (see {@link #attach}). Reusing it rather than emulating
+ * agents are started from, typically the one of the Step Studio (see {@link #attach}). Reusing it rather than emulating
  * it is what makes a local execution go through the same path as a platform execution: the same token selection, the
  * same file transfer to the agents, the same keyword protocol.
  */
@@ -93,7 +93,7 @@ public class LocalExecutionGrid implements Closeable {
     }
 
     /**
-     * Attaches to a grid which is already running and owned by someone else, typically the grid of the Step IDE.
+     * Attaches to a grid which is already running and owned by someone else, typically the grid of Step Studio.
      * {@link #close()} leaves that grid running.
      *
      * @param security the security configuration of that grid, passed on to the agents for them to be able to

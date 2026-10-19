@@ -29,6 +29,11 @@ import java.util.List;
 
 public class ExecutiontTaskParameters extends AbstractOrganizableObject implements EnricheableObject {
 
+    /**
+     * The name of the attribute holding the description of the task
+     */
+    public static final String DESCRIPTION = "description";
+
     // TODO remove this field and create a migration task to also remove it from the DB
     public String name;
 

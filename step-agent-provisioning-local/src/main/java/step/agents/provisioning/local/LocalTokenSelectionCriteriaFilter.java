@@ -51,8 +51,7 @@ public class LocalTokenSelectionCriteriaFilter implements TokenSelectionCriteria
     private static final Logger logger = LoggerFactory.getLogger(LocalTokenSelectionCriteriaFilter.class);
 
     /**
-     * The criteria a local execution can honour: the type of agent the keyword needs, and the partition isolating the
-     * tokens of this execution.
+     * The criteria a local execution can honour: the type of agent the keyword needs, and the token partition.
      */
     private static final Set<String> SUPPORTED_CRITERIA = Set.of(AgentTypes.AGENT_TYPE_KEY, TOKEN_ATTRIBUTE_PARTITION);
 

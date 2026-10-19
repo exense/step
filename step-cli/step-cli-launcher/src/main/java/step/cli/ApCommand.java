@@ -274,8 +274,8 @@ public class ApCommand extends BaseCommand {
         protected Path localAgentWorkDir;
 
         @CommandLine.Option(names = {"--localAgentMaxTokens"}, paramLabel = "<Count>",
-            description = "Local execution only. The maximum number of keywords a local agent can run in parallel. "
-                + "Agents are sized on what the execution requires, up to this limit.",
+            description = "Local execution only. The number of keywords a local agent can run in parallel. "
+                + "Every local agent is started with this number of tokens and shared by all the plans executed.",
             showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
             defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_MAX_TOKENS_PER_AGENT)
         protected Integer localAgentMaxTokens;

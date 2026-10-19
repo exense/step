@@ -32,6 +32,7 @@ import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.automation.AutomationPackageCronExclusion;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.yaml.YamlMetadata;
 
@@ -70,11 +71,15 @@ public class ScheduleMapper implements
     public ExecutiontTaskParameters toBusinessObject(AutomationPackageSchedule schedule) {
         ExecutiontTaskParameters task = new ExecutiontTaskParameters();
         task.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
+        String description = schedule.getDescription();
+        if (description != null && !description.isEmpty()) {
+            task.addAttribute(ExecutiontTaskParameters.DESCRIPTION, description);
+        }
         task.setActive(schedule.getActive() == null || schedule.getActive());
         task.setCronExpression(schedule.getCron());
-        List<String> cronExclusions = schedule.getCronExclusions();
+        List<AutomationPackageCronExclusion> cronExclusions = schedule.getCronExclusions();
         if (cronExclusions != null && !cronExclusions.isEmpty()) {
-            task.setCronExclusions(cronExclusions.stream().map(e -> new CronExclusion(e, "")).collect(Collectors.toList()));
+            task.setCronExclusions(cronExclusions.stream().filter(Objects::nonNull).map(AutomationPackageCronExclusion::toCronExclusion).collect(Collectors.toList()));
         }
         YamlMetadata.applyTo(task, schedule.getMetadata());
 
@@ -97,12 +102,14 @@ public class ScheduleMapper implements
     public AutomationPackageSchedule toYamlObject(ExecutiontTaskParameters task) {
         AutomationPackageSchedule schedule = new AutomationPackageSchedule(null);
         schedule.setName(task.getAttribute(AbstractOrganizableObject.NAME));
+        String description = task.getAttribute(ExecutiontTaskParameters.DESCRIPTION);
+        schedule.setDescription(description == null || description.isEmpty() ? null : description);
         // a schedule is active unless stated otherwise
         schedule.setActive(task.isActive() ? null : false);
         schedule.setCron(task.getCronExpression());
         List<CronExclusion> cronExclusions = task.getCronExclusions();
         if (cronExclusions != null && !cronExclusions.isEmpty()) {
-            schedule.setCronExclusions(cronExclusions.stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
+            schedule.setCronExclusions(cronExclusions.stream().filter(Objects::nonNull).map(AutomationPackageCronExclusion::fromCronExclusion).collect(Collectors.toList()));
         }
         schedule.setMetadata(YamlMetadata.extractFrom(task));
 

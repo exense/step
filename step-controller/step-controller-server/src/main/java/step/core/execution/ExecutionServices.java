@@ -93,7 +93,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
         super.init();
         executionAccessor = getContext().getExecutionAccessor();
         tableService = getContext().require(TableService.class);
-        // usually null, but IDE diverts executions
+        // usually null, but Studio diverts executions
         executionDiversion = getContext().get(ExecutionDiversion.class);
         executionNoticeManager = getContext().require(ExecutionNoticeManager.class);
     }

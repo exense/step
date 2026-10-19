@@ -48,50 +48,50 @@ See [Architecture overview](https://step.dev/knowledgebase/concepts/architecture
 
 ## Key Concepts
 
-| Concept | Description                                                                                                                                                                                                             | Learn more |
-|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
-| **Keyword** | An executable unit of automation implemented following one of three approaches: **code-based** (Java, .NET, JavaScript), **tool-native** (Cypress, K6, JMeter, SoapUI, …), or **command-based** (shell/CLI invocations) | [Keywords](https://step.dev/knowledgebase/userdocs/keywords/) |
-| **Plan** | A test or automation scenario composed of Keywords and control-flow artefacts                                                                                                                                           | [Plans](https://step.dev/knowledgebase/userdocs/plans/) |
+| Concept                | Description                                                                                                                                                                                                             | Learn more                                                                                |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
+| **Keyword**            | An executable unit of automation implemented following one of three approaches: **code-based** (Java, .NET, JavaScript), **tool-native** (Cypress, K6, JMeter, SoapUI, …), or **command-based** (shell/CLI invocations) | [Keywords](https://step.dev/knowledgebase/userdocs/keywords/)                             |
+| **Plan**               | A test or automation scenario composed of Keywords and control-flow artefacts                                                                                                                                           | [Plans](https://step.dev/knowledgebase/userdocs/plans/)                                   |
 | **Automation Package** | An executable and deployable unit (Archive + descriptor) that bundles Step entities (Keywords, Plans,...)                                                                                                               | [Automation Packages](https://step.dev/knowledgebase/devops/automation-packages-overview) |
-| **Agent / Token** | A worker process exposing a pool of execution slots (tokens) to the controller                                                                                                                                          | [Agents](https://step.dev/knowledgebase/setup/installation/binaries/agentinstall/) |
-| **Scheduler** | Triggers plan executions on a cron schedule                                                                                                                                                                             | [Scheduler](https://step.dev/knowledgebase/userdocs/executions/#schedule) |
+| **Agent / Token**      | A worker process exposing a pool of execution slots (tokens) to the controller                                                                                                                                          | [Agents](https://step.dev/knowledgebase/setup/installation/binaries/agentinstall/)        |
+| **Scheduler**          | Triggers plan executions on a cron schedule                                                                                                                                                                             | [Scheduler](https://step.dev/knowledgebase/userdocs/executions/#schedule)                 |
 
 ## Modules
 
 This repository contains the Step backend, organized as a Maven multi-module build:
 
-| Module | Description                                                                                               |
-|--------|-----------------------------------------------------------------------------------------------------------|
-| `step-commons` | Shared utilities used across the platform                                                                 |
-| `step-constants` | Platform-wide constants and enumerations                                                                  |
-| `step-core-model` | Core domain model: plans, artefacts, functions, resources                                                 |
-| `step-core` | Artefact lifecycle, expression evaluation, parameter resolution, security                                 |
-| `step-plans` | Execution engine, Plan parsing, YAML support, and control-flow artefacts (loops, conditionals, sequences) |
-| `step-automation-packages` | Automation package management with YAML, JUnit, and JUnit5 support                                        |
-| `step-functions` | Keyword execution layer: handlers, routing, and package management                                        |
-| `step-functions-plugins` | Plugin extensions for the function execution layer                                                        |
-| `step-agent` | Agent process that executes Keywords on worker nodes                                                      |
-| `step-controller` | Central orchestration server: REST API, scheduling, reporting, multi-tenancy                              |
-| `step-controller-plugins` | Controller plugin infrastructure                                                                          |
-| `step-repositories` | Repository abstraction for external plan storage and retrieval                                            |
-| `step-json-schema` | JSON schema support for Step entity validation                                                            |
-| `step-livereporting` | Real-time execution monitoring and streaming                                                              |
-| `step-maven-plugin` | Maven plugin for CI/CD integration                                                                        |
-| `step-cli` | Command-line interface for triggering and managing executions                                             |
-| `step-libs-maven-client` | Maven client for dynamic dependency resolution at runtime                                                 |
-| `step-ide` | Step plugins dedicated to the Step IDE — a standalone Step instance for local use by developers and testers to design plans and validate executions locally |
+| Module                     | Description                                                                                                                                                               |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `step-commons`             | Shared utilities used across the platform                                                                                                                                 |
+| `step-constants`           | Platform-wide constants and enumerations                                                                                                                                  |
+| `step-core-model`          | Core domain model: plans, artefacts, functions, resources                                                                                                                 |
+| `step-core`                | Artefact lifecycle, expression evaluation, parameter resolution, security                                                                                                 |
+| `step-plans`               | Execution engine, Plan parsing, YAML support, and control-flow artefacts (loops, conditionals, sequences)                                                                 |
+| `step-automation-packages` | Automation package management with YAML, JUnit, and JUnit5 support                                                                                                        |
+| `step-functions`           | Keyword execution layer: handlers, routing, and package management                                                                                                        |
+| `step-functions-plugins`   | Plugin extensions for the function execution layer                                                                                                                        |
+| `step-agent`               | Agent process that executes Keywords on worker nodes                                                                                                                      |
+| `step-controller`          | Central orchestration server: REST API, scheduling, reporting, multi-tenancy                                                                                              |
+| `step-controller-plugins`  | Controller plugin infrastructure                                                                                                                                          |
+| `step-repositories`        | Repository abstraction for external plan storage and retrieval                                                                                                            |
+| `step-json-schema`         | JSON schema support for Step entity validation                                                                                                                            |
+| `step-livereporting`       | Real-time execution monitoring and streaming                                                                                                                              |
+| `step-maven-plugin`        | Maven plugin for CI/CD integration                                                                                                                                        |
+| `step-cli`                 | Command-line interface for triggering and managing executions                                                                                                             |
+| `step-libs-maven-client`   | Maven client for dynamic dependency resolution at runtime                                                                                                                 |
+| `step-ide`                 | Step plugins dedicated to the Step IDE (Step Studio) — a standalone Step instance for local use by developers and testers to design plans and validate executions locally |
 
 ## Step Ecosystem
 
 This repository is the core backend of a broader set of open-source repositories:
 
-| Repository | Description |
-|------------|-------------|
-| [step-api](https://github.com/exense/step-api) | The Java API for writing Keywords (`@Keyword`, `AbstractKeyword`) — the only dependency needed to build keyword libraries |
-| [step-grid](https://github.com/exense/step-grid) | The distributed execution grid: agent lifecycle, token management, and controller–agent communication |
-| [step-framework](https://github.com/exense/step-framework) | Reusable infrastructure components: persistence, REST server, collections, and time series |
-| [step-frontend](https://github.com/exense/step-frontend) | The Angular-based web UI |
-| [step-distribution](https://github.com/exense/step-distribution/releases) | Release bundles and Docker images |
+| Repository                                                                | Description                                                                                                               |
+|---------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| [step-api](https://github.com/exense/step-api)                            | The Java API for writing Keywords (`@Keyword`, `AbstractKeyword`) — the only dependency needed to build keyword libraries |
+| [step-grid](https://github.com/exense/step-grid)                          | The distributed execution grid: agent lifecycle, token management, and controller–agent communication                     |
+| [step-framework](https://github.com/exense/step-framework)                | Reusable infrastructure components: persistence, REST server, collections, and time series                                |
+| [step-frontend](https://github.com/exense/step-frontend)                  | The Angular-based web UI                                                                                                  |
+| [step-distribution](https://github.com/exense/step-distribution/releases) | Release bundles and Docker images                                                                                         |
 
 ## Developer Setup
 
@@ -125,12 +125,12 @@ mvn clean install -DskipTests
 
 ## Important Links
 
-| Resource | URL |
-|----------|-----|
-| Documentation | [step.dev/knowledgebase](https://step.dev/knowledgebase) |
-| Official website | [step.dev](https://step.dev) |
-| SaaS portal | [portal.stepcloud.ch](https://portal.stepcloud.ch) |
-| Releases | [step-distribution/releases](https://github.com/exense/step-distribution/releases) |
+| Resource         | URL                                                                                |
+|------------------|------------------------------------------------------------------------------------|
+| Documentation    | [step.dev/knowledgebase](https://step.dev/knowledgebase)                           |
+| Official website | [step.dev](https://step.dev)                                                       |
+| SaaS portal      | [portal.stepcloud.ch](https://portal.stepcloud.ch)                                 |
+| Releases         | [step-distribution/releases](https://github.com/exense/step-distribution/releases) |
 
 ## Contributing
 

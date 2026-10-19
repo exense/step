@@ -54,7 +54,7 @@ import static step.core.plans.agents.configuration.AutomaticAgentProvisioningCon
  * and provisioning of the agents to the {@link AgentProvisioningDriver} of the execution engine context.
  * <p>
  * It is not auto-discovered: it is added to the execution engine together with the driver, by the Step controller when
- * a driver is configured, and by the CLI and the IDE for local executions.
+ * a driver is configured, and by the CLI and the Studio for local executions.
  */
 @Plugin
 @IgnoreDuringAutoDiscovery
@@ -150,7 +150,7 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
                     logger.warn("No provisioning status returned by the driver for request {} of execution {}", provisioningRequestId, context.getExecutionId());
                 }
             }
-            logger.info("Successfully provisioned agents for execution {}", context.getExecutionId());
+            logger.debug("Successfully provisioned agents for execution {}", context.getExecutionId());
         } else if (!agentProvisioningDriver.alwaysProvisionAgents()) {
             logger.info("Agent provisioning is disabled for this plan");
         }
@@ -164,7 +164,7 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
     public void deprovisionRequiredResources(ExecutionContext context) {
         String provisioningRequestId = getProvisioningRequestId(context);
         if (provisioningRequestId != null) {
-            logger.info("De-provisioning agents for execution " + context.getExecutionId());
+            logger.debug("De-provisioning agents for execution {}", context.getExecutionId());
             // Remove the provisioning request ID from the context before calling the driver as the corresponding request
             // will be removed from the driver when calling deprovisionTokens
             context.remove(PROVISIONING_REQUEST_ID);
@@ -173,7 +173,7 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
             } catch (Exception e) {
                 throw new DeprovisioningException("Error while de-provisioning agents", e);
             }
-            logger.info("Successfully de-provisioned agents for execution " + context.getExecutionId());
+            logger.debug("Successfully de-provisioned agents for execution {}", context.getExecutionId());
         }
     }
 

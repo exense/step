@@ -27,6 +27,7 @@ import step.core.entities.EntityConstants;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
+import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -89,6 +91,49 @@ public class AutomationPackageScheduleCollectionTest extends AutomationPackageCo
         assertTrue(yaml, yaml.contains("active: false"));
         assertFalse(yaml, yaml.contains("0 15 10 ? * *"));
         assertFalse(yaml, yaml.contains("cronExclusions"));
+    }
+
+    @Test
+    public void testScheduleDescription() throws IOException {
+        ExecutiontTaskParameters schedule = findSchedule("firstSchedule");
+        assertFalse(schedule.hasAttribute(ExecutiontTaskParameters.DESCRIPTION));
+        assertFalse(readSchedulesFragment().contains("description"));
+
+        // The description is an attribute of the task and a field of its own in YAML
+        schedule.addAttribute(ExecutiontTaskParameters.DESCRIPTION, "My schedule description");
+        scheduleCollection.save(schedule);
+        String yaml = readSchedulesFragment();
+        assertTrue(yaml, yaml.contains("description: \"My schedule description\""));
+        assertEquals("My schedule description", findSchedule("firstSchedule").getAttribute(ExecutiontTaskParameters.DESCRIPTION));
+
+        schedule = findSchedule("firstSchedule");
+        schedule.getAttributes().remove(ExecutiontTaskParameters.DESCRIPTION);
+        scheduleCollection.save(schedule);
+        assertFalse(readSchedulesFragment().contains("description"));
+    }
+
+    @Test
+    public void testCronExclusionDescription() throws IOException, AutomationPackageReadingException {
+        ExecutiontTaskParameters schedule = findSchedule("firstSchedule");
+        assertEquals("", schedule.getCronExclusions().get(0).getDescription());
+
+        // An exclusion with a description is written as an object, one without remains a plain cron expression
+        schedule.getCronExclusions().get(1).setDescription("Maintenance window");
+        scheduleCollection.save(schedule);
+        String yaml = readSchedulesFragment();
+        assertTrue(yaml, yaml.contains("- \"0 0 9 25 * ?\""));
+        assertTrue(yaml, yaml.contains("- cron: \"0 0 9 20 * ?\""));
+        assertTrue(yaml, yaml.contains("description: \"Maintenance window\""));
+
+        // Both forms are read back
+        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager, false);
+        scheduleCollection = new AutomationPackageCollectionFactory(new Properties(), fragmentManager).getCollection(EntityConstants.tasks, ExecutiontTaskParameters.class);
+        List<CronExclusion> cronExclusions = findSchedule("firstSchedule").getCronExclusions();
+        assertEquals(2, cronExclusions.size());
+        assertEquals("0 0 9 25 * ?", cronExclusions.get(0).getCronExpression());
+        assertEquals("", cronExclusions.get(0).getDescription());
+        assertEquals("0 0 9 20 * ?", cronExclusions.get(1).getCronExpression());
+        assertEquals("Maintenance window", cronExclusions.get(1).getDescription());
     }
 
     @Test

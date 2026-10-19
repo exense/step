@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Starts a real Java agent as a separate process and checks that it joins the embedded grid.
@@ -73,8 +74,8 @@ public class LocalProcessAgentProvisioningDriverTest {
 
                 AgentProvisioningRequest request = new AgentProvisioningRequest();
                 request.executionId = "testExecution";
-                // Two agents of a pool of one token: one process with two tokens
-                request.agentPoolRequirementSpecs = List.of(new AgentPoolRequirementSpec(javaPool.name, 2));
+                // A single token is required, the agent is nevertheless started with the maximum number of tokens
+                request.agentPoolRequirementSpecs = List.of(new AgentPoolRequirementSpec(javaPool.name, 1));
 
                 String requestId = driver.initializeTokenProvisioningRequest(request);
                 driver.executeTokenProvisioningRequest(requestId);
@@ -84,30 +85,26 @@ public class LocalProcessAgentProvisioningDriverTest {
                 Assert.assertEquals(2, grid.getGrid().getTokens().size());
 
                 driver.deprovisionTokens(requestId);
-                // What matters is that no agent survives the execution. The grid still lists its tokens at this
-                // point: they are only dropped when the registration times out, which the CLI never waits for since
-                // it tears the grid down right after.
-                Assert.assertFalse("The agent process should have been stopped",
+                Assert.assertTrue("The agent should survive the execution, it is shared with the next ones",
+                    provider.getStartedProcess().isAlive());
+
+                driver.close();
+                Assert.assertFalse("The agent process should have been stopped when closing the driver",
                     provider.getStartedProcess().isAlive());
             }
         }
     }
 
-    /**
-     * The CLI runs the plans of a package one after the other on the same grid, which still lists the tokens of the
-     * agent stopped at the end of the previous execution until their registration expires. Those tokens must not be
-     * selected by the next execution: their agent is gone, and waiting for it to answer only ends with a timeout.
-     */
     @Test
-    public void doesNotSelectTheTokensOfTheAgentOfAPreviousExecution() throws Exception {
+    public void reusesTheAgentAcrossExecutions() throws Exception {
         LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
+            .setMaxTokensPerAgent(2)
             .setWorkDirectory(workDirectory.getRoot().toPath())
             .setAgentStartTimeout(Duration.ofSeconds(90));
 
         LocalAgentWorkspace workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
         RecordingLocalAgentProvider provider =
             new RecordingLocalAgentProvider(new JavaLocalAgentProvider(configuration, workspace));
-        Assert.assertTrue("The Java agent should be embedded in the CLI", provider.isAvailable());
 
         try (LocalExecutionGrid grid = LocalExecutionGrid.startEmbedded(configuration.getAgentStartTimeout(), workspace)) {
             try (LocalProcessAgentProvisioningDriver driver = new LocalProcessAgentProvisioningDriver(grid, workspace,
@@ -115,17 +112,51 @@ public class LocalProcessAgentProvisioningDriverTest {
                 String javaPool = LocalProcessAgentProvisioningDriver.agentPoolName(AgentTypeConstants.AGENT_TYPE_JAVA);
 
                 String firstRequestId = provision(driver, "firstExecution", javaPool);
+                // Executions overlap: the second one is provisioned before the first one is de-provisioned
+                String secondRequestId = provision(driver, "secondExecution", javaPool);
                 driver.deprovisionTokens(firstRequestId);
-                Assert.assertFalse("The agent of the first execution should have been stopped",
-                    provider.getStartedProcess().isAlive());
+                String thirdRequestId = provision(driver, "thirdExecution", javaPool);
+
+                Assert.assertNull(driver.getTokenProvisioningStatus(secondRequestId).error);
+                Assert.assertNull(driver.getTokenProvisioningStatus(thirdRequestId).error);
+                Assert.assertEquals("A single agent should have been started", 1, provider.getStartedProcesses().size());
+                Assert.assertEquals(2, grid.getGrid().getTokens().size());
+                Assert.assertTrue(provider.getStartedProcess().isAlive());
+            }
+            Assert.assertFalse(provider.getStartedProcess().isAlive());
+        }
+    }
+
+    /**
+     * An agent which died between two executions is replaced, and its tokens, which the grid would otherwise keep
+     * listing until their registration expires, are removed so that no execution selects them.
+     */
+    @Test
+    public void restartsAnAgentWhichDied() throws Exception {
+        LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
+            .setMaxTokensPerAgent(2)
+            .setWorkDirectory(workDirectory.getRoot().toPath())
+            .setAgentStartTimeout(Duration.ofSeconds(90));
+
+        LocalAgentWorkspace workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
+        RecordingLocalAgentProvider provider =
+            new RecordingLocalAgentProvider(new JavaLocalAgentProvider(configuration, workspace));
+
+        try (LocalExecutionGrid grid = LocalExecutionGrid.startEmbedded(configuration.getAgentStartTimeout(), workspace)) {
+            try (LocalProcessAgentProvisioningDriver driver = new LocalProcessAgentProvisioningDriver(grid, workspace,
+                configuration, List.of(provider))) {
+                String javaPool = LocalProcessAgentProvisioningDriver.agentPoolName(AgentTypeConstants.AGENT_TYPE_JAVA);
+
+                driver.deprovisionTokens(provision(driver, "firstExecution", javaPool));
+                LocalAgentProcess firstProcess = provider.getStartedProcess();
+                firstProcess.stop(0);
+                Assert.assertFalse(firstProcess.isAlive());
 
                 String secondRequestId = provision(driver, "secondExecution", javaPool);
-                try {
-                    Assert.assertNull(driver.getTokenProvisioningStatus(secondRequestId).error);
-                    Assert.assertEquals("The grid lists the tokens of both agents", 2, grid.getGrid().getTokens().size());
-                } finally {
-                    driver.deprovisionTokens(secondRequestId);
-                }
+                Assert.assertNull(driver.getTokenProvisioningStatus(secondRequestId).error);
+                Assert.assertEquals("The dead agent should have been replaced", 2, provider.getStartedProcesses().size());
+                Assert.assertTrue(provider.getStartedProcess().isAlive());
+                Assert.assertEquals("Only the tokens of the new agent should be listed", 2, grid.getGrid().getTokens().size());
             }
         }
     }
@@ -146,15 +177,22 @@ public class LocalProcessAgentProvisioningDriverTest {
     private static class RecordingLocalAgentProvider implements LocalAgentProvider {
 
         private final LocalAgentProvider delegate;
-        private LocalAgentProcess startedProcess;
+        private final List<LocalAgentProcess> startedProcesses = new CopyOnWriteArrayList<>();
 
         RecordingLocalAgentProvider(LocalAgentProvider delegate) {
             this.delegate = delegate;
         }
 
+        /**
+         * @return the last started process
+         */
         LocalAgentProcess getStartedProcess() {
-            Assert.assertNotNull("No agent was started", startedProcess);
-            return startedProcess;
+            Assert.assertFalse("No agent was started", startedProcesses.isEmpty());
+            return startedProcesses.get(startedProcesses.size() - 1);
+        }
+
+        List<LocalAgentProcess> getStartedProcesses() {
+            return startedProcesses;
         }
 
         @Override
@@ -174,7 +212,8 @@ public class LocalProcessAgentProvisioningDriverTest {
 
         @Override
         public LocalAgentProcess start(LocalAgentStartContext context) throws LocalAgentException {
-            startedProcess = delegate.start(context);
+            LocalAgentProcess startedProcess = delegate.start(context);
+            startedProcesses.add(startedProcess);
             return startedProcess;
         }
     }

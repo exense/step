@@ -31,6 +31,7 @@ import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.plans.Plan;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.NamedPatchableYamlModel;
 import step.core.yaml.PatchableYamlModel;
@@ -80,9 +81,21 @@ public class AutomationPackageYamlFragmentManager {
     public static final String PROPERTY_NEW_OBJECT_FRAGMENT_MODE = "newFragmentPaths.%s.mode";
     public static final String PROPERTY_NEW_OBJECT_FRAGMENT_PATH = "newFragmentPaths.%s.path";
 
+    /**
+     * Custom field set to true on the business objects that cannot be saved nor removed
+     */
+    public static final String CUSTOM_FIELD_READ_ONLY = "readOnly";
+    /**
+     * Custom field telling the user why a business object is read-only
+     */
+    public static final String CUSTOM_FIELD_READ_ONLY_REASON = "readOnlyReason";
+    public static final String PLAIN_TEXT_PLAN_READ_ONLY_REASON = "This plan is defined in its own file using the plain text plan syntax and cannot be edited in the Studio. To change it, edit the file directly.";
+
     // TODO: These maps could potentially be combined, but this is a non-trivial task.
     protected final Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap = new ConcurrentHashMap<>();
     protected final Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
+    // The business objects of the package that are not defined as YAML entities, the plain text plans for instance
+    private final Set<AbstractOrganizableObject> readOnlyBusinessObjects = ConcurrentHashMap.newKeySet();
 
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
@@ -91,8 +104,21 @@ public class AutomationPackageYamlFragmentManager {
     private final Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> businessObjectToYamlMappers;
 
     public AutomationPackageYamlFragmentManager(ResourcePathMatchingResolver resourcePathMatchingResolver, AutomationPackageDescriptorYaml descriptorYaml, Set<AutomationPackageFragmentYaml> fragments, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
+        this(resourcePathMatchingResolver, descriptorYaml, fragments, descriptorReader, stagingContext, List.of());
+    }
+
+    /**
+     * @param plainTextPlans the plans of the package parsed from plain text. They are returned as the other plans,
+     *                       but are read-only: they can neither be saved nor removed
+     */
+    public AutomationPackageYamlFragmentManager(ResourcePathMatchingResolver resourcePathMatchingResolver, AutomationPackageDescriptorYaml descriptorYaml, Set<AutomationPackageFragmentYaml> fragments, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext,
+                                                List<Plan> plainTextPlans) {
+        Objects.requireNonNull(plainTextPlans, "plainTextPlans must not be null");
         this.resourcePathMatchingResolver = resourcePathMatchingResolver;
         this.descriptorYaml = descriptorYaml;
+
+        // Registered first: the mappers referring to other entities, the schedules for instance, find them
+        plainTextPlans.forEach(plan -> registerReadOnlyBusinessObject(plan, PLAIN_TEXT_PLAN_READ_ONLY_REASON));
 
         apRoot = descriptorYaml.getFragmentPath().getParent();
 
@@ -116,6 +142,13 @@ public class AutomationPackageYamlFragmentManager {
                 descriptorYaml.initializeMaps(mapper, patchableMap, fragmentMap);
                 importedFragments.forEach(f -> f.initializeMaps(mapper, patchableMap, fragmentMap));
             });
+    }
+
+    private void registerReadOnlyBusinessObject(AbstractOrganizableObject businessObject, String reason) {
+        Objects.requireNonNull(businessObject, "read-only business object must not be null");
+        businessObject.addCustomField(CUSTOM_FIELD_READ_ONLY, true);
+        businessObject.addCustomField(CUSTOM_FIELD_READ_ONLY_REASON, reason);
+        readOnlyBusinessObjects.add(businessObject);
     }
 
     private Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> createBusinessObjectToYamlMappers(Map<Class<?>, Object> injectables) {
@@ -167,13 +200,34 @@ public class AutomationPackageYamlFragmentManager {
 
     @SuppressWarnings("unchecked")
     public <BO extends AbstractOrganizableObject, T> Iterable<BO> getBusinessObjects(Class<T> boClass) {
-        return patchableMap.keySet().stream()
+        return Stream.concat(patchableMap.keySet().stream(), readOnlyBusinessObjects.stream())
             .filter(businessObject -> boClass.isAssignableFrom(businessObject.getClass()))
             .map(businessObject -> (BO) businessObject).collect(Collectors.toList());
     }
 
+    /**
+     * @return true if the business object can neither be saved nor removed, as flagged by its custom field
+     * {@value #CUSTOM_FIELD_READ_ONLY}
+     */
+    public static boolean isReadOnly(AbstractOrganizableObject object) {
+        Objects.requireNonNull(object, "object must not be null");
+        return Boolean.TRUE.equals(object.getCustomField(CUSTOM_FIELD_READ_ONLY));
+    }
+
+    /**
+     * @throws AutomationPackageReadOnlyEntityException if the business object is read-only
+     */
+    public static void requireEditable(AbstractOrganizableObject object) {
+        if (isReadOnly(object)) {
+            String message = String.format("'%s' is read-only", object.getAttribute(AbstractOrganizableObject.NAME));
+            Object reason = object.getCustomField(CUSTOM_FIELD_READ_ONLY_REASON);
+            throw new AutomationPackageReadOnlyEntityException(reason == null ? message : message + ": " + reason);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO save(BO object) {
+        requireEditable(object);
 
         BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) businessObjectToYamlMappers.get(object.getClass());
         if (mapper == null) {
@@ -199,6 +253,7 @@ public class AutomationPackageYamlFragmentManager {
 
     @SuppressWarnings("unchecked")
     public synchronized <BO extends AbstractOrganizableObject> void remove(BO object) {
+        requireEditable(object);
         BusinessObjectToYamlMapper<BO, ?> mapper = (BusinessObjectToYamlMapper<BO, ?>) businessObjectToYamlMappers.get(object.getClass());
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());

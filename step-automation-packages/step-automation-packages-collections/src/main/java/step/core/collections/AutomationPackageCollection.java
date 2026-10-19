@@ -22,6 +22,9 @@ import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class AutomationPackageCollection<BO extends AbstractOrganizableObject, T> extends InMemoryCollection<BO> implements Collection<BO> {
 
 
@@ -41,6 +44,8 @@ public class AutomationPackageCollection<BO extends AbstractOrganizableObject, T
 
     @Override
     public BO save(BO p) {
+        // checked first, the object being otherwise saved in memory before the fragment manager rejects it
+        AutomationPackageYamlFragmentManager.requireEditable(p);
         return fragmentManager.save(super.save(p));
     }
 
@@ -53,7 +58,10 @@ public class AutomationPackageCollection<BO extends AbstractOrganizableObject, T
 
     @Override
     public void remove(Filter filter) {
-        find(filter, null, null, null, 0).forEach(fragmentManager::remove);
+        List<BO> objects = find(filter, null, null, null, 0).collect(Collectors.toList());
+        // checked for all of them first: none is removed if any is read-only
+        objects.forEach(AutomationPackageYamlFragmentManager::requireEditable);
+        objects.forEach(fragmentManager::remove);
         super.remove(filter);
     }
 }
