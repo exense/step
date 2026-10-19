@@ -368,6 +368,27 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
     }
 
     @Test
+    public void testUnreadablePackageErrorMessage() throws IOException {
+        // the package can't be read, its name is unknown and the error refers to the file name instead
+        File zip = zipTestResourceFolder("invalid-call-plan", "automation-package.yml");
+        try (InputStream is = new FileInputStream(zip)) {
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, "invalid-call-plan.zip")).build();
+            AutomationPackageManagerException ex = Assert.assertThrows(AutomationPackageManagerException.class, () -> manager.createOrUpdateAutomationPackage(parameters));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Unable to update the automation package from file 'invalid-call-plan.zip'. " +
+                "Caused by: Unable to read the plan 'Call MyJavaPlan': The callPlan must define either 'plan' or 'planId'."));
+        }
+    }
+
+    @Test
+    public void testDescribePackage() {
+        assertEquals(" 'my-package':644fbe4e38a61e07cc3a4df8", AutomationPackageManager.describePackage("my-package", "644fbe4e38a61e07cc3a4df8", "my-package.jar"));
+        assertEquals(" 'my-package'", AutomationPackageManager.describePackage("my-package", null, "my-package.jar"));
+        assertEquals(" from file 'my-package.jar'", AutomationPackageManager.describePackage(null, null, "my-package.jar"));
+        assertEquals("", AutomationPackageManager.describePackage(null, null, null));
+    }
+
+    @Test
     public void testZipArchive() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/step-automation-packages.zip")) {
             ObjectId result;
