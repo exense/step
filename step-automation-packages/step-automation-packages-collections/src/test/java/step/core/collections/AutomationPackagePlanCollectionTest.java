@@ -64,13 +64,14 @@ public class AutomationPackagePlanCollectionTest extends AutomationPackageCollec
         long count = planCollection.count(Filters.empty(), 100);
         List<Plan> plans = planCollection.find(Filters.empty(), null, null, null, 100).collect(Collectors.toList());
 
-        assertEquals(2, count);
+        assertEquals(3, count);
         Set<String> names = plans.stream().map(p -> p.getAttributes().get("name")).collect(Collectors.toUnmodifiableSet());
 
-        assertEquals(2, names.size());
+        assertEquals(3, names.size());
 
         assertTrue(names.contains("Test Plan"));
         assertTrue(names.contains("Test Plan with Composite"));
+        assertTrue(names.contains("Plain text plan"));
     }
 
     @Test

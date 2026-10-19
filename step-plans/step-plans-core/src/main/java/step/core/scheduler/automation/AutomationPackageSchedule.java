@@ -35,11 +35,13 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
     public static final String FIELD_NAME_IN_AP = "schedules";
     private String name;
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String description;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Boolean active = true;
     private String cron;
 
     @JsonInclude(JsonInclude.Include.NON_NULL) // otherwise fails schema check after re-reading serialized value
-    private List<String> cronExclusions;
+    private List<AutomationPackageCronExclusion> cronExclusions;
     private String planName;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String assertionPlanName;
@@ -79,15 +81,23 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public void setCron(String cron) {
         this.cron = cron;
     }
 
-    public List<String> getCronExclusions() {
+    public List<AutomationPackageCronExclusion> getCronExclusions() {
         return cronExclusions;
     }
 
-    public void setCronExclusions(List<String> cronExclusions) {
+    public void setCronExclusions(List<AutomationPackageCronExclusion> cronExclusions) {
         this.cronExclusions = cronExclusions;
     }
 
@@ -131,6 +141,7 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase implements
     public String toString() {
         return "AutomationPackageSchedule{" +
             "name='" + name + '\'' +
+            ", description='" + description + '\'' +
             ", active=" + active +
             ", cron='" + cron + '\'' +
             ", cronExclusions=" + cronExclusions +

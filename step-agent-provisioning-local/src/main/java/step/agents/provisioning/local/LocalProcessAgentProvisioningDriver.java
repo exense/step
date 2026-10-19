@@ -34,6 +34,7 @@ import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.execution.ProvisioningException;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.grid.AgentRef;
+import step.grid.GridImpl;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTypes;
 import step.grid.client.AbstractGridClientImpl;
@@ -44,7 +45,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,8 +69,14 @@ import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_P
  * <p>
  * <b>One process per agent type.</b> The forecast is expressed in agents of a given pool, but a developer machine is
  * not a cluster: starting one JVM per forecast agent would trade a lot of memory and start-up time for an isolation
- * nobody asked for locally. The tokens forecast for a type are therefore served by a single agent process configured
- * with that many tokens, capped by {@link LocalAgentProvisioningConfiguration#getMaxTokensPerAgent()}.
+ * nobody asked for locally. Each agent type is therefore served by a single agent process, configured with
+ * {@link LocalAgentProvisioningConfiguration#getMaxTokensPerAgent()} tokens.
+ * <p>
+ * <b>Agents live as long as this driver.</b> An agent is started the first time an execution needs its type and is
+ * then shared by all the executions, which run one request per token in parallel, until {@link #close()}. Restarting
+ * the agents for every execution would not only cost their start-up time, it would also throw away what they keep
+ * between requests, such as the workspaces the Node.js agent prepares per token. An agent found dead or unreachable
+ * by a later execution is replaced.
  * <p>
  * <b>One token per pool agent.</b> The local pools are declared with a single token each, which is what makes the
  * agents be sized on what the execution actually needs. The forecasting turns a number of required tokens into a
@@ -100,6 +106,16 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
      */
     private final Map<String, LocalAgentProvider> allProvidersByAgentType;
     private final Map<String, ProvisioningSession> provisioningSessions = new ConcurrentHashMap<>();
+    /**
+     * The running agents, at most one per agent type, shared by all the executions.
+     */
+    private final Map<String, StartedAgent> agentsByType = new ConcurrentHashMap<>();
+    /**
+     * One lock per agent type, so that concurrent executions don't start the same agent twice while the start of an
+     * agent doesn't delay the executions requiring another type.
+     */
+    private final Map<String, Object> agentLocks = new ConcurrentHashMap<>();
+    private volatile boolean closed;
 
     public LocalProcessAgentProvisioningDriver(LocalExecutionGrid grid, LocalAgentWorkspace workspace,
                                                LocalAgentProvisioningConfiguration configuration,
@@ -156,6 +172,11 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         return provider != null ? provider.getInstallationHint() : null;
     }
 
+    private String displayName(String agentType) {
+        LocalAgentProvider provider = allProvidersByAgentType.get(agentType);
+        return provider != null ? provider.getDisplayName() : agentType;
+    }
+
     static String agentPoolName(String agentType) {
         return AGENT_POOL_NAME_PREFIX + agentType;
     }
@@ -196,7 +217,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         String planConfigurationMessage = agentProvisioningConfiguration.enableAgentProvisioning() ?
             "This plan configures its agent pools manually" :
             "This plan disables the agent provisioning";
-        logger.info("{}, this is ignored for local execution, agents are still started automatically.", planConfigurationMessage);
+        logger.info("{}, this is ignored for local execution: the local agents of the required types are used.", planConfigurationMessage);
         return requiredAgentPools;
     }
 
@@ -264,45 +285,43 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
     }
 
     @Override
-    public AgentProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) throws Exception {
+    public AgentProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
         ProvisioningSession session = requireSession(provisioningRequestId);
         AgentProvisioningStatus status = session.status;
         AgentProvisioningReport report = new AgentProvisioningReport();
         status.provisioningReport = report;
 
-        Map<String, Integer> tokensByAgentType = calculateTokensByAgentType(session.request.agentPoolRequirementSpecs);
-        status.statusDescription = "Starting " + tokensByAgentType.size() + " local agent(s)...";
+        // The number of tokens per type only matters to warn about an execution needing more than an agent provides:
+        // the agents are shared by all executions and always started with the maximum number of tokens.
+        Set<String> agentTypes = calculateRequiredTokensByAgentType(session.request.agentPoolRequirementSpecs).keySet();
+        status.statusDescription = "Preparing " + agentTypes.size() + " local agent(s)...";
 
         try {
             // Sequentially: there are at most as many agents as there are agent types, and starting them one after
             // the other keeps the output of a failing one readable.
-            for (Map.Entry<String, Integer> entry : tokensByAgentType.entrySet()) {
-                String agentType = entry.getKey();
-                int numberOfTokens = entry.getValue();
+            for (String agentType : agentTypes) {
                 AgentPoolProvisioningReport poolReport = new AgentPoolProvisioningReport(
                     new AgentPoolRequirementSpec(agentPoolName(agentType), 1));
                 report.addAgentPoolReport(poolReport);
                 try {
-                    session.startedAgents.add(startAgent(agentType, numberOfTokens, session.tokenPartition));
+                    ensureAgentRunning(agentType);
                     poolReport.success = true;
                 } catch (LocalAgentException e) {
-                    logger.error("Error while starting the local {} agent", agentType, e);
+                    logger.error("Unable to provide the local {} agent", displayName(agentType), e);
                     poolReport.error = new AgentProvisioningError(e.getMessage());
                 } finally {
                     poolReport.completed = true;
                 }
             }
 
-            List<AgentPoolProvisioningReport> failedPools = report.pools.stream().filter(p -> !p.success).collect(Collectors.toList());
+            List<AgentPoolProvisioningReport> failedPools = report.pools.stream().filter(p -> !p.success).toList();
             if (!failedPools.isEmpty()) {
                 String message = failedPools.stream().map(p -> p.error.errorMessage).collect(Collectors.joining("; "));
                 status.error = new AgentProvisioningError(message);
-                // Stop the agents which did start: a partially provisioned execution would fail later on with a far
-                // less obvious error.
-                stopAgents(session);
+                // The agents which are running are left as they are: they are shared with the other executions.
                 throw new ProvisioningException(message);
             }
-            status.statusDescription = "Started " + tokensByAgentType.size() + " local agent(s)";
+            status.statusDescription = agentTypes.size() + " local agent(s) ready";
         } finally {
             status.completed = true;
         }
@@ -310,10 +329,54 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
     }
 
     /**
+     * Returns the running agent of the given type, starting it if there is none yet or if the previous one is no
+     * longer usable.
+     */
+    private void ensureAgentRunning(String agentType) throws LocalAgentException {
+        Object lock = agentLocks.computeIfAbsent(agentType, t -> new Object());
+        synchronized (lock) {
+            if (closed) {
+                throw new LocalAgentException("The local agent provisioning has been closed");
+            }
+            StartedAgent existing = agentsByType.get(agentType);
+            if (existing != null) {
+                if (isUsable(existing)) {
+                    logger.info("Reusing the local {} agent already running.", displayName(agentType));
+                    return;
+                }
+                logger.warn("The local {} agent is no longer reachable and will be restarted. Last output of the agent:{}{}",
+                    displayName(agentType), System.lineSeparator(), String.join(System.lineSeparator(), existing.process.getLastOutputLines()));
+                agentsByType.remove(agentType);
+                discardAgent(existing);
+            }
+
+            StartedAgent startedAgent = startAgent(agentType, configuration.getMaxTokensPerAgent());
+            if (closed) {
+                // Closed while the agent was starting: close() could not see it
+                stopAgent(startedAgent);
+                throw new LocalAgentException("The local agent provisioning has been closed");
+            }
+            agentsByType.put(agentType, startedAgent);
+        }
+    }
+
+    private boolean isUsable(StartedAgent agent) {
+        if (!agent.process.isAlive() || agent.agentRef == null) {
+            return false;
+        }
+        try {
+            gridClient.pingAgent(agent.agentRef);
+            return true;
+        } catch (AbstractGridClientImpl.AgentCommunicationException e) {
+            return false;
+        }
+    }
+
+    /**
      * Folds the forecast, expressed in numbers of agents per pool, into a number of tokens per agent type.
      */
     // Package private for the sake of the tests, which cover the sizing without starting any agent
-    Map<String, Integer> calculateTokensByAgentType(List<AgentPoolRequirementSpec> requirementSpecs) {
+    Map<String, Integer> calculateRequiredTokensByAgentType(List<AgentPoolRequirementSpec> requirementSpecs) {
         Map<String, AgentPoolSpec> availablePools = getAvailableAgentPoolSpecs().stream()
             .collect(Collectors.toMap(s -> s.name, s -> s));
 
@@ -332,10 +395,9 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         tokensByAgentType.replaceAll((agentType, tokens) -> {
             int maxTokens = configuration.getMaxTokensPerAgent();
             if (tokens > maxTokens) {
-                logger.warn("This execution requires {} {} tokens, more than the {} a local agent is allowed to "
-                        + "provide. The agent is started with {} tokens: parallel steps will queue instead of running "
-                        + "side by side. Raise {} if this machine can take more.",
-                    tokens, agentType, maxTokens, maxTokens,
+                logger.warn("This execution requires {} {} tokens, more than the {} a local agent provides: parallel "
+                        + "steps will queue instead of running side by side. Raise {} if this machine can take more.",
+                    tokens, agentType, maxTokens,
                     LocalAgentProvisioningConfiguration.optionHint(LocalAgentProvisioningConfiguration.OPTION_MAX_TOKENS, "<count>"));
                 return maxTokens;
             }
@@ -346,7 +408,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         return tokensByAgentType;
     }
 
-    private StartedAgent startAgent(String agentType, int numberOfTokens, String tokenPartition) throws LocalAgentException {
+    private StartedAgent startAgent(String agentType, int numberOfTokens) throws LocalAgentException {
         LocalAgentProvider provider = providersByAgentType.get(agentType);
         if (provider == null) {
             throw new LocalAgentException("No local agent available for the agent type '" + agentType + "'");
@@ -360,9 +422,10 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         }
 
         logger.info("Starting the local {} agent with {} token(s)...", provider.getDisplayName(), numberOfTokens);
-        Map<String, String> partition = Map.of(TOKEN_ATTRIBUTE_PARTITION, tokenPartition);
+        String tokenPartition = UUID.randomUUID().toString();
+        // An attribute only, with no selection pattern: the agent is shared, every execution may select its tokens
         LocalAgentStartContext startContext = new LocalAgentStartContext(grid.getGridUrl(), workingDirectory,
-            numberOfTokens, partition, partition, grid.getSecurity());
+            numberOfTokens, Map.of(TOKEN_ATTRIBUTE_PARTITION, tokenPartition), Map.of(), grid.getSecurity());
         LocalAgentProcess process = provider.start(startContext);
 
         StartedAgent startedAgent = new StartedAgent(process);
@@ -372,7 +435,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             process.stop(configuration.getAgentShutdownTimeout().toMillis());
             throw e;
         }
-        logger.info("The local {} agent is ready.", provider.getDisplayName());
+        logger.info("The local {} agent is ready. It is kept running for the next executions.", provider.getDisplayName());
         return startedAgent;
     }
 
@@ -410,9 +473,12 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
 
     private TokenWrapper selectToken(LocalAgentProcess process, String agentType, String tokenPartition) throws LocalAgentException {
         try {
+            // Selecting on the partition of the agent just started, never on the tokens of a previous one of the same
+            // type which the grid may still list
             return gridClient.getTokenHandle(
-                Map.of(TOKEN_ATTRIBUTE_PARTITION, tokenPartition),
-                Map.of(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile(Pattern.quote(agentType)), true)),
+                Map.of(),
+                Map.of(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile(Pattern.quote(agentType)), true),
+                    TOKEN_ATTRIBUTE_PARTITION, new Interest(Pattern.compile(Pattern.quote(tokenPartition)), true)),
                 false);
         } catch (Exception e) {
             throw agentStartFailure(process, agentType, "it did not connect to the grid within "
@@ -465,34 +531,53 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         return session != null ? session.status : null;
     }
 
+    /**
+     * Only forgets the request: the agents keep running for the next executions and are stopped by {@link #close()}.
+     */
     @Override
     public void deprovisionTokens(String provisioningRequestId) {
-        ProvisioningSession session = provisioningSessions.remove(provisioningRequestId);
-        if (session != null) {
-            stopAgents(session);
-        }
+        provisioningSessions.remove(provisioningRequestId);
     }
 
-    private void stopAgents(ProvisioningSession session) {
-        long shutdownTimeoutMs = configuration.getAgentShutdownTimeout().toMillis();
-        for (StartedAgent startedAgent : session.startedAgents) {
-            // Asking the agent to shut down itself rather than killing the process: it is the only graceful path on
-            // Windows, where Process.destroy() terminates the process without running its shutdown hook.
-            boolean shutdownRequested = false;
-            if (startedAgent.agentRef != null) {
+    private void stopAgent(StartedAgent startedAgent) {
+        // Asking the agent to shut down itself rather than killing the process: it is the only graceful path on
+        // Windows, where Process.destroy() terminates the process without running its shutdown hook.
+        boolean shutdownRequested = false;
+        if (startedAgent.agentRef != null && startedAgent.process.isAlive()) {
+            try {
+                gridClient.shutdownAgent(startedAgent.agentRef);
+                shutdownRequested = true;
+            } catch (Exception e) {
+                logger.debug("Unable to shut down {} through the grid. It will be terminated.", startedAgent.process.getName(), e);
+            }
+        }
+        // An agent which was never asked to shut down, or which refused the request because it exposes no such
+        // service, has no reason to terminate on its own: waiting for it only delays the shutdown by the whole
+        // timeout. The Node.js agent is in that case today, it has no /shutdown service.
+        startedAgent.process.stop(shutdownRequested ? configuration.getAgentShutdownTimeout().toMillis() : 0);
+    }
+
+    /**
+     * Stops an agent which is no longer usable and removes its tokens from the grid, which would otherwise keep
+     * offering them to the executions until their registration expires.
+     */
+    private void discardAgent(StartedAgent startedAgent) {
+        stopAgent(startedAgent);
+        if (startedAgent.agentRef == null) {
+            return;
+        }
+        String agentId = startedAgent.agentRef.getAgentId();
+
+        GridImpl gridImpl = grid.getGrid();
+        for (TokenWrapper token : gridImpl.getTokens()) {
+            if (token.getAgent() != null && Objects.equals(token.getAgent().getAgentId(), agentId)) {
                 try {
-                    gridClient.shutdownAgent(startedAgent.agentRef);
-                    shutdownRequested = true;
+                    gridImpl.invalidateToken(token.getID());
                 } catch (Exception e) {
-                    logger.debug("Unable to shut down {} through the grid. It will be terminated.", startedAgent.process.getName(), e);
+                    logger.warn("Unable to remove the token {} of the stopped local agent {} from the grid", token.getID(), agentId, e);
                 }
             }
-            // An agent which was never asked to shut down, or which refused the request because it exposes no such
-            // service, has no reason to terminate on its own: waiting for it only delays the end of the execution by
-            // the whole timeout. The Node.js agent is in that case today, it has no /shutdown service.
-            startedAgent.process.stop(shutdownRequested ? shutdownTimeoutMs : 0);
         }
-        session.startedAgents.clear();
     }
 
     /**
@@ -504,12 +589,21 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
     }
 
     /**
-     * Stops whatever is still running. Normally a no-op, as the agents of an execution are stopped when it is
-     * de-provisioned; it covers the executions which never got that far.
+     * Stops the agents started by this driver, which run for its whole lifetime.
      */
     @Override
     public void close() {
-        provisioningSessions.values().forEach(this::stopAgents);
+        closed = true;
+        for (Map.Entry<String, Object> entry : agentLocks.entrySet()) {
+            // Waits for an agent being started to be either registered, and stopped here, or stopped by its starter
+            synchronized (entry.getValue()) {
+                StartedAgent startedAgent = agentsByType.remove(entry.getKey());
+                if (startedAgent != null) {
+                    logger.info("Stopping the local {} agent...", displayName(entry.getKey()));
+                    stopAgent(startedAgent);
+                }
+            }
+        }
         provisioningSessions.clear();
     }
 
@@ -522,23 +616,16 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         final AgentProvisioningRequest request;
         final String provisioningId = UUID.randomUUID().toString();
         final AgentProvisioningStatus status = new AgentProvisioningStatus();
-        final Set<StartedAgent> startedAgents = new HashSet<>();
-        /**
-         * Isolates the tokens of this execution from the ones of any other, exactly as the Kubernetes driver does.
-         * The partition is declared on the tokens of the provisioned agent both as an attribute and as a selection
-         * pattern, and the execution presents it as an attribute when selecting a token: the selection pattern is
-         * what keeps the tokens of an agent stopped by a previous execution, which the grid still lists until their
-         * registration expires, from being selected by the next one.
-         * The execution id is used (fallback to random UUID for JUnit tests).
-         */
-        final String tokenPartition;
 
         ProvisioningSession(AgentProvisioningRequest request) {
             this.request = request;
-            this.tokenPartition = Optional.ofNullable(request.executionId).orElseGet(() -> UUID.randomUUID().toString());
         }
     }
 
+    /**
+     * A running agent. Its tokens carry a partition attribute unique to this process, which is how its start-up
+     * selects them rather than the tokens of a previous agent of the same type the grid may still list.
+     */
     private static class StartedAgent {
         final LocalAgentProcess process;
         AgentRef agentRef;

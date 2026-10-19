@@ -18,11 +18,49 @@
  ******************************************************************************/
 package step.core.scheduler.automation;
 
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.spi.JsonProvider;
 import step.automation.packages.schema.CommonAutomationPackageJsonSchemaExtension;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 public class AutomationPackageScheduleJsonSchema extends CommonAutomationPackageJsonSchemaExtension {
 
     public AutomationPackageScheduleJsonSchema() {
         super(AutomationPackageSchedule.SCHEDULE_DEF, AutomationPackageSchedule.FIELD_NAME_IN_AP, AutomationPackageSchedule.class);
+    }
+
+    @Override
+    protected List<JsonSchemaFieldProcessor> getFieldProcessors() {
+        return YamlJsonSchemaHelper.prepareDefaultFieldProcessors(List.of(AutomationPackageScheduleJsonSchema::processCronExclusions));
+    }
+
+    /**
+     * A cron exclusion is either a cron expression or an object holding the cron expression and its description
+     */
+    private static boolean processCronExclusions(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder,
+                                                 List<String> requiredPropertiesOutput, JsonSchemaCreator schemaCreator) {
+        if (!objectClass.equals(AutomationPackageSchedule.class) || !field.getName().equals("cronExclusions")) {
+            return false;
+        }
+        JsonProvider jsonProvider = schemaCreator.getJsonProvider();
+        JsonObjectBuilder stringType = jsonProvider.createObjectBuilder().add("type", "string");
+        JsonObjectBuilder objectType = jsonProvider.createObjectBuilder()
+            .add("type", "object")
+            .add("properties", jsonProvider.createObjectBuilder()
+                .add(AutomationPackageCronExclusion.CRON_FIELD, jsonProvider.createObjectBuilder().add("type", "string"))
+                .add(AutomationPackageCronExclusion.DESCRIPTION_FIELD, jsonProvider.createObjectBuilder().add("type", "string")))
+            .add("required", jsonProvider.createArrayBuilder().add(AutomationPackageCronExclusion.CRON_FIELD))
+            .add("additionalProperties", false);
+        propertiesBuilder.add(fieldMetadata.getFieldName(), jsonProvider.createObjectBuilder()
+            .add("type", "array")
+            .add("items", jsonProvider.createObjectBuilder()
+                .add("oneOf", jsonProvider.createArrayBuilder().add(stringType).add(objectType))));
+        return true;
     }
 }

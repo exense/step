@@ -252,15 +252,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
             }
         }
 
-        final boolean localReportNodeTSEnabled = variablesManager.getVariableAsBoolean(TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED, true);
-        if (reportNodeTimeSeries.isIngestionEnabled() && localReportNodeTSEnabled) {
+        if (isReportNodeTimeSeriesEnabled()) {
             AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
             if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
-                // TODO implement node pruning for time series
-                Map<String, Object> customAttributes = getTimeSeriesContextAttributes(context);
-                customAttributes.put("type", artefactInstance.getClass().getSimpleName());
-                customAttributes.put("name", artefact.getAttributes().get(AbstractOrganizableObject.NAME));
-                reportNodeTimeSeries.ingestReportNode(reportNode, customAttributes);
+                reportNodeTimeSeries.ingestReportNode(reportNode, getTimeSeriesAttributes(artefactInstance));
             }
         }
 
@@ -269,6 +264,26 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
         afterDelegation(reportNode, parentReportNode, artefact);
 
         return reportNode;
+    }
+
+    private boolean isReportNodeTimeSeriesEnabled() {
+        return reportNodeTimeSeries.isIngestionEnabled() &&
+            variablesManager.getVariableAsBoolean(TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED, true);
+    }
+
+    /**
+     * Build the custom attributes used to ingest a report node into the {@link ReportNodeTimeSeries}.
+     * The same attributes have to be used to compensate the ingestion of that node, see
+     * {@link #compensateReportNodeInTimeSeries(ReportNode)}
+     *
+     * @param artefact the artefact of the report node: its instance during the execution of the node, its resolved
+     *                 artefact when the node is read back from the report
+     */
+    private Map<String, Object> getTimeSeriesAttributes(AbstractArtefact artefact) {
+        Map<String, Object> customAttributes = getTimeSeriesContextAttributes(context);
+        customAttributes.put("type", artefact.getClass().getSimpleName());
+        customAttributes.put("name", artefact.getAttribute(AbstractOrganizableObject.NAME));
+        return customAttributes;
     }
 
     private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
@@ -569,8 +584,31 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
     protected void pruneReportBranch(ReportNode reportNode) {
         ObjectId reportNodeId = reportNode.getId();
         reportNodeAccessor.getChildren(reportNodeId).forEachRemaining(this::pruneReportBranch);
+        compensateReportNodeInTimeSeries(reportNode);
         reportNodeAccessor.remove(reportNodeId);
         context.getExecutionCallbacks().onReportNodeRemoval(context, reportNode);
+    }
+
+    /**
+     * Compensate the data ingested into the {@link ReportNodeTimeSeries} for the provided report node, so that a node
+     * removed from the report stops counting in the time series,
+     * see {@link ReportNodeTimeSeries#compensateReportNode(ReportNode, Map)}
+     * <p>
+     * Report nodes which have not been ingested are skipped: work artefacts, as in the execution phase, and nodes
+     * which haven't been executed, i.e. nodes created during the skeleton phase only, recognized by their unset
+     * duration. The status can not be used to recognize them, as executed nodes can end with the status NORUN, like
+     * a Check which isn't evaluated because its keyword call failed. Report nodes which were not persisted at all
+     * can't be compensated, as they can't be found in the report either
+     *
+     * @param reportNode the report node to be compensated
+     */
+    private void compensateReportNodeInTimeSeries(ReportNode reportNode) {
+        AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
+        boolean ingested = isReportNodeTimeSeriesEnabled() && resolvedArtefact != null && !resolvedArtefact.isWorkArtefact()
+            && reportNode.getDuration() != null;
+        if (ingested) {
+            reportNodeTimeSeries.compensateReportNode(reportNode, getTimeSeriesAttributes(resolvedArtefact));
+        }
     }
 
     private REPORT_NODE createReportNode(ReportNode parentReportNode, ARTEFACT artefact, ParentSource parentSource) {

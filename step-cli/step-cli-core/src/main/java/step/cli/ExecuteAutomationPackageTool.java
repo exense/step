@@ -89,7 +89,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
      * <p>
      * Regardless of the mode, if the parameter firstExecutionIdFuture is present,
      * the given future will be completed immediately once the execution ID is known.
-     * This is used by the IDE execution diversion mechanism (which starts the execution
+     * This is used by the Studio execution diversion mechanism (which starts the execution
      * in an asynchronous fashion, and uses the ID retrieved here).
      *
      * @param firstExecutionIdFuture execution ID future to complete once it's known.

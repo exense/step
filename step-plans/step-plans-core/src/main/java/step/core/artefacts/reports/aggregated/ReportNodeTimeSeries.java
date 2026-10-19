@@ -42,6 +42,9 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesConfig timeSeriesConfig, boolean ingestionEnabled) {
         timeSeries = new TimeSeriesBuilder()
             .withConfig(timeSeriesConfig, collectionFactory, TIME_SERIES_MAIN_COLLECTION, Set.of(EXECUTION_ID))
+            // The report nodes removed from the report are compensated, see compensateReportNode, and leave buckets
+            // holding no sample. They are excluded from the queries of every consumer of this time series
+            .withAggregationConfig(new TimeSeriesAggregationConfig().setExcludeEmptyBuckets(true))
             .build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
@@ -70,11 +73,30 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     }
 
     public void ingestReportNode(ReportNode reportNode, Map<String, Object> customAttributes) {
-        ReportNodeStatus status = reportNode.getStatus();
+        ingestionPipeline.ingestPoint(buildBucketAttributes(reportNode, customAttributes), reportNode.getExecutionTime(), reportNode.getDuration());
+    }
+
+    /**
+     * Compensates the data ingested for the provided report node, i.e. removes its contribution from the buckets it
+     * has been ingested into, at every resolution. It is used when report nodes are removed from the report and must
+     * stop counting in the time series, see {@link step.core.artefacts.handlers.ArtefactHandler}
+     * <p>
+     * The count, the sum and the distribution of the compensated buckets are exact. Their min and their max can not be
+     * restored and keep including the compensated samples. The buckets left without any sample are excluded from the
+     * queries of this time series, see {@link TimeSeriesAggregationConfig#setExcludeEmptyBuckets(boolean)}
+     *
+     * @param reportNode       the report node to be compensated, with the same arguments as used for its ingestion
+     * @param customAttributes the custom attributes used for its ingestion
+     */
+    public void compensateReportNode(ReportNode reportNode, Map<String, Object> customAttributes) {
+        ingestionPipeline.compensatePoint(buildBucketAttributes(reportNode, customAttributes), reportNode.getExecutionTime(), reportNode.getDuration());
+    }
+
+    private BucketAttributes buildBucketAttributes(ReportNode reportNode, Map<String, Object> customAttributes) {
         BucketAttributes nodeBucket = new BucketAttributes();
         nodeBucket.put(EXECUTION_ID, reportNode.getExecutionID());
         nodeBucket.put(ARTEFACT_HASH, reportNode.getArtefactHash());
-        nodeBucket.put(STATUS, status.toString());
+        nodeBucket.put(STATUS, reportNode.getStatus().toString());
         if (reportNode.getError() != null) {
             nodeBucket.put(ERROR_CODE, reportNode.getError().getCode() != null ? reportNode.getError().getCode() : 0);
             if (reportNode.getError().getMsg() != null) {
@@ -84,8 +106,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         if (customAttributes != null) {
             nodeBucket.putAll(customAttributes);
         }
-
-        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), reportNode.getDuration());
+        return nodeBucket;
     }
 
     public void flush() {
