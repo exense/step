@@ -1,0 +1,10 @@
+---
+version: "1.3.0"
+name: "Plan1"
+root:
+  testCase:
+    children:
+      - callPlan:
+          nodeName: "Call Plan2"
+          selectionAttributes:
+            - name: "Plan2"
