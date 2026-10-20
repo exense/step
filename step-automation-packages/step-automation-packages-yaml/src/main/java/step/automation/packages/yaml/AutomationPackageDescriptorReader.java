@@ -382,6 +382,7 @@ public class AutomationPackageDescriptorReader {
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
         yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+        yamlFactory.enable(YAMLGenerator.Feature.LITERAL_BLOCK_STYLE);
         return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
     }
 
