@@ -33,7 +33,7 @@ public class MavenArtifactDownloader {
             MavenArtifactClient mavenArtifactClient = getMavenArtifactClient(mavenConfig);
             return mavenArtifactClient.getArtifact(getDefaultArtifact(mavenArtifactIdentifier), existingSnapshotTimestamp);
         } catch (SettingsBuildingException | org.eclipse.aether.resolution.ArtifactResolutionException e) {
-            throw new AutomationPackageReadingException("Unable to download maven artifact " + mavenArtifactIdentifier.toStringRepresentation() + ": " + e.getMessage(), e);
+            throw new AutomationPackageReadingException("Unable to download maven artifact " + mavenArtifactIdentifier.toStringRepresentation() + (e.getMessage() != null ? ": " + e.getMessage() : ""), e);
         }
     }
 
@@ -64,7 +64,7 @@ public class MavenArtifactDownloader {
         try {
             return getMavenArtifactClient(mavenConfig).fetchSnapshotMetadata(getDefaultArtifact(mavenArtifactIdentifier), existingSnapshotTimestamp);
         } catch (SettingsBuildingException e) {
-            throw new AutomationPackageReadingException("Unable to download maven artifact " + mavenArtifactIdentifier.toStringRepresentation() + ": " + e.getMessage(), e);
+            throw new AutomationPackageReadingException("Unable to download maven artifact " + mavenArtifactIdentifier.toStringRepresentation() + (e.getMessage() != null ? ": " + e.getMessage() : ""), e);
         }
     }
 }
