@@ -106,7 +106,14 @@ public class MavenArtifactClient {
         artifactRequest.setRepositories(enabledRepositoriesFromProfile);
         File result;
 
-        ArtifactResult artifactResult = repositorySystem.resolveArtifact(session, artifactRequest);
+        ArtifactResult artifactResult;
+        try {
+            artifactResult = repositorySystem.resolveArtifact(session, artifactRequest);
+        } catch (ArtifactResolutionException e) {
+            // This is the single place where the full failure (including stack trace) is logged. Callers only propagate the message.
+            logger.error("Error while resolving artifact {} from repositories {}", artifact, enabledRepositoriesFromProfile, e);
+            throw e;
+        }
         Artifact resolvedArtifact = artifactResult.getArtifact();
         if (resolvedArtifact != null) {
             result = resolvedArtifact.getFile();
