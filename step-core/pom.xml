@@ -90,6 +90,11 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-xml</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.javadelight</groupId>
+      <artifactId>delight-nashorn-sandbox</artifactId>
+      <version>0.5.3</version>
+    </dependency>
   </dependencies>
 
   <build>
