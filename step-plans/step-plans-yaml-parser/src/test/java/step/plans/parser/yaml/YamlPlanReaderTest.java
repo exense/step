@@ -30,11 +30,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
+import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
-import step.plans.parser.yaml.model.YamlPlanVersions;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
@@ -222,7 +228,10 @@ public class YamlPlanReaderTest {
 
                 Assert.fail("Validation exception should be thrown");
             } catch (YamlPlanValidationException ex) {
-                Assert.assertEquals("#: required key [name] not found", ex.getMessage());
+                Assert.assertEquals("""
+                    YAML Plan Validation Errors occurred:
+                    Line 3, Column 5: property 'name' is not defined in the schema and the schema does not allow additional properties
+                    Line 1, Column 1: required property 'name' not found""", ex.getMessage());
                 log.info("OK - Validation exception caught", ex);
             }
 

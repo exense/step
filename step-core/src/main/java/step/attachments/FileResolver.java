@@ -62,6 +62,10 @@ public class FileResolver {
         this.resourceManager = resourceManager;
     }
 
+    public static String resourceApPathFromURL(String url) {
+        return AP_RESOURCE_PREFIX + normalizeApRelativePath(url.replaceAll("^jar:.*?!", ""));
+    }
+
     public ResourceManager getResourceManager() {
         return resourceManager;
     }
@@ -213,6 +217,7 @@ public class FileResolver {
      * and {@code /}, collapses {@code .}/{@code ..} segments) and rejects any path that escapes its
      * root. Used both to look the entry up in the archive and to build the on-disk cache target, so
      * a {@code ..} traversal cannot reach outside {@code <cacheRoot>/<apId>/}.
+     *
      * @throws IllegalArgumentException if the path is empty or escapes the archive root. Note that a
      *                                  path the file system itself cannot represent surfaces as an
      *                                  {@code InvalidPathException}, which is one too

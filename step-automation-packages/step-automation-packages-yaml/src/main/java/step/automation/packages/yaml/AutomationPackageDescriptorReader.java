@@ -26,10 +26,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
-import org.everit.json.schema.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.handlers.JsonSchemaValidationException;
 import step.artefacts.handlers.JsonSchemaValidator;
+import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.AutomationPackageKeyword;
@@ -63,25 +64,25 @@ import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.plugins.functions.types.automation.YamlCompositeFunction;
 
-import static step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask.AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME;
-import static step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask.YAML_PLANS_COLLECTION_NAME;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
+import static step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask.AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME;
+import static step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask.YAML_PLANS_COLLECTION_NAME;
 
 public class AutomationPackageDescriptorReader {
 
@@ -148,7 +149,7 @@ public class AutomationPackageDescriptorReader {
     }
 
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(String location, InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
-        return readAutomationPackageYamlFile(location, yaml, targetClass, packageName, null);
+        return readAutomationPackageYamlFile(FileResolver.resourceApPathFromURL(location), yaml, targetClass, packageName, null);
     }
 
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(String location, InputStream yaml, Class<T> targetClass, String packageName, String inheritedVersion) throws AutomationPackageReadingException {
@@ -165,19 +166,16 @@ public class AutomationPackageDescriptorReader {
             // The file is migrated before doing the schema validation since we can only validate against the current version
             Document migratedDocument = migrateIfRequired(yamlDocument, version);
             if (migratedDocument != null) {
-                yamlDescriptorString =  "---\n" + yamlObjectMapper.writeValueAsString(migratedDocument);
+                yamlDescriptorString = "---\n" + yamlObjectMapper.writeValueAsString(migratedDocument);
             }
 
             if (jsonSchema != null) {
                 try {
-                    JsonSchemaValidator.validate(jsonSchema, yamlObjectMapper.readTree(yamlDescriptorString).toString());
+                    JsonSchemaValidator.validate(jsonSchema, yamlDescriptorString);
+                } catch (JsonSchemaValidationException ex) {
+                    throw new YamlPlanValidationException(ex, location);
                 } catch (Exception ex) {
-                    // add error details
-                    String message = ex.getMessage();
-                    if (ex instanceof ValidationException) {
-                        message = message + " " + ((ValidationException) ex).getAllMessages();
-                    }
-                    throw new YamlPlanValidationException(message, ex);
+                    throw new YamlPlanValidationException(ex.getMessage());
                 }
             }
 

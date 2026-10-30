@@ -74,7 +74,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
         // prepare definitions to be reused in subschemas (referenced via $ref property)
         JsonObjectBuilder allDefs = prepareDefinitions();
-        topLevelBuilder.add("$defs", allDefs);
+        topLevelBuilder.add("definitions", allDefs);
 
         // add properties for top-level
         topLevelBuilder.add("properties", createMainAutomationPackageProperties());

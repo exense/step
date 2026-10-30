@@ -54,7 +54,7 @@ public class YamlJsonSchemaHelper {
     public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
     public static final String PLAN_DEF = "PlanDef";
     public static final String COMPOSITE_PLAN_DEF = "CompositePlanDef";
-    public static final String DEFS_PREFIX = "#/$defs/";
+    public static final String DEFS_PREFIX = "#/definitions/";
     private final JsonProvider jsonProvider;
 
     public YamlJsonSchemaHelper(JsonProvider jsonProvider) {
@@ -153,7 +153,7 @@ public class YamlJsonSchemaHelper {
      *             "type": "object"
      *           },
      *           {
-     *             "$ref": "#/$defs/DynamicExpressionDef"
+     *             "$ref": "#/definitions/DynamicExpressionDef"
      *           }
      *         ]
      *       }

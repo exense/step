@@ -196,7 +196,7 @@ public class AutomationPackageDescriptorReaderTest {
 
     @Test
     public void metadataNotAMapTest() throws IOException {
-        assertInvalidDescriptor("metadataNotAMapDescriptor.yml", "#/metadata: expected type: JSONObject");
+        assertInvalidDescriptor("metadataNotAMapDescriptor.yml", "Line 3, Column 11: string found, object expected");
     }
 
     private void assertInvalidDescriptor(String fileName, String expectedMessagePart) throws IOException {
@@ -225,7 +225,7 @@ public class AutomationPackageDescriptorReaderTest {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageDescriptorReader readerWithoutSchema = new AutomationPackageDescriptorReader(null, serializationRegistry);
         for (AutomationPackageDescriptorReader r : List.of(reader, readerWithoutSchema)) {
-            InputStream is = new ByteArrayInputStream("~".getBytes(StandardCharsets.UTF_8));
+            InputStream is = new ByteArrayInputStream("~" .getBytes(StandardCharsets.UTF_8));
             assertThrows(AutomationPackageReadingException.class, () -> r.readAutomationPackageDescriptor(is, ""));
         }
     }

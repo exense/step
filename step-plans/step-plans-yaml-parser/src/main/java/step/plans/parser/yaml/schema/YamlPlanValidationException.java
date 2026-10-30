@@ -18,7 +18,11 @@
  ******************************************************************************/
 package step.plans.parser.yaml.schema;
 
+import step.artefacts.handlers.JsonSchemaValidationException;
+
 public class YamlPlanValidationException extends RuntimeException {
+
+
     public YamlPlanValidationException(String message) {
         super(message);
     }
@@ -27,7 +31,11 @@ public class YamlPlanValidationException extends RuntimeException {
         super(message, cause);
     }
 
-    public YamlPlanValidationException(Throwable cause) {
-        super(cause);
+    public YamlPlanValidationException(JsonSchemaValidationException cause) {
+        super("YAML Plan Validation Errors occurred:\n" + String.join("\n", cause.getFormattedErrorMessages()), cause);
+    }
+
+    public YamlPlanValidationException(JsonSchemaValidationException cause, String location) {
+        super("YAML Plan Validation Errors occurred in " + location + ":\n" + String.join("\n", cause.getFormattedErrorMessages()), cause);
     }
 }

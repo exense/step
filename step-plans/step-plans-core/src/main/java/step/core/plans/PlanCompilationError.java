@@ -26,6 +26,11 @@ public class PlanCompilationError {
         super();
     }
 
+    public PlanCompilationError(String message) {
+        super();
+        this.message = message;
+    }
+
     public String getMessage() {
         return message;
     }

@@ -121,7 +121,7 @@ public class YamlPlanJsonSchemaGenerator {
         topLevelBuilder.add("title", "Plan");
 
         // prepare definitions to be reused in subschemas (referenced via $ref property)
-        topLevelBuilder.add("$defs", createDefs(true));
+        topLevelBuilder.add("definitions", createDefs(true));
 
         YamlJsonSchemaHelper.addRef(topLevelBuilder, YamlJsonSchemaHelper.PLAN_DEF);
 
@@ -338,7 +338,7 @@ public class YamlPlanJsonSchemaGenerator {
         // TODO: find some solution to apply default 'nodeName'
         classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
             jsonProvider.createObjectBuilder()
-                .add("$ref", "#/$defs/SmartDynamicValueStringDef")
+                .add("$ref", "#/definitions/SmartDynamicValueStringDef")
                 .add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlArtefact, null))
         );
 
@@ -371,16 +371,16 @@ public class YamlPlanJsonSchemaGenerator {
     }
 
     private JsonObjectBuilder createArtefactDef(Map<String, String> artefactImplReferences) {
-        JsonObjectBuilder elseClause = jsonProvider.createObjectBuilder().add("else", false);
-        JsonObjectBuilder clause;
+        JsonObjectBuilder builder = jsonProvider.createObjectBuilder()
+            .add("type", "object")
+            .add("properties", jsonProvider.createObjectBuilder())
+            .add("additionalProperties", false);
         for (Map.Entry<String, String> entry : artefactImplReferences.entrySet()) {
-            clause = jsonProvider.createObjectBuilder()
+            builder = jsonProvider.createObjectBuilder()
                 .add("if", jsonProvider.createObjectBuilder().add("required", jsonProvider.createArrayBuilder().add(entry.getValue())))
                 .add("then", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), entry.getKey()))
-                .addAll(elseClause);
-            elseClause = jsonProvider.createObjectBuilder().add("else", clause);
+                .add("else", builder);
         }
-        JsonObjectBuilder builder = jsonProvider.createObjectBuilder(elseClause.build().getJsonObject("else"));
         builder.add("type", "object");
         return builder;
     }

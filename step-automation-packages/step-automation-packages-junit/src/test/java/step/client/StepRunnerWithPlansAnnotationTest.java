@@ -29,7 +29,8 @@ import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
 
 @RunWith(Step.class)
-@ExcludePlans({"JMeter Plan", "testAutomation.plan"})
+// Need to exclude Plan2 as calling plan2 alone will cause an exception for resolving input
+@ExcludePlans({"JMeter Plan", "testAutomation.plan", "Plan2"})
 @Plans({"plans/plan2.plan", "plans/plan3.plan", "plans/assertsTest.plan"})
 @ExecutionParameters({"PARAM_EXEC", "Value", "PARAM_EXEC2", "Value", "PARAM_EXEC3", "Value"})
 public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
