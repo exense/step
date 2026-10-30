@@ -31,12 +31,13 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
-import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.core.plans.builder.PlanBuilder;
 import step.planbuilder.BaseArtefacts;
+import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -188,8 +189,9 @@ public class YamlPlanReaderTest {
         // The selectionAttributes field isn't migrated for plans declaring the version 1.3.0, the call plan has then neither plan nor planId
         try (FileInputStream is = new FileInputStream("src/test/resources/step/plans/parser/yaml/call-plan/test-call-plan-legacy-selection-attributes.yml")) {
             RuntimeException exception = Assert.assertThrows(RuntimeException.class, () -> yamlReader.readYamlPlan(is));
-            Assert.assertEquals("Unable to read the plan 'Plan1': The callPlan 'Call Plan2' must define either 'plan' or 'planId'. " +
-                "Note that since the version 1.3.0 of the yaml format, the 'selectionAttributes' field has been replaced by the 'plan' field.", exception.getMessage());
+            // TODO: SED-5000 we need to review if this more generic error message is a valid solution to SED-5028
+            Assert.assertEquals("YAML Plan Validation Errors occurred:\n" +
+                "Line 8, Column 11: property 'selectionAttributes' is not defined in the schema and the schema does not allow additional properties", exception.getMessage());
         }
     }
 
