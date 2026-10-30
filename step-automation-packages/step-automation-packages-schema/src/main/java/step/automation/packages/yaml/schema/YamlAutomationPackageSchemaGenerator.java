@@ -24,15 +24,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.plans.automation.AutomationPackagePlainTextPlanJsonSchema;
-import step.parameter.automation.AutomationPackageParameterJsonSchema;
+import step.automation.packages.schema.AutomationPackageJsonSchemaExtension;
 import step.core.Version;
 import step.core.scheduler.automation.AutomationPackageScheduleJsonSchema;
-import step.automation.packages.schema.AutomationPackageJsonSchemaExtension;
-import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.YamlMetadata;
+import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.parameter.automation.AutomationPackageParameterJsonSchema;
+import step.plans.automation.AutomationPackagePlainTextPlanJsonSchema;
 import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
@@ -74,7 +74,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
         // prepare definitions to be reused in subschemas (referenced via $ref property)
         JsonObjectBuilder allDefs = prepareDefinitions();
-        topLevelBuilder.add("$defs", allDefs);
+        topLevelBuilder.add("definitions", allDefs);
 
         // add properties for top-level
         topLevelBuilder.add("properties", createMainAutomationPackageProperties());
