@@ -1,0 +1,10 @@
+version: 1.3.0
+name: "Invalid call plan"
+plans:
+  - name: "Call MyJavaPlan"
+    root:
+      testCase:
+        children:
+          - callPlan:
+              selectionAttributes:
+                - name: "MyJavaPlan"

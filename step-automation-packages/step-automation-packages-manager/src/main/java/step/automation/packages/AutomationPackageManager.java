@@ -434,13 +434,17 @@ public class AutomationPackageManager {
                                                                          AutomationPackageUpdateParameter parameters) throws AutomationPackageManagerException {
         AtomicReference<Resource> packageResource = new AtomicReference<>(null);
         AtomicReference<Resource> libraryResource = new AtomicReference<>(null);
-        String packageName = "undefined";
-        String packageId = "undefined";
+        // name, id and file name of the package are set as soon as known and used to describe the package in errors
+        String packageName = null;
+        String packageId = null;
+        String packageFileName = null;
         AtomicBoolean isRunningAsync = new AtomicBoolean(false);
         AtomicReference<AutomationPackageStaging> staging = new AtomicReference<>(null);
         try (AutomationPackageArchive automationPackageArchive = automationPackageProvider.getAutomationPackageArchive()) {
+            packageFileName = automationPackageArchive.getOriginalFileName();
             AutomationPackage newPackage;
             AutomationPackageContent packageContent = readAutomationPackage(automationPackageArchive, parameters.versionName);
+            packageName = packageContent.getName();
 
             AutomationPackage oldPackage = findOldPackage(parameters.explicitOldId, parameters.objectPredicate, packageContent);
 
@@ -551,9 +555,10 @@ public class AutomationPackageManager {
                 );
             }
         } catch (Throwable e) {
-            log.error("Error while updating the automation package with name '{}':{}}.", packageName, packageId, e);
+            String packageDescription = describePackage(packageName, packageId, packageFileName);
+            log.error("Error while updating the automation package{}.", packageDescription, e);
             handleAutomationPackageDeploymentErrors(parameters, packageName, packageId, packageResource.get(), libraryResource.get());
-            throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e : new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ".", e, true);
+            throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e : new AutomationPackageManagerException("Unable to update the automation package" + packageDescription + ".", e, true);
         } finally {
             if (!isRunningAsync.get() && staging.get() != null) {
                 staging.get().getResourceManager().cleanup();
@@ -614,6 +619,20 @@ public class AutomationPackageManager {
      * @param packageName     the name of the AP
      * @param libraryResource the library resource that my need cleanup
      */
+    /**
+     * @return the description of the package to be appended to error messages, based on the information known so far:
+     * <code> 'name':id</code>, <code> 'name'</code>, <code> from file 'fileName'</code> or an empty string
+     */
+    static String describePackage(String packageName, String packageId, String packageFileName) {
+        if (packageName != null) {
+            return " '" + packageName + "'" + ((packageId != null) ? ":" + packageId : "");
+        } else if (packageFileName != null) {
+            return " from file '" + packageFileName + "'";
+        } else {
+            return "";
+        }
+    }
+
     private void handleAutomationPackageDeploymentErrors(AutomationPackageUpdateParameter parameters, String packageName, String packageId, Resource packageResource, Resource libraryResource) {
         try {
             //Cleanup the package resource if it isn't used by any automation packages

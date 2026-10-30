@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import step.artefacts.CallPlan;
 import step.core.artefacts.CheckArtefact;
+import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -56,6 +57,22 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 
         Assert.assertTrue(executed.get());
         Assert.assertTrue(getChildren(context.getReport()).get(0).getStatus().equals(ReportNodeStatus.PASSED));
+    }
+
+    @Test
+    public void testWithoutSelectionCriteria() {
+        context = newExecutionContext();
+
+        // A call plan without plan id nor selection attributes must not select any plan, including the calling plan itself
+        Plan plan = PlanBuilder.create().startBlock(new CallPlan()).endBlock().build();
+        context.getPlanAccessor().save(plan);
+
+        createSkeleton(plan.getRoot());
+        execute(plan.getRoot());
+
+        ReportNode callPlanNode = getChildren(context.getReport()).get(0);
+        Assert.assertEquals(ReportNodeStatus.TECHNICAL_ERROR, callPlanNode.getStatus());
+        Assert.assertEquals("No selection attribute defined", callPlanNode.getError().getMsg());
     }
 
 }

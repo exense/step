@@ -121,6 +121,8 @@ public class V1_3_0_EscapeStringInterpolationYamlMigrationTaskTest {
     public void testOldPlanCallPlanInputsAreEscaped() throws Exception {
         Plan plan = readPlan("1.2.0",
             "  - callPlan:\n" +
+            "      selectionAttributes:\n" +
+            "        - name: \"Sub Plan\"\n" +
             "      input:\n" +
             "        - p1: \"value ${v}\"\n");
 
