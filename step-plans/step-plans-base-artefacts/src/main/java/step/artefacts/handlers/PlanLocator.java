@@ -92,6 +92,14 @@ public class PlanLocator {
                     return List.of();
                 }
             }
+            // Without any selection criteria the call plan doesn't reference any plan
+            if (selectionAttributes.isEmpty()) {
+                if (strictMode) {
+                    throw new NoSuchElementException("No selection attribute defined");
+                } else {
+                    return List.of();
+                }
+            }
             Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
             stream = stream.filter(objectPredicate);
             List<Plan> matchingPlans = stream.collect(Collectors.toList());
