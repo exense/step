@@ -20,7 +20,9 @@ package step.cli;
 
 import org.apache.commons.io.output.TeeOutputStream;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.Sequence;
@@ -32,6 +34,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
+import step.grid.io.AttachmentHelper;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 import step.threadpool.ThreadPoolPlugin;
@@ -39,9 +42,13 @@ import step.threadpool.ThreadPoolPlugin;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -62,6 +69,9 @@ public class LiveReportTreePrinterPluginTest {
 
     // Long enough for no node of these plans to be printed by the hold timer, except where the test intends it
     private static final Duration LONG_HOLD_DELAY = Duration.ofMinutes(1);
+
+    @Rule
+    public final TemporaryFolder reportDirectory = new TemporaryFolder();
 
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
     private Charset outputCharset;
@@ -274,6 +284,91 @@ public class LiveReportTreePrinterPluginTest {
         result.printTree();
     }
 
+    /**
+     * The attachments of the nodes of a test case taking a screenshot of the page and then failing on an exception
+     */
+    @Test
+    public void writesTheAttachmentsOfTheNodesAndPrintsWhereBelowThem() throws IOException {
+        Plan plan = PlanBuilder.create()
+            .startBlock(testCase("Order with an expired token"))
+            .add(keyword("Take screenshot"))
+            .add(keyword("Place order", "token", "'expired'", "cartId", "'cart-1'"))
+            .endBlock().build();
+        plan.addAttribute(AbstractOrganizableObject.NAME, "Online shop");
+        AttachmentExporter exporter = new AttachmentExporter(reportDirectory.getRoot().toPath(), LocalDateTime.of(2026, 11, 2, 14, 30, 12));
+
+        PlanRunnerResult result = execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, exporter);
+
+        Path runDirectory = exporter.getRunDirectory();
+        Assert.assertEquals(reportDirectory.getRoot().toPath().resolve("20261102-143012-000000-local"), runDirectory);
+        Assert.assertEquals(List.of(
+            "▶ Order with an expired token",
+            "▶ Order with an expired token > Session",
+            "✔ Order with an expired token > Session > Take screenshot(Input={}, Output={}) : PASSED (<duration>)",
+            "    attachment: <run>/Online_shop/0001-Take_screenshot/page.png",
+            "    attachment: <run>/Online_shop/0001-Take_screenshot/page-2.png",
+            "    attachment: <run>/Online_shop/0001-Take_screenshot/console__12_11_.log",
+            "✖ Order with an expired token > Session > Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}) : TECHNICAL_ERROR (<duration>) The token 'expired' is no longer valid",
+            "    attachment: <run>/Online_shop/0002-Place_order/exception.log",
+            "✖ Order with an expired token > Session : TECHNICAL_ERROR (<duration>)",
+            "✖ Order with an expired token : TECHNICAL_ERROR (<duration>)"
+        ), withRunDirectoryReplaced(outputLines(), runDirectory));
+
+        Path screenshots = runDirectory.resolve("Online_shop").resolve("0001-Take_screenshot");
+        Assert.assertEquals("before", Files.readString(screenshots.resolve("page.png")));
+        Assert.assertEquals("after", Files.readString(screenshots.resolve("page-2.png")));
+        Assert.assertEquals("console", Files.readString(screenshots.resolve("console__12_11_.log")));
+        String exceptionLog = Files.readString(runDirectory.resolve("Online_shop").resolve("0002-Place_order").resolve("exception.log"));
+        Assert.assertTrue(exceptionLog, exceptionLog.contains("The token 'expired' is no longer valid"));
+
+        List<String> index = Files.readAllLines(runDirectory.resolve(AttachmentExporter.INDEX_FILE_NAME)).stream()
+            .map(line -> line.replaceAll("\\b[0-9a-f]{24}\\b", "<node id>"))
+            .collect(Collectors.toList());
+        Assert.assertEquals(List.of(
+            "Plan\tPath\tStatus\tReport node\tAttachment\tFile\tSkipped reason",
+            "Online shop\tOrder with an expired token > Session > Take screenshot\tPASSED\t<node id>\tpage.png\tOnline_shop/0001-Take_screenshot/page.png\t",
+            "Online shop\tOrder with an expired token > Session > Take screenshot\tPASSED\t<node id>\tpage.png\tOnline_shop/0001-Take_screenshot/page-2.png\t",
+            "Online shop\tOrder with an expired token > Session > Take screenshot\tPASSED\t<node id>\tconsole: 12/11?.log\tOnline_shop/0001-Take_screenshot/console__12_11_.log\t",
+            "Online shop\tOrder with an expired token > Session > Place order\tTECHNICAL_ERROR\t<node id>\texception.log\tOnline_shop/0002-Place_order/exception.log\t"
+        ), index);
+
+        // The report tree printed at the end of the execution tells where they are as well
+        StringWriter tree = new StringWriter();
+        result.printTree(tree, true, false, exporter::describeAttachments);
+        Assert.assertEquals(List.of(
+            "Order with an expired token:TECHNICAL_ERROR:",
+            " Session:TECHNICAL_ERROR:",
+            "  Take screenshot(Input={}, Output={}):PASSED:",
+            "   attachment: <run>/Online_shop/0001-Take_screenshot/page.png",
+            "   attachment: <run>/Online_shop/0001-Take_screenshot/page-2.png",
+            "   attachment: <run>/Online_shop/0001-Take_screenshot/console__12_11_.log",
+            "  Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}):TECHNICAL_ERROR:The token 'expired' is no longer valid",
+            "   attachment: <run>/Online_shop/0002-Place_order/exception.log"
+        ), withRunDirectoryReplaced(Arrays.asList(tree.toString().split("\\R")), runDirectory));
+    }
+
+    @Test
+    public void writesNothingForAnExecutionWithoutAttachments() {
+        Plan plan = PlanBuilder.create()
+            .startBlock(sequence())
+            .add(echo("'main'"))
+            .endBlock().build();
+        AttachmentExporter exporter = new AttachmentExporter(reportDirectory.getRoot().toPath());
+
+        execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, exporter);
+
+        Assert.assertFalse(Files.exists(exporter.getRunDirectory()));
+        Assert.assertEquals(0, exporter.getFileCount());
+    }
+
+    private static List<String> withRunDirectoryReplaced(List<String> lines, Path runDirectory) {
+        // The URI of a directory ends with a slash
+        String runDirectoryUri = runDirectory.toAbsolutePath().toUri().toString().replaceAll("/$", "");
+        return lines.stream()
+            .map(line -> line.replace(runDirectoryUri, "<run>"))
+            .collect(Collectors.toList());
+    }
+
     @Test
     public void formatsDurations() {
         Assert.assertEquals("0 ms", LiveReportTreePrinterPlugin.formatDuration(0));
@@ -287,11 +382,15 @@ public class LiveReportTreePrinterPluginTest {
     }
 
     private PlanRunnerResult execute(Plan plan, Duration holdDelay, Charset charset) {
+        return execute(plan, holdDelay, charset, null);
+    }
+
+    private PlanRunnerResult execute(Plan plan, Duration holdDelay, Charset charset, AttachmentExporter attachmentExporter) {
         outputCharset = charset;
         // Also written to the standard output, for the report to be reviewed in the output of the tests
         PrintStream out = new PrintStream(new TeeOutputStream(output, System.out), true, charset);
         try (ExecutionEngine executionEngine = ExecutionEngine.builder()
-            .withPlugin(new LiveReportTreePrinterPlugin(out, holdDelay))
+            .withPlugin(new LiveReportTreePrinterPlugin(out, holdDelay, attachmentExporter))
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new BaseArtefactPlugin())
             .withPlugin(new FunctionPlugin())
@@ -334,6 +433,14 @@ public class LiveReportTreePrinterPluginTest {
         public void addArticleToCart() {
             output.add("cartId", "cart-1");
             output.add("itemCount", "1");
+        }
+
+        @Keyword(name = "Take screenshot")
+        public void takeScreenshot() {
+            // Twice the same name, as a keyword taking a screenshot before and after an action would
+            output.addAttachment(AttachmentHelper.generateAttachmentFromByteArray("before".getBytes(StandardCharsets.UTF_8), "page.png"));
+            output.addAttachment(AttachmentHelper.generateAttachmentFromByteArray("after".getBytes(StandardCharsets.UTF_8), "page.png"));
+            output.addAttachment(AttachmentHelper.generateAttachmentFromByteArray("console".getBytes(StandardCharsets.UTF_8), "console: 12/11?.log"));
         }
 
         @Keyword(name = "Place order")

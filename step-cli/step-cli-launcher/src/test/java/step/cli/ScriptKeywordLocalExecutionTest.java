@@ -58,7 +58,7 @@ public class ScriptKeywordLocalExecutionTest {
 
         // Fails the test if any plan of the package fails, the handler reports plan failures by throwing
         new ApLocalExecuteCommandHandler()
-            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration, LocalReportMode.tree);
+            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration, LocalReportMode.tree, null);
 
         for (Entry<String, String> engine : Map.of("groovy", "groovy/lang/GroovyShell.class",
             "javascript", "org/openjdk/nashorn/api/scripting/NashornScriptEngineFactory.class").entrySet()) {

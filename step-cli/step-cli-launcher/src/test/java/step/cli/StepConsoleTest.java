@@ -295,6 +295,12 @@ public class StepConsoleTest {
         Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
         Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
         Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.file, ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
+
+        // the attachments can only be saved by local executions
+        remoteExecuteHistory.clear();
+        res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--saveAttachments");
+        Assert.assertNotEquals(0, res);
+        Assert.assertEquals(0, remoteExecuteHistory.size());
     }
 
     @Test
@@ -367,7 +373,7 @@ public class StepConsoleTest {
         Histories histories = new Histories(null, null, null, localExecuteHistory);
 
         // all parameters
-        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD", "-ep=key1=value1|key2=value2", "-ep=key3=value3", "--localAgentVmArgs=-Xmx4g", "--localAgentVmArgs=-XX:HeapDumpPath=C:\\Program Files\\dumps", "--localReportMode=live");
+        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD", "-ep=key1=value1|key2=value2", "-ep=key3=value3", "--localAgentVmArgs=-Xmx4g", "--localAgentVmArgs=-XX:HeapDumpPath=C:\\Program Files\\dumps", "--localReportMode=live", "--saveAttachments", "--reportDir=target/my-reports");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, localExecuteHistory.size());
@@ -381,6 +387,7 @@ public class StepConsoleTest {
         Assert.assertEquals(List.of("-Xmx4g", "-XX:HeapDumpPath=C:\\Program Files\\dumps"),
             usedParams.localAgentConfiguration.getJavaAgentVmArgs());
         Assert.assertEquals(LocalReportMode.live, usedParams.reportMode);
+        Assert.assertEquals(new File("target/my-reports"), usedParams.attachmentsReportDir);
 
         // minimum parameters
         localExecuteHistory.clear();
@@ -393,6 +400,7 @@ public class StepConsoleTest {
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
         Assert.assertEquals(List.of(), usedParams.localAgentConfiguration.getJavaAgentVmArgs());
         Assert.assertEquals(LocalReportMode.tree, usedParams.reportMode);
+        Assert.assertNull(usedParams.attachmentsReportDir);
 
         // properties files
         localExecuteHistory.clear();
@@ -609,6 +617,7 @@ public class StepConsoleTest {
             private Map<String, String> executionParameters;
             public LocalAgentProvisioningConfiguration localAgentConfiguration;
             private LocalReportMode reportMode;
+            private File attachmentsReportDir;
         }
 
         public TestApExecuteCommand(List<RemoteExecutionParams> remoteParams, List<LocalExecutionParams> localParams) {
@@ -637,12 +646,14 @@ public class StepConsoleTest {
         @Override
         protected void executeLocally(File file, File kwLibFile, List<String> includePlans, List<String> excludePlans,
                                       List<String> includeCategories, List<String> excludeCategories, Map<String, String> executionParameters,
-                                      LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode) {
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode,
+                                      File attachmentsReportDir) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();
                 p.apFile = file;
                 p.localAgentConfiguration = localAgentConfiguration;
                 p.reportMode = reportMode;
+                p.attachmentsReportDir = attachmentsReportDir;
                 p.excludePlans = excludePlans;
                 p.includePlans = includePlans;
                 p.includeCategories = includeCategories;

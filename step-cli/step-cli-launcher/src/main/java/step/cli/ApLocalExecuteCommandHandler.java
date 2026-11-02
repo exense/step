@@ -36,6 +36,7 @@ import step.artefacts.handlers.functions.AgentProvisioningExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.agents.provisioning.driver.AgentProvisioningStatusAccessor;
 import step.core.artefacts.Artefact;
+import step.core.artefacts.reports.ReportNode;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
@@ -49,10 +50,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static step.cli.ExecuteAutomationPackageTool.getPlanFilters;
@@ -61,17 +65,23 @@ public class ApLocalExecuteCommandHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
+    /**
+     * @param attachmentsReportDir the directory to write the attachments of the report nodes to, in a new folder of
+     *                             their own, null for them not to be written
+     */
     public void execute(File apFile, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
                         List<String> excludeCategories, Map<String, String> executionParameters,
-                        LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode) throws StepCliExecutionException {
+                        LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode,
+                        File attachmentsReportDir) throws StepCliExecutionException {
         Objects.requireNonNull(reportMode);
+        AttachmentExporter attachmentExporter = attachmentsReportDir != null ? new AttachmentExporter(attachmentsReportDir.toPath()) : null;
         // The keywords run on real agents started as separate processes on this machine, so that a local execution
         // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
         // supports every keyword language rather than only the Java ones.
         // Declared before the engine, and therefore closed after it: the local grid it stops is still in use as long
         // as the engine has not released the class loaders of its local tokens.
         try (LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
-             ExecutionEngine executionEngine = buildExecutionEngine(localAgents, reportMode)) {
+             ExecutionEngine executionEngine = buildExecutionEngine(localAgents, reportMode, attachmentExporter)) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
             InputStream libFileInputStream = null;
@@ -106,12 +116,18 @@ public class ApLocalExecuteCommandHandler {
                     && !localAgentConfiguration.isDebug();
                 Runnable restoreExecutionLogs = suppressExecutionLogs ? StepConsoleLogging.suppressExecutionLogs() : () -> {
                 };
+                Function<ReportNode, List<String>> attachmentLines = attachmentExporter != null
+                    ? attachmentExporter::describeAttachments : node -> List.of();
                 try {
                     for (StepClassParserResult parserResult : listPlans) {
-                        runPlan(parserResult, executionEngine, executionParameters, reportMode, failedPlans);
+                        runPlan(parserResult, executionEngine, executionParameters, reportMode, attachmentLines, failedPlans);
                     }
                 } finally {
                     restoreExecutionLogs.run();
+                }
+                if (attachmentExporter != null && attachmentExporter.getFileCount() > 0) {
+                    log.info("{} attachment(s) written to {}, listed in {}", attachmentExporter.getFileCount(),
+                        attachmentExporter.getRunDirectory().toAbsolutePath().toUri(), AttachmentExporter.INDEX_FILE_NAME);
                 }
 
                 // The details of each failure have been logged above. Reporting them here as well is what makes the
@@ -143,7 +159,7 @@ public class ApLocalExecuteCommandHandler {
     }
 
     private static void runPlan(StepClassParserResult parserResult, ExecutionEngine executionEngine, Map<String, String> executionParameters,
-                                LocalReportMode reportMode, List<String> failedPlans) {
+                                LocalReportMode reportMode, Function<ReportNode, List<String>> attachmentLines, List<String> failedPlans) {
         new AbstractLocalPlanRunner(parserResult, executionEngine) {
             @Override
             protected void onExecutionStart() {
@@ -153,7 +169,7 @@ public class ApLocalExecuteCommandHandler {
             @Override
             protected void onExecutionPassed(PlanRunnerResult result) throws IOException {
                 if (reportMode.printsTree()) {
-                    super.onExecutionPassed(result);
+                    result.printTree(new OutputStreamWriter(System.out), true, false, attachmentLines);
                 }
             }
 
@@ -166,7 +182,7 @@ public class ApLocalExecuteCommandHandler {
                     detailMessage += "Assertion error. ";
                 }
                 if (reportMode.printsTree()) {
-                    detailMessage += "Execution tree is:\n" + ExecuteAutomationPackageTool.getExecutionTreeAsString(result);
+                    detailMessage += "Execution tree is:\n" + getExecutionTreeAsString(result, attachmentLines);
                 } else {
                     // The failing nodes have already been printed out along with their errors
                     detailMessage += "Errors: " + result.getErrorSummary();
@@ -199,13 +215,32 @@ public class ApLocalExecuteCommandHandler {
         }.runPlan();
     }
 
-    private static ExecutionEngine buildExecutionEngine(LocalAgentProvisioningPlugin localAgents, LocalReportMode reportMode) {
+    /**
+     * The report tree with the details of the nodes, the stack traces of the technical errors, and where the
+     * attachments of the nodes have been written
+     */
+    private static String getExecutionTreeAsString(PlanRunnerResult result, Function<ReportNode, List<String>> attachmentLines) {
+        StringWriter writer = new StringWriter();
+        try {
+            result.printTree(writer, true, true, attachmentLines);
+            return writer.toString();
+        } catch (IOException e) {
+            log.error("Error while writing execution tree: {}", writer, e);
+            return "Error while writing tree. See logs for details.";
+        }
+    }
+
+    private static ExecutionEngine buildExecutionEngine(LocalAgentProvisioningPlugin localAgents, LocalReportMode reportMode,
+                                                        AttachmentExporter attachmentExporter) {
         ExecutionEngine.Builder builder = ExecutionEngine.builder()
             .withOperationMode(OperationMode.CLI)
             .withPlugin(localAgents)
             .withPlugin(new AgentProvisioningExecutionPlugin(new AgentProvisioningStatusAccessor(new InMemoryCollection<>())));
         if (reportMode.printsLive()) {
-            builder.withPlugin(new LiveReportTreePrinterPlugin());
+            // Writes the attachments itself, to print where right below their node
+            builder.withPlugin(new LiveReportTreePrinterPlugin(System.out, LiveReportTreePrinterPlugin.DEFAULT_HOLD_DELAY, attachmentExporter));
+        } else if (attachmentExporter != null) {
+            builder.withPlugin(new AttachmentExportPlugin(attachmentExporter));
         }
         return builder.withPluginsFromClasspath().build();
     }

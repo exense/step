@@ -246,8 +246,14 @@ public class ApCommand extends BaseCommand {
         @CommandLine.Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout")
         protected List<String> reportType;
 
-        @CommandLine.Option(names = {"--reportDir"}, description = "The local directory to store generated execution reports", defaultValue = "reports")
+        @CommandLine.Option(names = {"--reportDir"}, description = "The local directory to store generated execution reports and saved attachments", defaultValue = "reports")
         protected File reportDir;
+
+        @CommandLine.Option(names = {"--saveAttachments"}, defaultValue = "false",
+            description = "Write the attachments of the executed report nodes, such as screenshots or the stack traces of technical errors, "
+                + "to a new subfolder of --reportDir, along with an index of the nodes they belong to. Currently supported for local executions only.",
+            showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+        protected boolean saveAttachments;
 
         @CommandLine.Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> executionParameters;
@@ -362,7 +368,7 @@ public class ApCommand extends BaseCommand {
             }
 
             executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories,
-                executionParameters, buildLocalAgentConfiguration(), localReportMode);
+                executionParameters, buildLocalAgentConfiguration(), localReportMode, saveAttachments ? reportDir : null);
         }
 
         protected LocalAgentProvisioningConfiguration buildLocalAgentConfiguration() {
@@ -386,9 +392,10 @@ public class ApCommand extends BaseCommand {
 
         protected void executeLocally(File file, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
                                       List<String> excludeCategories, Map<String, String> executionParameters,
-                                      LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode) {
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode,
+                                      File attachmentsReportDir) {
             new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories,
-                excludeCategories, executionParameters, localAgentConfiguration, reportMode);
+                excludeCategories, executionParameters, localAgentConfiguration, reportMode, attachmentsReportDir);
         }
 
         public void checkStepUrlRequired() {
@@ -397,6 +404,10 @@ public class ApCommand extends BaseCommand {
 
         protected void handleApRemoteExecuteCommand() {
             checkAll();
+
+            if (saveAttachments) {
+                throw new StepCliExecutionException("Saving the attachments is only supported for local executions");
+            }
 
             List<ExecuteAutomationPackageTool.Report> reports = parseReportsParams();
             MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);

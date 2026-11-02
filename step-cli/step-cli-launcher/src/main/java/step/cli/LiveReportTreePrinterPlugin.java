@@ -19,7 +19,7 @@
 package step.cli;
 
 import org.bson.types.ObjectId;
-import step.core.artefacts.reports.ParentSource;
+import step.cli.AttachmentExporter.ExportedAttachment;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
@@ -31,6 +31,7 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -59,6 +60,13 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * The markers fall back to ASCII characters when the charset of the output cannot encode them, as a Windows console
  * using a legacy code page.
+ * <p>
+ * Given an {@link AttachmentExporter}, it writes the attachments of each node as soon as it ends, and prints where
+ * below the node:
+ * <pre>
+ * ✖ MyPlan > MyKeyword(Input={}, Output={}) : TECHNICAL_ERROR (12 ms) Connection refused
+ *     attachment: file:///C:/work/reports/20261102-143012-123456-local/MyPlan/0001-MyKeyword/exception.log
+ * </pre>
  */
 @Plugin
 @IgnoreDuringAutoDiscovery
@@ -66,11 +74,12 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
 
     public static final Duration DEFAULT_HOLD_DELAY = Duration.ofSeconds(1);
 
-    private static final String PATH_SEPARATOR = " > ";
+    private static final String ATTACHMENT_INDENT = "    ";
 
     private final PrintStream out;
     private final Duration holdDelay;
     private final Markers markers;
+    private final AttachmentExporter attachmentExporter;
 
     // All the fields below are guarded by this instance
     private final Map<ObjectId, RunningNode> runningNodes = new HashMap<>();
@@ -81,8 +90,16 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
     }
 
     public LiveReportTreePrinterPlugin(PrintStream out, Duration holdDelay) {
+        this(out, holdDelay, null);
+    }
+
+    /**
+     * @param attachmentExporter writes the attachments of the nodes, null for them not to be written
+     */
+    public LiveReportTreePrinterPlugin(PrintStream out, Duration holdDelay, AttachmentExporter attachmentExporter) {
         this.out = Objects.requireNonNull(out);
         this.holdDelay = Objects.requireNonNull(holdDelay);
+        this.attachmentExporter = attachmentExporter;
         this.markers = Markers.UNICODE.canBeEncodedIn(out.charset()) ? Markers.UNICODE : Markers.ASCII;
     }
 
@@ -95,17 +112,11 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
     public synchronized void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
         // The root of the plan is a child of the root node of the execution, which is not executed by an artefact handler
         RunningNode parent = node.getParentID() != null ? runningNodes.get(node.getParentID()) : null;
-        StringBuilder parentPath = new StringBuilder();
         if (parent != null) {
             printStart(parent);
-            parentPath.append(parent.path()).append(PATH_SEPARATOR);
-        }
-        ParentSource parentSource = node.getParentSource();
-        if (parentSource != null && parentSource.printSource) {
-            parentPath.append("[").append(parentSource.name()).append("]").append(PATH_SEPARATOR);
         }
 
-        RunningNode runningNode = new RunningNode(parentPath.toString(), node.getName());
+        RunningNode runningNode = new RunningNode(ReportNodePaths.prefixOf(parent != null ? parent.path() : null, node), node.getName());
         runningNode.holdTimeout = getHoldTimer().schedule(() -> printStartOfLongRunningNode(runningNode),
             holdDelay.toMillis(), TimeUnit.MILLISECONDS);
         // Registered once its timeout is scheduled, for no node to be found without one
@@ -113,17 +124,28 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
     }
 
     @Override
-    public synchronized void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
-        RunningNode runningNode = runningNodes.remove(node.getId());
+    public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
         String parentPath;
-        if (runningNode != null) {
-            runningNode.ended = true;
-            runningNode.holdTimeout.cancel(false);
-            parentPath = runningNode.parentPath;
-        } else {
-            parentPath = "";
+        synchronized (this) {
+            RunningNode runningNode = runningNodes.remove(node.getId());
+            if (runningNode != null) {
+                runningNode.ended = true;
+                runningNode.holdTimeout.cancel(false);
+                parentPath = runningNode.parentPath;
+            } else {
+                parentPath = "";
+            }
         }
-        print(markers.of(node.getStatus()) + " " + parentPath + describeNode(node) + " : " + describeResult(node));
+        // Written without holding the lock, for the other threads not to wait for the copy of the files
+        List<ExportedAttachment> attachments = attachmentExporter != null
+            ? attachmentExporter.export(context, node, parentPath + node.getName()) : List.of();
+        synchronized (this) {
+            print(markers.of(node.getStatus()) + " " + parentPath + describeNode(node) + " : " + describeResult(node));
+            // Right below their node, before any line of another thread
+            for (ExportedAttachment attachment : attachments) {
+                print(ATTACHMENT_INDENT + attachment.describe());
+            }
+        }
     }
 
     @Override
