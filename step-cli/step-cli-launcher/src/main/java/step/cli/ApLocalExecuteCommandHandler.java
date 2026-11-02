@@ -52,6 +52,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static step.cli.ExecuteAutomationPackageTool.getPlanFilters;
@@ -62,18 +63,15 @@ public class ApLocalExecuteCommandHandler {
 
     public void execute(File apFile, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
                         List<String> excludeCategories, Map<String, String> executionParameters,
-                        LocalAgentProvisioningConfiguration localAgentConfiguration) throws StepCliExecutionException {
+                        LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode) throws StepCliExecutionException {
+        Objects.requireNonNull(reportMode);
         // The keywords run on real agents started as separate processes on this machine, so that a local execution
         // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
         // supports every keyword language rather than only the Java ones.
         // Declared before the engine, and therefore closed after it: the local grid it stops is still in use as long
         // as the engine has not released the class loaders of its local tokens.
         try (LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
-             ExecutionEngine executionEngine = ExecutionEngine.builder()
-                 .withOperationMode(OperationMode.CLI)
-                 .withPlugin(localAgents)
-                 .withPlugin(new AgentProvisioningExecutionPlugin(new AgentProvisioningStatusAccessor(new InMemoryCollection<>())))
-                 .withPluginsFromClasspath().build()) {
+             ExecutionEngine executionEngine = buildExecutionEngine(localAgents, reportMode)) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
             InputStream libFileInputStream = null;
@@ -102,49 +100,18 @@ public class ApLocalExecuteCommandHandler {
                 log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
 
                 List<String> failedPlans = new ArrayList<>();
-                for (StepClassParserResult parserResult : listPlans) {
-                    new AbstractLocalPlanRunner(parserResult, executionEngine) {
-                        @Override
-                        protected void onExecutionStart() {
-                            log.info("Execution has been started for plan {}", parserResult.getName());
-                        }
-
-                        @Override
-                        protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
-                            log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
-
-                            String executionTree = ExecuteAutomationPackageTool.getExecutionTreeAsString(result);
-                            String detailMessage = errorText + "\n" + executionTree;
-                            if (assertionError) {
-                                detailMessage += "Assertion error. ";
-                            }
-                            detailMessage += "Execution tree is: " + executionTree;
-                            log.error(detailMessage);
-                            failedPlans.add(parserResult.getName());
-                        }
-
-                        @Override
-                        protected void onInitializingException(Exception exception) {
-                            log.error("Execution initialization exception for plan {}.", parserResult.getName(), exception);
-                            failedPlans.add(parserResult.getName());
-                        }
-
-                        @Override
-                        protected void onExecutionException(Exception exception) {
-                            log.error("Execution exception for plan {}", parserResult.getName(), exception);
-                            failedPlans.add(parserResult.getName());
-                        }
-
-                        @Override
-                        protected void onTestFinished() {
-                            log.info("Execution has been finished for plan {}", parserResult.getName());
-                        }
-
-                        @Override
-                        protected Map<String, String> getExecutionParameters() {
-                            return executionParameters;
-                        }
-                    }.runPlan();
+                // The live report is only readable if the logs of the engine are not interleaved with it, unless they
+                // have been asked for with --verbose or --debug, which the configuration of the local agents reflects
+                boolean suppressExecutionLogs = reportMode.printsLive() && !localAgentConfiguration.isVerbose()
+                    && !localAgentConfiguration.isDebug();
+                Runnable restoreExecutionLogs = suppressExecutionLogs ? StepConsoleLogging.suppressExecutionLogs() : () -> {
+                };
+                try {
+                    for (StepClassParserResult parserResult : listPlans) {
+                        runPlan(parserResult, executionEngine, executionParameters, reportMode, failedPlans);
+                    }
+                } finally {
+                    restoreExecutionLogs.run();
                 }
 
                 // The details of each failure have been logged above. Reporting them here as well is what makes the
@@ -173,6 +140,74 @@ public class ApLocalExecuteCommandHandler {
             // Only the shutdown of the local agents can reach this: the body above handles its own IO errors
             throw new StepCliExecutionException("Error while stopping the local execution environment", e);
         }
+    }
+
+    private static void runPlan(StepClassParserResult parserResult, ExecutionEngine executionEngine, Map<String, String> executionParameters,
+                                LocalReportMode reportMode, List<String> failedPlans) {
+        new AbstractLocalPlanRunner(parserResult, executionEngine) {
+            @Override
+            protected void onExecutionStart() {
+                log.info("Execution has been started for plan {}", parserResult.getName());
+            }
+
+            @Override
+            protected void onExecutionPassed(PlanRunnerResult result) throws IOException {
+                if (reportMode.printsTree()) {
+                    super.onExecutionPassed(result);
+                }
+            }
+
+            @Override
+            protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
+                log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
+
+                String detailMessage = errorText + ". ";
+                if (assertionError) {
+                    detailMessage += "Assertion error. ";
+                }
+                if (reportMode.printsTree()) {
+                    detailMessage += "Execution tree is:\n" + ExecuteAutomationPackageTool.getExecutionTreeAsString(result);
+                } else {
+                    // The failing nodes have already been printed out along with their errors
+                    detailMessage += "Errors: " + result.getErrorSummary();
+                }
+                log.error(detailMessage);
+                failedPlans.add(parserResult.getName());
+            }
+
+            @Override
+            protected void onInitializingException(Exception exception) {
+                log.error("Execution initialization exception for plan {}.", parserResult.getName(), exception);
+                failedPlans.add(parserResult.getName());
+            }
+
+            @Override
+            protected void onExecutionException(Exception exception) {
+                log.error("Execution exception for plan {}", parserResult.getName(), exception);
+                failedPlans.add(parserResult.getName());
+            }
+
+            @Override
+            protected void onTestFinished() {
+                log.info("Execution has been finished for plan {}", parserResult.getName());
+            }
+
+            @Override
+            protected Map<String, String> getExecutionParameters() {
+                return executionParameters;
+            }
+        }.runPlan();
+    }
+
+    private static ExecutionEngine buildExecutionEngine(LocalAgentProvisioningPlugin localAgents, LocalReportMode reportMode) {
+        ExecutionEngine.Builder builder = ExecutionEngine.builder()
+            .withOperationMode(OperationMode.CLI)
+            .withPlugin(localAgents)
+            .withPlugin(new AgentProvisioningExecutionPlugin(new AgentProvisioningStatusAccessor(new InMemoryCollection<>())));
+        if (reportMode.printsLive()) {
+            builder.withPlugin(new LiveReportTreePrinterPlugin());
+        }
+        return builder.withPluginsFromClasspath().build();
     }
 
     private static String getPlanName(Plan p) {

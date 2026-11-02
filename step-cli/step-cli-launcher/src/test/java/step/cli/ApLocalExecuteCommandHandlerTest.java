@@ -55,7 +55,7 @@ public class ApLocalExecuteCommandHandlerTest {
             .setWorkDirectory(workDirectory.getRoot().toPath());
 
         new ApLocalExecuteCommandHandler()
-            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration);
+            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration, LocalReportMode.both);
 
         Assert.assertTrue("The Java agent should have been extracted and started",
             Files.isRegularFile(workDirectory.getRoot().toPath()

@@ -292,6 +292,13 @@ public class ApCommand extends BaseCommand {
                 + " arguments containing spaces.")
         protected List<String> localAgentVmArgs;
 
+        @CommandLine.Option(names = {"--localReportMode"}, paramLabel = "<Mode>",
+            description = "Local execution only. How the execution report is printed out: tree prints the report tree of each plan once it has been executed, "
+                + "live prints each report node as it starts and ends, both does both. Supported values: ${COMPLETION-CANDIDATES}.",
+            showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            defaultValue = "tree")
+        protected LocalReportMode localReportMode;
+
         @Override
         public Integer call() throws Exception {
             super.call();
@@ -355,7 +362,7 @@ public class ApCommand extends BaseCommand {
             }
 
             executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories,
-                executionParameters, buildLocalAgentConfiguration());
+                executionParameters, buildLocalAgentConfiguration(), localReportMode);
         }
 
         protected LocalAgentProvisioningConfiguration buildLocalAgentConfiguration() {
@@ -379,9 +386,9 @@ public class ApCommand extends BaseCommand {
 
         protected void executeLocally(File file, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
                                       List<String> excludeCategories, Map<String, String> executionParameters,
-                                      LocalAgentProvisioningConfiguration localAgentConfiguration) {
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode) {
             new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories,
-                excludeCategories, executionParameters, localAgentConfiguration);
+                excludeCategories, executionParameters, localAgentConfiguration, reportMode);
         }
 
         public void checkStepUrlRequired() {

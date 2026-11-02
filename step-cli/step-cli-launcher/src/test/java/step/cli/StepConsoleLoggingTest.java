@@ -128,6 +128,29 @@ public class StepConsoleLoggingTest {
         Assert.assertEquals(Level.INFO, loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).getEffectiveLevel());
     }
 
+    /**
+     * What keeps the live report of a local execution readable: only the errors and the logs of the CLI and of the
+     * local agents are printed while the plans execute, and everything is printed again afterwards.
+     */
+    @Test
+    public void suppressesTheExecutionLogsUntilRestored() {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        rootLoggerWriting(output, "%msg%n");
+
+        Runnable restore = StepConsoleLogging.suppressExecutionLogs(loggerContext);
+        loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").info("engine info");
+        loggerContext.getLogger("step.commons.activation.Activator").warn("engine warning");
+        loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").error("engine error");
+        loggerContext.getLogger("step.cli.ApLocalExecuteCommandHandler").info("cli info");
+        loggerContext.getLogger("step.agents.provisioning.local.LocalProcessAgentProvisioningDriver").info("agent info");
+        loggerContext.getLogger("step.client.SomeClient").info("other info");
+        restore.run();
+        loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").info("engine info after");
+
+        Assert.assertEquals("engine error\ncli info\nagent info\nengine info after\n",
+            output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n"));
+    }
+
     private PatternLayoutEncoder rootLoggerEncoder(String pattern) {
         return (PatternLayoutEncoder) ((OutputStreamAppender<ILoggingEvent>) rootLoggerWriting(new ByteArrayOutputStream(), pattern)
             .getAppender("APPENDER")).getEncoder();

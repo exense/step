@@ -72,7 +72,7 @@ public class NodeLocalExecutionTest {
         // not asserted: the CLI uses a globally installed step-node-agent when there is one, and only installs it into
         // the workspace otherwise, so both are a correct outcome.
         new ApLocalExecuteCommandHandler()
-            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration);
+            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration, LocalReportMode.tree);
     }
 
     /**
