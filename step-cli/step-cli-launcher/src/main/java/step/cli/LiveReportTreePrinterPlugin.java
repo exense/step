@@ -106,9 +106,10 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         }
 
         RunningNode runningNode = new RunningNode(parentPath.toString(), node.getName());
-        runningNodes.put(node.getId(), runningNode);
         runningNode.holdTimeout = getHoldTimer().schedule(() -> printStartOfLongRunningNode(runningNode),
             holdDelay.toMillis(), TimeUnit.MILLISECONDS);
+        // Registered once its timeout is scheduled, for no node to be found without one
+        runningNodes.put(node.getId(), runningNode);
     }
 
     @Override
