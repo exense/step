@@ -30,8 +30,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +47,16 @@ public class JUnitReportCreator implements ReportCreator {
     @Override
     public void createReport(Map<String, Execution> executions, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException {
         File preparedReport = prepareCustomReportOnServer(new ArrayList<>(executions.keySet()), logging);
+        outputZipReport(preparedReport, outputFolder, outputModes, logging);
+    }
 
+    /**
+     * Outputs a JUnit report prepared as a zip archive, unzipping it to the report directory for
+     * {@link ExecuteAutomationPackageTool.ReportOutputMode#file} and logging its main xml file for
+     * {@link ExecuteAutomationPackageTool.ReportOutputMode#stdout}, and deletes the archive
+     */
+    public static void outputZipReport(File preparedReport, File outputFolder, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes,
+                                       CliToolLogging logging) throws IOException {
         for (ExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
             switch (outputMode) {
                 case file:
@@ -63,7 +70,7 @@ public class JUnitReportCreator implements ReportCreator {
                     break;
                 case stdout:
                     // create temp folder with unzipped report to read and print the content of the main .xml file
-                    File tempFolderToUnzip = new File(outputFolder, DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) + "-temp");
+                    File tempFolderToUnzip = new File(outputFolder, ReportFiles.timestamp() + "-temp");
                     tempFolderToUnzip.mkdir();
                     FileHelper.unzip(preparedReport, tempFolderToUnzip);
 
@@ -95,15 +102,12 @@ public class JUnitReportCreator implements ReportCreator {
         RemoteExecutionManager.Report customReport;
         File outputFile;
 
-        Path currentFolder = new File("").toPath().toAbsolutePath();
-        Path relativePathToOutputDir = currentFolder.relativize(outputFolder.toPath().toAbsolutePath());
-
         // report output directory is sent as a root folder for attachments
         if (executionIds.size() > 1) {
-            customReport = remoteExecutionManager.getCustomMultiReport(executionIds, CustomReportType.JUNITZIP, includeAttachments, relativePathToOutputDir.toFile().getPath());
+            customReport = remoteExecutionManager.getCustomMultiReport(executionIds, CustomReportType.JUNITZIP, includeAttachments, getAttachmentsRootFolder(outputFolder));
             outputFile = new File(outputFolder, customReport.getFileName());
         } else {
-            customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), CustomReportType.JUNITZIP, includeAttachments, relativePathToOutputDir.toFile().getPath());
+            customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), CustomReportType.JUNITZIP, includeAttachments, getAttachmentsRootFolder(outputFolder));
             outputFile = new File(outputFolder, customReport.getFileName());
         }
         logging.logDebug("Saving execution report (" + ExecuteAutomationPackageTool.ReportType.junit + ") into " + outputFile.getAbsolutePath(), null);
@@ -112,5 +116,14 @@ public class JUnitReportCreator implements ReportCreator {
             fos.write(customReport.getContent());
         }
         return outputFile;
+    }
+
+    /**
+     * @return the report directory relative to the working directory, which the links of the JUnit report to the
+     * attachments it contains start with
+     */
+    public static String getAttachmentsRootFolder(File outputFolder) {
+        Path currentFolder = new File("").toPath().toAbsolutePath();
+        return currentFolder.relativize(outputFolder.toPath().toAbsolutePath()).toFile().getPath();
     }
 }

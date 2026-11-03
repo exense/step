@@ -243,7 +243,10 @@ public class ApCommand extends BaseCommand {
         @CommandLine.Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
         protected Integer numberOfThreads;
 
-        @CommandLine.Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout")
+        @CommandLine.Option(names = {"--reportType"}, description = "The type of execution report to be generated, repeat the option for several reports. "
+            + "Supported report types: junit (output to file by default), aggregated, tree, live (local executions only, each report node printed as it starts and ends), "
+            + "all of them output to stdout by default. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout. "
+            + "Local executions print the tree report to stdout when no report type is given.")
         protected List<String> reportType;
 
         @CommandLine.Option(names = {"--reportDir"}, description = "The local directory to store generated execution reports and saved attachments", defaultValue = "reports")
@@ -298,13 +301,6 @@ public class ApCommand extends BaseCommand {
                 + " arguments containing spaces.")
         protected List<String> localAgentVmArgs;
 
-        @CommandLine.Option(names = {"--localReportMode"}, paramLabel = "<Mode>",
-            description = "Local execution only. How the execution report is printed out: tree prints the report tree of each plan once it has been executed, "
-                + "live prints each report node as it starts and ends, both does both. Supported values: ${COMPLETION-CANDIDATES}.",
-            showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-            defaultValue = "tree")
-        protected LocalReportMode localReportMode;
-
         @Override
         public Integer call() throws Exception {
             super.call();
@@ -358,9 +354,7 @@ public class ApCommand extends BaseCommand {
                 throw new StepCliExecutionException("AP file is not defined");
             }
 
-            if (reportType != null && !reportType.isEmpty()) {
-                throw new StepCliExecutionException("The report generation is not supported for local execution");
-            }
+            List<ExecuteAutomationPackageTool.Report> reports = parseReportsParams();
 
             File packageLibraryFile = null;
             if (library != null && !library.isEmpty()) {
@@ -368,7 +362,8 @@ public class ApCommand extends BaseCommand {
             }
 
             executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories,
-                executionParameters, buildLocalAgentConfiguration(), localReportMode, saveAttachments ? reportDir : null);
+                executionParameters, buildLocalAgentConfiguration(), reports != null ? reports : LocalReports.DEFAULT_REPORTS,
+                reportDir, saveAttachments);
         }
 
         protected LocalAgentProvisioningConfiguration buildLocalAgentConfiguration() {
@@ -392,10 +387,10 @@ public class ApCommand extends BaseCommand {
 
         protected void executeLocally(File file, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
                                       List<String> excludeCategories, Map<String, String> executionParameters,
-                                      LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode,
-                                      File attachmentsReportDir) {
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration,
+                                      List<ExecuteAutomationPackageTool.Report> reports, File reportDir, boolean saveAttachments) {
             new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories,
-                excludeCategories, executionParameters, localAgentConfiguration, reportMode, attachmentsReportDir);
+                excludeCategories, executionParameters, localAgentConfiguration, reports, reportDir, saveAttachments);
         }
 
         public void checkStepUrlRequired() {

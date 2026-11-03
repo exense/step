@@ -52,7 +52,7 @@ import java.util.stream.Stream;
  * along with its temporary storage. They are written to a folder created in the report directory for the whole run of
  * the CLI, the first time a node has attachments, which is never reused by another run:
  * <pre>
- * reports/20261102-143012-123456-local/
+ * reports/20261102-143012-123456-attachments/
  *   attachments.tsv
  *   Online_shop/
  *     0001-Place_order/exception.log
@@ -89,7 +89,7 @@ public class AttachmentExporter {
     AttachmentExporter(Path reportDirectory, LocalDateTime runStart) {
         Objects.requireNonNull(reportDirectory);
         Objects.requireNonNull(runStart);
-        this.runDirectory = reportDirectory.resolve(RUN_TIMESTAMP.format(runStart) + "-local");
+        this.runDirectory = reportDirectory.resolve(RUN_TIMESTAMP.format(runStart) + "-attachments");
     }
 
     /**

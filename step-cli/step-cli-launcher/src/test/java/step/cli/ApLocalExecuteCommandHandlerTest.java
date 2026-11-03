@@ -23,6 +23,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
+import step.cli.ExecuteAutomationPackageTool.Report;
+import step.cli.ExecuteAutomationPackageTool.ReportOutputMode;
+import step.cli.ExecuteAutomationPackageTool.ReportType;
 import step.core.Constants;
 
 import java.io.File;
@@ -30,6 +33,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -54,8 +58,27 @@ public class ApLocalExecuteCommandHandlerTest {
         LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
             .setWorkDirectory(workDirectory.getRoot().toPath());
 
+        // Every report type a local execution supports, written to files, the live one also printed out
+        File reportDir = new File(workDirectory.getRoot(), "reports");
+        List<Report> reports = List.of(
+            new Report(ReportType.live, List.of(ReportOutputMode.stdout, ReportOutputMode.file)),
+            new Report(ReportType.tree, List.of(ReportOutputMode.file)),
+            new Report(ReportType.aggregated, List.of(ReportOutputMode.file)),
+            new Report(ReportType.junit));
         new ApLocalExecuteCommandHandler()
-            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration, LocalReportMode.both, null);
+            .execute(automationPackage, null, null, null, null, null, Map.of(), configuration, reports, reportDir, false);
+
+        List<String> reportFiles = Arrays.stream(Objects.requireNonNull(reportDir.list())).sorted().collect(Collectors.toList());
+        for (String pattern : List.of("\\d{8}-\\d{6}-\\d{6}-live\\.txt", ".+-\\d{8}-\\d{6}-\\d{6}-tree\\.txt",
+            ".+-\\d{8}-\\d{6}-\\d{6}-aggregated\\.txt", ".+-junit")) {
+            Assert.assertTrue("A report file named " + pattern + " should have been written: " + reportFiles,
+                reportFiles.stream().anyMatch(name -> name.matches(pattern)));
+        }
+        String liveReport = Files.readString(new File(reportDir, reportFiles.stream().filter(name -> name.endsWith("-live.txt")).findFirst().orElseThrow()).toPath());
+        Assert.assertTrue(liveReport, liveReport.contains("✔ "));
+        File junitReportFolder = new File(reportDir, reportFiles.stream().filter(name -> name.endsWith("-junit")).findFirst().orElseThrow());
+        Assert.assertTrue("The JUnit report should contain its xml file: " + Arrays.toString(junitReportFolder.list()),
+            Objects.requireNonNull(junitReportFolder.list((dir, name) -> name.endsWith("-junit.xml"))).length == 1);
 
         Assert.assertTrue("The Java agent should have been extracted and started",
             Files.isRegularFile(workDirectory.getRoot().toPath()

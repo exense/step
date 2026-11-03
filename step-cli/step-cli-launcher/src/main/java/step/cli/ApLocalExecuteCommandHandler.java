@@ -21,6 +21,7 @@ package step.cli;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.cli.ExecuteAutomationPackageTool.Report;
 import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.agents.provisioning.local.LocalAgentProvisioningPlugin;
 import step.automation.packages.AutomationPackageFromInputStreamProvider;
@@ -50,8 +51,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,22 +66,26 @@ public class ApLocalExecuteCommandHandler {
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
     /**
-     * @param attachmentsReportDir the directory to write the attachments of the report nodes to, in a new folder of
-     *                             their own, null for them not to be written
+     * @param reports         the reports to produce, as chosen with --reportType
+     * @param reportDir       the directory the report files and the attachments are written to
+     * @param saveAttachments if the attachments of the report nodes are written to a new folder of the report directory
      */
     public void execute(File apFile, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
                         List<String> excludeCategories, Map<String, String> executionParameters,
-                        LocalAgentProvisioningConfiguration localAgentConfiguration, LocalReportMode reportMode,
-                        File attachmentsReportDir) throws StepCliExecutionException {
-        Objects.requireNonNull(reportMode);
-        AttachmentExporter attachmentExporter = attachmentsReportDir != null ? new AttachmentExporter(attachmentsReportDir.toPath()) : null;
+                        LocalAgentProvisioningConfiguration localAgentConfiguration, List<Report> reports, File reportDir,
+                        boolean saveAttachments) throws StepCliExecutionException {
+        Objects.requireNonNull(reports);
+        Objects.requireNonNull(reportDir);
+        AttachmentExporter attachmentExporter = saveAttachments ? new AttachmentExporter(reportDir.toPath()) : null;
         // The keywords run on real agents started as separate processes on this machine, so that a local execution
         // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
         // supports every keyword language rather than only the Java ones.
         // Declared before the engine, and therefore closed after it: the local grid it stops is still in use as long
-        // as the engine has not released the class loaders of its local tokens.
-        try (LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
-             ExecutionEngine executionEngine = buildExecutionEngine(localAgents, reportMode, attachmentExporter)) {
+        // as the engine has not released the class loaders of its local tokens. The same goes for the file of the
+        // live report, written to until the engine is closed.
+        try (LocalReports localReports = new LocalReports(reports, reportDir);
+             LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
+             ExecutionEngine executionEngine = buildExecutionEngine(localAgents, localReports.openLiveReportOutputs(), attachmentExporter)) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
             InputStream libFileInputStream = null;
@@ -110,9 +114,10 @@ public class ApLocalExecuteCommandHandler {
                 log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
 
                 List<String> failedPlans = new ArrayList<>();
+                List<String> executionIds = new ArrayList<>();
                 // The live report is only readable if the logs of the engine are not interleaved with it, unless they
                 // have been asked for with --verbose or --debug, which the configuration of the local agents reflects
-                boolean suppressExecutionLogs = reportMode.printsLive() && !localAgentConfiguration.isVerbose()
+                boolean suppressExecutionLogs = localReports.printsLiveReportToStdout() && !localAgentConfiguration.isVerbose()
                     && !localAgentConfiguration.isDebug();
                 Runnable restoreExecutionLogs = suppressExecutionLogs ? StepConsoleLogging.suppressExecutionLogs() : () -> {
                 };
@@ -120,11 +125,12 @@ public class ApLocalExecuteCommandHandler {
                     ? attachmentExporter::describeAttachments : node -> List.of();
                 try {
                     for (StepClassParserResult parserResult : listPlans) {
-                        runPlan(parserResult, executionEngine, executionParameters, reportMode, attachmentLines, failedPlans);
+                        runPlan(parserResult, executionEngine, executionParameters, localReports, attachmentLines, executionIds, failedPlans);
                     }
                 } finally {
                     restoreExecutionLogs.run();
                 }
+                localReports.onAllPlansExecuted(executionIds, executionEngine.getExecutionEngineContext());
                 if (attachmentExporter != null && attachmentExporter.getFileCount() > 0) {
                     log.info("{} attachment(s) written to {}, listed in {}", attachmentExporter.getFileCount(),
                         attachmentExporter.getRunDirectory().toAbsolutePath().toUri(), AttachmentExporter.INDEX_FILE_NAME);
@@ -153,13 +159,15 @@ public class ApLocalExecuteCommandHandler {
                 }
             }
         } catch (IOException e) {
-            // Only the shutdown of the local agents can reach this: the body above handles its own IO errors
-            throw new StepCliExecutionException("Error while stopping the local execution environment", e);
+            // Only the file of the live report and the shutdown of the local agents can reach this: the body above
+            // handles its own IO errors
+            throw new StepCliExecutionException("Error while preparing or stopping the local execution environment", e);
         }
     }
 
     private static void runPlan(StepClassParserResult parserResult, ExecutionEngine executionEngine, Map<String, String> executionParameters,
-                                LocalReportMode reportMode, Function<ReportNode, List<String>> attachmentLines, List<String> failedPlans) {
+                                LocalReports localReports, Function<ReportNode, List<String>> attachmentLines,
+                                List<String> executionIds, List<String> failedPlans) {
         new AbstractLocalPlanRunner(parserResult, executionEngine) {
             @Override
             protected void onExecutionStart() {
@@ -167,28 +175,26 @@ public class ApLocalExecuteCommandHandler {
             }
 
             @Override
-            protected void onExecutionPassed(PlanRunnerResult result) throws IOException {
-                if (reportMode.printsTree()) {
-                    result.printTree(new OutputStreamWriter(System.out), true, false, attachmentLines);
-                }
+            protected void onExecutionPassed(PlanRunnerResult result) {
+                onPlanExecuted(result);
             }
 
             @Override
             protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
+                onPlanExecuted(result);
                 log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
 
                 String detailMessage = errorText + ". ";
                 if (assertionError) {
                     detailMessage += "Assertion error. ";
                 }
-                if (reportMode.printsTree()) {
-                    detailMessage += "Execution tree is:\n" + getExecutionTreeAsString(result, attachmentLines);
-                } else {
-                    // The failing nodes have already been printed out along with their errors
-                    detailMessage += "Errors: " + result.getErrorSummary();
-                }
-                log.error(detailMessage);
+                log.error(detailMessage + "Errors: " + result.getErrorSummary());
                 failedPlans.add(parserResult.getName());
+            }
+
+            private void onPlanExecuted(PlanRunnerResult result) {
+                executionIds.add(result.getExecutionId());
+                localReports.onPlanExecuted(parserResult.getName(), result, executionEngine.getExecutionEngineContext(), attachmentLines);
             }
 
             @Override
@@ -215,30 +221,15 @@ public class ApLocalExecuteCommandHandler {
         }.runPlan();
     }
 
-    /**
-     * The report tree with the details of the nodes, the stack traces of the technical errors, and where the
-     * attachments of the nodes have been written
-     */
-    private static String getExecutionTreeAsString(PlanRunnerResult result, Function<ReportNode, List<String>> attachmentLines) {
-        StringWriter writer = new StringWriter();
-        try {
-            result.printTree(writer, true, true, attachmentLines);
-            return writer.toString();
-        } catch (IOException e) {
-            log.error("Error while writing execution tree: {}", writer, e);
-            return "Error while writing tree. See logs for details.";
-        }
-    }
-
-    private static ExecutionEngine buildExecutionEngine(LocalAgentProvisioningPlugin localAgents, LocalReportMode reportMode,
+    private static ExecutionEngine buildExecutionEngine(LocalAgentProvisioningPlugin localAgents, List<PrintStream> liveReportOutputs,
                                                         AttachmentExporter attachmentExporter) {
         ExecutionEngine.Builder builder = ExecutionEngine.builder()
             .withOperationMode(OperationMode.CLI)
             .withPlugin(localAgents)
             .withPlugin(new AgentProvisioningExecutionPlugin(new AgentProvisioningStatusAccessor(new InMemoryCollection<>())));
-        if (reportMode.printsLive()) {
-            // Writes the attachments itself, to print where right below their node
-            builder.withPlugin(new LiveReportTreePrinterPlugin(System.out, LiveReportTreePrinterPlugin.DEFAULT_HOLD_DELAY, attachmentExporter));
+        // If live reports are used register only LiveReportTreePrinterPlugin which also export attachments, for non-live reports AttachmentExportPlugin is used instead to export attachments directly
+        if (!liveReportOutputs.isEmpty()) {
+            builder.withPlugin(new LiveReportTreePrinterPlugin(liveReportOutputs, LiveReportTreePrinterPlugin.DEFAULT_HOLD_DELAY, attachmentExporter));
         } else if (attachmentExporter != null) {
             builder.withPlugin(new AttachmentExportPlugin(attachmentExporter));
         }

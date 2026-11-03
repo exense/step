@@ -20,16 +20,10 @@ package step.cli.reports;
 
 import step.cli.ExecuteAutomationPackageTool;
 import step.cli.CliToolLogging;
-import step.cli.StepCliExecutionException;
 import step.client.executions.RemoteExecutionManager;
-import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.Execution;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -46,42 +40,9 @@ public class AggregatedReportCreator implements ReportCreator {
     @Override
     public void createReport(Map<String, Execution> executions, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) {
         for (String executionId : executions.keySet()) {
-            AggregatedReportView aggregatedReportView = remoteExecutionManager.getAggregatedReportView(executionId);
-
-            for (ExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
-                switch (outputMode) {
-                    case stdout:
-                        logging.logInfo("Aggregated report:\n" + aggregatedReportView.toString(), null);
-                        break;
-                    case file:
-                        Execution executionInfo = executions.get(executionId);
-                        String executionName;
-                        if (executionInfo == null || executionInfo.getDescription() == null) {
-                            executionName = executionId;
-                        } else {
-                            executionName = sanitizeFileName(executionInfo.getDescription());
-                        }
-                        String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now());
-                        String fileName = String.format("%s-%s-aggregated.txt", executionName, timestamp);
-                        File reportFile = new File(outputFolder, fileName);
-                        try (FileOutputStream fos = new FileOutputStream(reportFile)) {
-                            fos.write(aggregatedReportView.toString().getBytes());
-                        } catch (IOException e) {
-                            throw new StepCliExecutionException("Unable to prepare the aggregated report file", e);
-                        }
-                        logging.logInfo("The aggregated report has been saved in " + reportFile.getAbsolutePath(), null);
-                        break;
-                    default:
-                        logging.logError("Unsupported output mode (" + outputMode + " ) for aggregated report report", null);
-                }
-            }
+            String report = remoteExecutionManager.getAggregatedReportView(executionId).toString();
+            ReportFiles.outputTextReport(outputFolder, ExecuteAutomationPackageTool.ReportType.aggregated,
+                ReportFiles.getExecutionName(executionId, executions.get(executionId)), report, outputModes, logging);
         }
-    }
-
-    /**
-     * Sanitizes the file name by replacing all special characters with '_'
-     */
-    protected String sanitizeFileName(String fileName) {
-        return fileName.replaceAll("[^a-zA-Z0-9\\._]+", "_");
     }
 }

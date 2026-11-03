@@ -300,7 +300,7 @@ public class LiveReportTreePrinterPluginTest {
         PlanRunnerResult result = execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, exporter);
 
         Path runDirectory = exporter.getRunDirectory();
-        Assert.assertEquals(reportDirectory.getRoot().toPath().resolve("20261102-143012-000000-local"), runDirectory);
+        Assert.assertEquals(reportDirectory.getRoot().toPath().resolve("20261102-143012-000000-attachments"), runDirectory);
         Assert.assertEquals(List.of(
             "▶ Order with an expired token",
             "▶ Order with an expired token > Session",

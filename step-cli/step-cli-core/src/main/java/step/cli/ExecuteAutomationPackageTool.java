@@ -26,6 +26,7 @@ import step.cli.parameters.ApExecuteParameters;
 import step.cli.reports.AggregatedReportCreator;
 import step.cli.reports.JUnitReportCreator;
 import step.cli.reports.ReportCreator;
+import step.cli.reports.TreeReportCreator;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
@@ -181,6 +182,9 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                                         case aggregated:
                                             reportCreator = new AggregatedReportCreator(remoteExecutionManager, outputFolder);
                                             break;
+                                        case tree:
+                                            reportCreator = new TreeReportCreator(remoteExecutionManager, outputFolder);
+                                            break;
                                         default:
                                             throw new UnsupportedOperationException("Unsupported report type: " + reportType);
                                     }
@@ -315,7 +319,15 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
 
     public enum ReportType {
         junit,
-        aggregated
+        aggregated,
+        /**
+         * The report tree of each execution, as printed by the local executions
+         */
+        tree,
+        /**
+         * Each report node printed out as it starts and ends, only supported by the local executions
+         */
+        live
     }
 
     public enum ReportOutputMode {

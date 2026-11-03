@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Prints the report tree of an execution as it unfolds, each line holding the path of its report node from the root
@@ -58,14 +59,14 @@ import java.util.concurrent.TimeUnit;
  * other nodes is additionally printed with a ▶ before the first of them, and so is a node running for longer than
  * the hold delay, for a long running keyword not to go unnoticed.
  * <p>
- * The markers fall back to ASCII characters when the charset of the output cannot encode them, as a Windows console
- * using a legacy code page.
+ * The report can be printed to several outputs, typically the console and a file. The markers fall back to ASCII
+ * characters on an output whose charset cannot encode them, as a Windows console using a legacy code page.
  * <p>
  * Given an {@link AttachmentExporter}, it writes the attachments of each node as soon as it ends, and prints where
  * below the node:
  * <pre>
  * ✖ MyPlan > MyKeyword(Input={}, Output={}) : TECHNICAL_ERROR (12 ms) Connection refused
- *     attachment: file:///C:/work/reports/20261102-143012-123456-local/MyPlan/0001-MyKeyword/exception.log
+ *     attachment: file:///C:/work/reports/20261102-143012-123456-attachments/MyPlan/0001-MyKeyword/exception.log
  * </pre>
  */
 @Plugin
@@ -76,9 +77,8 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
 
     private static final String ATTACHMENT_INDENT = "    ";
 
-    private final PrintStream out;
+    private final List<Output> outputs;
     private final Duration holdDelay;
-    private final Markers markers;
     private final AttachmentExporter attachmentExporter;
 
     // All the fields below are guarded by this instance
@@ -97,10 +97,20 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
      * @param attachmentExporter writes the attachments of the nodes, null for them not to be written
      */
     public LiveReportTreePrinterPlugin(PrintStream out, Duration holdDelay, AttachmentExporter attachmentExporter) {
-        this.out = Objects.requireNonNull(out);
+        this(List.of(Objects.requireNonNull(out)), holdDelay, attachmentExporter);
+    }
+
+    /**
+     * @param outs               the outputs the report is printed to, each of them with the markers its charset can
+     *                           encode
+     * @param attachmentExporter writes the attachments of the nodes, null for them not to be written
+     */
+    public LiveReportTreePrinterPlugin(List<PrintStream> outs, Duration holdDelay, AttachmentExporter attachmentExporter) {
+        this.outputs = Objects.requireNonNull(outs).stream()
+            .map(out -> new Output(out, Markers.UNICODE.canBeEncodedIn(out.charset()) ? Markers.UNICODE : Markers.ASCII))
+            .toList();
         this.holdDelay = Objects.requireNonNull(holdDelay);
         this.attachmentExporter = attachmentExporter;
-        this.markers = Markers.UNICODE.canBeEncodedIn(out.charset()) ? Markers.UNICODE : Markers.ASCII;
     }
 
     @Override
@@ -140,10 +150,11 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         List<ExportedAttachment> attachments = attachmentExporter != null
             ? attachmentExporter.export(context, node, parentPath + node.getName()) : List.of();
         synchronized (this) {
-            print(markers.of(node.getStatus()) + " " + parentPath + describeNode(node) + " : " + describeResult(node));
+            String line = parentPath + describeNode(node) + " : " + describeResult(node);
+            print(markers -> markers.of(node.getStatus()) + " " + line);
             // Right below their node, before any line of another thread
             for (ExportedAttachment attachment : attachments) {
-                print(ATTACHMENT_INDENT + attachment.describe());
+                print(markers -> ATTACHMENT_INDENT + attachment.describe());
             }
         }
     }
@@ -166,7 +177,7 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
 
     private void printStart(RunningNode runningNode) {
         if (!runningNode.startPrinted) {
-            print(markers.start + " " + runningNode.path());
+            print(markers -> markers.start + " " + runningNode.path());
             runningNode.startPrinted = true;
             runningNode.holdTimeout.cancel(false);
         }
@@ -185,9 +196,14 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         return holdTimer;
     }
 
-    private void print(String line) {
-        out.println(line);
-        out.flush();
+    /**
+     * @param line the line, given the markers of the output it is printed to
+     */
+    private void print(Function<Markers, String> line) {
+        for (Output output : outputs) {
+            output.out.println(line.apply(output.markers));
+            output.out.flush();
+        }
     }
 
     /**
@@ -235,6 +251,9 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         private String path() {
             return parentPath + name;
         }
+    }
+
+    private record Output(PrintStream out, Markers markers) {
     }
 
     private record Markers(String start, String passed, String failed, String other) {
