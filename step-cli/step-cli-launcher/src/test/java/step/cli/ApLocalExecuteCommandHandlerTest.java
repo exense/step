@@ -68,17 +68,18 @@ public class ApLocalExecuteCommandHandlerTest {
         new ApLocalExecuteCommandHandler()
             .execute(automationPackage, null, null, null, null, null, Map.of(), configuration, reports, reportDir, false);
 
-        List<String> reportFiles = Arrays.stream(Objects.requireNonNull(reportDir.list())).sorted().collect(Collectors.toList());
-        for (String pattern : List.of("\\d{8}-\\d{6}-\\d{6}-live\\.txt", ".+-\\d{8}-\\d{6}-\\d{6}-tree\\.txt",
-            ".+-\\d{8}-\\d{6}-\\d{6}-aggregated\\.txt", ".+-junit")) {
+        // All of them in the folder of the run
+        File[] runFolders = Objects.requireNonNull(reportDir.listFiles());
+        Assert.assertEquals(1, runFolders.length);
+        List<String> reportFiles = Arrays.stream(Objects.requireNonNull(runFolders[0].list())).sorted().collect(Collectors.toList());
+        for (String pattern : List.of("live\\.txt", ".+-tree\\.txt", ".+-aggregated\\.txt", "junit")) {
             Assert.assertTrue("A report file named " + pattern + " should have been written: " + reportFiles,
                 reportFiles.stream().anyMatch(name -> name.matches(pattern)));
         }
-        String liveReport = Files.readString(new File(reportDir, reportFiles.stream().filter(name -> name.endsWith("-live.txt")).findFirst().orElseThrow()).toPath());
+        String liveReport = Files.readString(new File(runFolders[0], "live.txt").toPath());
         Assert.assertTrue(liveReport, liveReport.contains("✔ "));
-        File junitReportFolder = new File(reportDir, reportFiles.stream().filter(name -> name.endsWith("-junit")).findFirst().orElseThrow());
-        Assert.assertTrue("The JUnit report should contain its xml file: " + Arrays.toString(junitReportFolder.list()),
-            Objects.requireNonNull(junitReportFolder.list((dir, name) -> name.endsWith("-junit.xml"))).length == 1);
+        Assert.assertTrue("The JUnit report should contain its xml file",
+            new File(runFolders[0], "junit/junit.xml").isFile());
 
         Assert.assertTrue("The Java agent should have been extracted and started",
             Files.isRegularFile(workDirectory.getRoot().toPath()

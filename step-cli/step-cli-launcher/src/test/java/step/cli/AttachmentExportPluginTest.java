@@ -25,6 +25,7 @@ import org.junit.rules.TemporaryFolder;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.TestCase;
+import step.cli.reports.ReportRunFolder;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
@@ -58,7 +59,7 @@ public class AttachmentExportPluginTest {
      */
     @Test
     public void writesTheAttachmentsOfEveryPlanOfTheRunToAFolderOfItsOwn() throws IOException {
-        AttachmentExporter exporter = new AttachmentExporter(reportDirectory.getRoot().toPath());
+        AttachmentExporter exporter = new AttachmentExporter(new ReportRunFolder(reportDirectory.getRoot()));
         try (ExecutionEngine executionEngine = ExecutionEngine.builder()
             .withPlugin(new AttachmentExportPlugin(exporter))
             .withPlugin(new ThreadPoolPlugin())
@@ -70,7 +71,7 @@ public class AttachmentExportPluginTest {
             executionEngine.execute(screenshotPlan("Shop/checkout"));
         }
 
-        Path runDirectory = exporter.getRunDirectory();
+        Path runDirectory = exporter.getDirectory();
         Assert.assertEquals(6, exporter.getFileCount());
         Assert.assertTrue(Files.isRegularFile(runDirectory.resolve("Shop_checkout").resolve("0001-Take_screenshot").resolve("page-2.png")));
         Assert.assertTrue(Files.isRegularFile(runDirectory.resolve("Shop_checkout-2").resolve("0002-Take_screenshot").resolve("page-2.png")));
@@ -92,12 +93,7 @@ public class AttachmentExportPluginTest {
     }
 
     @Test
-    public void namesTheFilesAndFoldersWithCharactersEveryFileSystemAccepts() {
-        Assert.assertEquals("Order_an_article", AttachmentExporter.toFolderName("Order an article"));
-        Assert.assertEquals("Echo", AttachmentExporter.toFolderName("Echo..."));
-        Assert.assertEquals("_", AttachmentExporter.toFolderName(null));
-        Assert.assertEquals(50, AttachmentExporter.toFolderName("x".repeat(80)).length());
-
+    public void namesTheFilesWithCharactersEveryFileSystemAccepts() {
         Assert.assertEquals("screenshot_1.png", AttachmentExporter.toFileName(" screenshot 1.png "));
         Assert.assertEquals("a_b_c_d.txt", AttachmentExporter.toFileName("a/b\\c:d.txt"));
         Assert.assertEquals("attachment", AttachmentExporter.toFileName(""));

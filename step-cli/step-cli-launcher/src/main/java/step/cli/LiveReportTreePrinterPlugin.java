@@ -20,6 +20,8 @@ package step.cli;
 
 import org.bson.types.ObjectId;
 import step.cli.AttachmentExporter.ExportedAttachment;
+import step.cli.ExecuteAutomationPackageTool.ReportType;
+import step.cli.reports.ReportFiles;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
@@ -41,9 +43,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
- * Prints the report tree of an execution as it unfolds, each line holding the path of its report node from the root
- * of the plan, so that it can be read on its own even when the branches of a parallel artefact are interleaved:
+ * Prints the report tree of an execution as it unfolds, after a line naming its plan, each line holding the path of
+ * its report node from the root of the plan, so that it can be read on its own even when the branches of a parallel
+ * artefact are interleaved:
  * <pre>
+ * Live report of MyPlan:
  * ▶ MyPlan
  * ✔ MyPlan > [BEFORE] > Echo(Setting up) : PASSED (12 ms)
  * ▶ MyPlan > ThreadGroup
@@ -66,7 +70,7 @@ import java.util.function.Function;
  * below the node:
  * <pre>
  * ✖ MyPlan > MyKeyword(Input={}, Output={}) : TECHNICAL_ERROR (12 ms) Connection refused
- *     attachment: file:///C:/work/reports/20261102-143012-123456-attachments/MyPlan/0001-MyKeyword/exception.log
+ *     attachment: file:///C:/work/reports/20261102-143012-123456/attachments/MyPlan/0001-MyKeyword/exception.log
  * </pre>
  */
 @Plugin
@@ -116,6 +120,9 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
     @Override
     public synchronized void executionStart(ExecutionContext context) {
         runningNodes.clear();
+        // The executions of a run are printed one after another to the same outputs
+        String header = ReportFiles.title(ReportType.live, List.of(ReportNodePaths.planNameOf(context)));
+        print(markers -> header);
     }
 
     @Override
@@ -259,7 +266,7 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
     private record Markers(String start, String passed, String failed, String other) {
 
         private static final Markers UNICODE = new Markers("▶", "✔", "✖", "○");
-        private static final Markers ASCII = new Markers(">", "+", "x", "-");
+        private static final Markers ASCII = new Markers(">", "v", "x", "o");
 
         private boolean canBeEncodedIn(Charset charset) {
             return charset.newEncoder().canEncode(start + passed + failed + other);

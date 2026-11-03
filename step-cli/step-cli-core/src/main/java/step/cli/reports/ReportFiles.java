@@ -28,65 +28,47 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Prints the reports to stdout and/or writes them to the report directory. Used for both remote and local executions.
+ * Helper used to print the reports to stdout and writes them to the report folder of the run. Used for both remote and local executions.
  */
 public final class ReportFiles {
-
-    private static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS");
 
     private ReportFiles() {
     }
 
     /**
-     * @return the timestamp the names of the report files and folders start or end with
+     * Writes a text report of an execution to {@code <execution name>-<report type>.txt}
      */
-    public static String timestamp() {
-        return TIMESTAMP.format(LocalDateTime.now());
-    }
-
-    /**
-     * Sanitizes the file name by replacing all special characters with '_'
-     */
-    public static String sanitizeFileName(String fileName) {
-        return fileName.replaceAll("[^a-zA-Z0-9\\._]+", "_");
-    }
-
-    /**
-     * Writes a text report of an execution to {@code <execution name>-<timestamp>-<report type>.txt}
-     *
-     * @param executionName the name of the execution, typically its plan, or its id when it has none
-     */
-    private static File writeTextReport(File outputFolder, String executionName, String reportType, String content,
-                                        CliToolLogging logging) {
-        File reportFile = new File(outputFolder, String.format("%s-%s-%s.txt", sanitizeFileName(executionName), timestamp(), reportType));
+    private static void writeTextReport(ReportRunFolder runFolder, String executionId, String executionName,
+                                        ReportType reportType, String content, CliToolLogging logging) {
+        File reportFile = new File(runFolder.prepare(),
+            runFolder.getExecutionFileName(executionId, executionName) + "-" + reportType.name() + ".txt");
         try {
             Files.writeString(reportFile.toPath(), content, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new StepCliExecutionException("Unable to prepare the " + reportType + " report file", e);
+            throw new StepCliExecutionException("Unable to write the " + reportType + " report file", e);
         }
-        // As a file URI, which terminals and IDE consoles turn into a link
-        logging.logInfo("The " + reportType + " report has been saved in " + reportFile.toPath().toAbsolutePath().toUri(), null);
-        return reportFile;
+        logging.logInfo("The " + reportType + " report has been saved in " + toUri(reportFile), null);
     }
 
     /**
      * Outputs a text report of an execution, logging it for {@link ReportOutputMode#stdout} and writing it to the
-     * report directory for {@link ReportOutputMode#file}
+     * folder of the run for {@link ReportOutputMode#file}
+     *
+     * @param executionName the name of the execution, typically its plan
      */
-    public static void outputTextReport(File outputFolder, ReportType reportType, String executionName, String report,
-                                        List<ReportOutputMode> outputModes, CliToolLogging logging) {
+    public static void outputTextReport(ReportRunFolder runFolder, ReportType reportType, String executionId,
+                                        String executionName, String report, List<ReportOutputMode> outputModes,
+                                        CliToolLogging logging) {
         for (ReportOutputMode outputMode : outputModes) {
             switch (outputMode) {
                 case stdout:
-                    logging.logInfo(capitalize(reportType.name()) + " report:\n" + report, null);
+                    logging.logInfo(title(reportType, List.of(executionName)) + "\n" + report, null);
                     break;
                 case file:
-                    writeTextReport(outputFolder, executionName, reportType.name(), report, logging);
+                    writeTextReport(runFolder, executionId, executionName, reportType, report, logging);
                     break;
                 default:
                     logging.logError("Unsupported output mode (" + outputMode + " ) for " + reportType + " report", null);
@@ -102,21 +84,22 @@ public final class ReportFiles {
         return executionInfo == null || executionInfo.getDescription() == null ? executionId : executionInfo.getDescription();
     }
 
-    private static String capitalize(String text) {
-        return Character.toUpperCase(text.charAt(0)) + text.substring(1);
+    /**
+     * @param executionNames the names of the executions the report is about, typically their plans
+     * @return the line printed before a report, such as {@code Tree report of My plan:}
+     */
+    public static String title(ReportType reportType, List<String> executionNames) {
+        return capitalize(reportType.name()) + " report of " + String.join(", ", executionNames) + ":";
     }
 
     /**
-     * Creates the report directory if it does not exist yet
+     * @return the absolute file URI of the file, which terminals and IDE consoles turn into a link
      */
-    public static File prepareOutputFolder(File outputFolder) {
-        if (outputFolder.exists()) {
-            if (!outputFolder.isDirectory()) {
-                throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + outputFolder.getAbsolutePath());
-            }
-        } else if (!outputFolder.mkdirs()) {
-            throw new StepCliExecutionException("Report cannot be generated. Folder hasn't been created: " + outputFolder.getAbsolutePath());
-        }
-        return outputFolder;
+    public static String toUri(File file) {
+        return file.toPath().toAbsolutePath().toUri().toString();
+    }
+
+    private static String capitalize(String text) {
+        return Character.toUpperCase(text.charAt(0)) + text.substring(1);
     }
 }

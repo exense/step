@@ -23,25 +23,24 @@ import step.cli.CliToolLogging;
 import step.client.executions.RemoteExecutionManager;
 import step.core.execution.model.Execution;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
 public class AggregatedReportCreator implements ReportCreator {
 
     private final RemoteExecutionManager remoteExecutionManager;
-    private final File outputFolder;
+    private final ReportRunFolder runFolder;
 
-    public AggregatedReportCreator(RemoteExecutionManager remoteExecutionManager, File outputFolder) {
+    public AggregatedReportCreator(RemoteExecutionManager remoteExecutionManager, ReportRunFolder runFolder) {
         this.remoteExecutionManager = remoteExecutionManager;
-        this.outputFolder = outputFolder;
+        this.runFolder = runFolder;
     }
 
     @Override
     public void createReport(Map<String, Execution> executions, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) {
         for (String executionId : executions.keySet()) {
             String report = remoteExecutionManager.getAggregatedReportView(executionId).toString();
-            ReportFiles.outputTextReport(outputFolder, ExecuteAutomationPackageTool.ReportType.aggregated,
+            ReportFiles.outputTextReport(runFolder, ExecuteAutomationPackageTool.ReportType.aggregated, executionId,
                 ReportFiles.getExecutionName(executionId, executions.get(executionId)), report, outputModes, logging);
         }
     }

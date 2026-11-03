@@ -26,6 +26,7 @@ import step.cli.parameters.ApExecuteParameters;
 import step.cli.reports.AggregatedReportCreator;
 import step.cli.reports.JUnitReportCreator;
 import step.cli.reports.ReportCreator;
+import step.cli.reports.ReportRunFolder;
 import step.cli.reports.TreeReportCreator;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -101,32 +102,18 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
     protected List<StartedExecution> executePackageOnStep(CompletableFuture<String> firstExecutionIdFuture) throws StepCliExecutionException {
         parameters.validate();
 
-        File outputFolder = null;
+        ReportRunFolder runFolder = null;
 
-        // prepare folders to store requested reports
         if (parameters.getReports() != null && !parameters.getReports().isEmpty()) {
             if (!parameters.getWaitForExecution()) {
                 throw new StepCliExecutionException("The execution report can only been prepared in synchronous mode");
             }
-
-            // even if the 'file' output mode is not defined, we create some output folder to store (temporarily) the report
-            // because otherwise we will have no location to store the junit report before we print it to console in 'stdout' mode
-            if (parameters.getReportOutputDir() == null) {
-                outputFolder = new File(new File("").getAbsolutePath());
-            } else {
-                outputFolder = parameters.getReportOutputDir();
+            File reportDir = parameters.getReportOutputDir() == null ? new File(new File("").getAbsolutePath()) : parameters.getReportOutputDir();
+            // Checked before the execution, the folder of the run only being created once a report is written to it
+            if (reportDir.exists() && !reportDir.isDirectory()) {
+                throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + reportDir.getAbsolutePath());
             }
-            if (outputFolder.exists()) {
-                if (!outputFolder.isDirectory()) {
-                    throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + outputFolder.getAbsolutePath());
-                }
-            } else {
-                boolean dirCreated = outputFolder.mkdir();
-                if (!dirCreated) {
-                    throw new StepCliExecutionException("Report cannot be generated. Folder hasn't been created: " + outputFolder.getAbsolutePath());
-                }
-            }
-
+            runFolder = new ReportRunFolder(reportDir);
         }
 
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient();
@@ -177,13 +164,13 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                                     ReportType reportType = report.getReportType();
                                     switch (reportType) {
                                         case junit:
-                                            reportCreator = new JUnitReportCreator(remoteExecutionManager, outputFolder);
+                                            reportCreator = new JUnitReportCreator(remoteExecutionManager, runFolder);
                                             break;
                                         case aggregated:
-                                            reportCreator = new AggregatedReportCreator(remoteExecutionManager, outputFolder);
+                                            reportCreator = new AggregatedReportCreator(remoteExecutionManager, runFolder);
                                             break;
                                         case tree:
-                                            reportCreator = new TreeReportCreator(remoteExecutionManager, outputFolder);
+                                            reportCreator = new TreeReportCreator(remoteExecutionManager, runFolder);
                                             break;
                                         default:
                                             throw new UnsupportedOperationException("Unsupported report type: " + reportType);

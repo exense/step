@@ -24,7 +24,6 @@ import step.client.executions.RemoteExecutionManager;
 import step.core.execution.model.Execution;
 import step.core.plans.runner.PlanRunnerResult;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
@@ -39,18 +38,18 @@ import java.util.Map;
 public class TreeReportCreator implements ReportCreator {
 
     private final RemoteExecutionManager remoteExecutionManager;
-    private final File outputFolder;
+    private final ReportRunFolder runFolder;
 
-    public TreeReportCreator(RemoteExecutionManager remoteExecutionManager, File outputFolder) {
+    public TreeReportCreator(RemoteExecutionManager remoteExecutionManager, ReportRunFolder runFolder) {
         this.remoteExecutionManager = remoteExecutionManager;
-        this.outputFolder = outputFolder;
+        this.runFolder = runFolder;
     }
 
     @Override
     public void createReport(Map<String, Execution> executions, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException {
         for (String executionId : executions.keySet()) {
             String report = getTreeAsString(remoteExecutionManager.getFuture(executionId));
-            ReportFiles.outputTextReport(outputFolder, ExecuteAutomationPackageTool.ReportType.tree,
+            ReportFiles.outputTextReport(runFolder, ExecuteAutomationPackageTool.ReportType.tree, executionId,
                 ReportFiles.getExecutionName(executionId, executions.get(executionId)), report, outputModes, logging);
         }
     }

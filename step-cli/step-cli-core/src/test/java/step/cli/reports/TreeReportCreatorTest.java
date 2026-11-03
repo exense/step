@@ -32,6 +32,7 @@ import step.core.execution.model.Execution;
 import java.io.File;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,14 +55,12 @@ public class TreeReportCreatorTest {
         Mockito.when(execution.getDescription()).thenReturn("My plan");
         List<String> logged = new ArrayList<>();
 
-        new TreeReportCreator(executionManager, reportFolder.getRoot())
+        new TreeReportCreator(executionManager, new ReportRunFolder(reportFolder.getRoot(), LocalDateTime.of(2026, 11, 3, 10, 15, 30)))
             .createReport(Map.of("execution-1", execution), List.of(ReportOutputMode.stdout, ReportOutputMode.file), logging(logged));
 
-        Assert.assertEquals("Tree report:\nEcho(Hello):PASSED:\n", logged.get(0));
-        File[] files = reportFolder.getRoot().listFiles((dir, name) -> name.matches("My_plan-\\d{8}-\\d{6}-\\d{6}-tree\\.txt"));
-        Assert.assertNotNull(files);
-        Assert.assertEquals(1, files.length);
-        Assert.assertEquals("Echo(Hello):PASSED:\n", Files.readString(files[0].toPath()));
+        Assert.assertEquals("Tree report of My plan:\nEcho(Hello):PASSED:\n", logged.get(0));
+        File file = reportFolder.getRoot().toPath().resolve("20261103-101530-000000").resolve("My_plan-tree.txt").toFile();
+        Assert.assertEquals("Echo(Hello):PASSED:\n", Files.readString(file.toPath()));
     }
 
     private static CliToolLogging logging(List<String> logged) {

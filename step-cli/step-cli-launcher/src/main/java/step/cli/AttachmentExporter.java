@@ -23,10 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.AttachmentMeta;
 import step.attachments.SkippedAttachmentMeta;
-import step.core.accessors.AbstractOrganizableObject;
+import step.cli.reports.ReportRunFolder;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
-import step.core.plans.Plan;
 import step.resources.AttachmentStorage;
 
 import java.io.IOException;
@@ -35,11 +34,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,54 +45,48 @@ import java.util.stream.Stream;
 
 /**
  * Writes the attachments of the report nodes of local executions to disk, before the execution engine deletes them
- * along with its temporary storage. They are written to a folder created in the report directory for the whole run of
- * the CLI, the first time a node has attachments, which is never reused by another run:
+ * along with its temporary storage. They are written to the attachments folder of the folder of the run, created the
+ * first time a node has attachments:
  * <pre>
- * reports/20261102-143012-123456-attachments/
+ * reports/20261102-143012-123456/attachments/
  *   attachments.tsv
  *   Online_shop/
  *     0001-Place_order/exception.log
  *     0002-Take_screenshot/screenshot.png
  * </pre>
- * Each node gets a folder numbered in the order the nodes end, holding its attachments under their own names. The
- * index {@code attachments.tsv} tells which node each of them belongs to: the plan, the path of the node from the root
- * of the plan, as printed by the live report, its status and its id.
+ * Each plan gets a folder named like its report files, and each node a folder numbered in the order the nodes end,
+ * holding its attachments under their own names. The index {@code attachments.tsv} tells which node each of them
+ * belongs to: the plan, the path of the node from the root of the plan, as printed by the live report, its status and
+ * its id.
  */
 public class AttachmentExporter {
 
     private static final Logger logger = LoggerFactory.getLogger(AttachmentExporter.class);
 
+    public static final String FOLDER_NAME = "attachments";
     public static final String INDEX_FILE_NAME = "attachments.tsv";
 
-    private static final DateTimeFormatter RUN_TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS");
     private static final String INDEX_HEADER = String.join("\t", "Plan", "Path", "Status", "Report node", "Attachment", "File", "Skipped reason");
-    // Keeps the paths of the files within the limits of Windows, the names of the nodes being as long as one likes
-    private static final int MAX_FOLDER_NAME_LENGTH = 50;
 
-    private final Path runDirectory;
+    private final ReportRunFolder runFolder;
+    private final Path directory;
 
     // All the fields below are guarded by this instance
     private final Map<String, Path> planDirectories = new HashMap<>();
-    private final Set<String> planDirectoryNames = new HashSet<>();
     private final Map<ObjectId, List<ExportedAttachment>> exportedAttachments = new HashMap<>();
     private int nodeCount;
     private int fileCount;
 
-    public AttachmentExporter(Path reportDirectory) {
-        this(reportDirectory, LocalDateTime.now());
-    }
-
-    AttachmentExporter(Path reportDirectory, LocalDateTime runStart) {
-        Objects.requireNonNull(reportDirectory);
-        Objects.requireNonNull(runStart);
-        this.runDirectory = reportDirectory.resolve(RUN_TIMESTAMP.format(runStart) + "-attachments");
+    public AttachmentExporter(ReportRunFolder runFolder) {
+        this.runFolder = Objects.requireNonNull(runFolder);
+        this.directory = runFolder.getFolder().toPath().resolve(FOLDER_NAME);
     }
 
     /**
-     * @return the folder of this run, which only exists once an attachment has been written to it
+     * @return the folder the attachments are written to, which only exists once one of them has been written
      */
-    public Path getRunDirectory() {
-        return runDirectory;
+    public Path getDirectory() {
+        return directory;
     }
 
     public synchronized int getFileCount() {
@@ -118,14 +108,14 @@ public class AttachmentExporter {
         try {
             Path planDirectory = getPlanDirectory(context);
             Path nodeDirectory = Files.createDirectories(planDirectory.resolve(
-                String.format("%04d-%s", ++nodeCount, toFolderName(node.getName()))));
+                String.format("%04d-%s", ++nodeCount, ReportRunFolder.toFileName(node.getName()))));
             for (AttachmentMeta attachment : attachments) {
                 ExportedAttachment exportedAttachment = export(context.getAttachmentStorage(), attachment, nodeDirectory);
                 exported.add(exportedAttachment);
                 appendToIndex(context, node, nodePath, exportedAttachment);
             }
         } catch (IOException e) {
-            logger.error("Unable to write the attachments of the report node {} to {}", nodePath, runDirectory, e);
+            logger.error("Unable to write the attachments of the report node {} to {}", nodePath, directory, e);
             // The attachments which could not be written are reported as skipped, for none to go unnoticed
             Set<AttachmentMeta> handled = exported.stream().map(ExportedAttachment::attachment).collect(Collectors.toSet());
             attachments.stream().filter(a -> !handled.contains(a))
@@ -166,50 +156,28 @@ public class AttachmentExporter {
     private Path getPlanDirectory(ExecutionContext context) throws IOException {
         Path planDirectory = planDirectories.get(context.getExecutionId());
         if (planDirectory == null) {
-            if (!Files.isDirectory(runDirectory)) {
-                Files.createDirectories(runDirectory);
-                Files.writeString(runDirectory.resolve(INDEX_FILE_NAME), INDEX_HEADER + "\n", StandardCharsets.UTF_8);
+            if (!Files.isDirectory(directory)) {
+                Files.createDirectories(directory);
+                Files.writeString(directory.resolve(INDEX_FILE_NAME), INDEX_HEADER + "\n", StandardCharsets.UTF_8);
             }
-            // Plans whose names only differ by the characters a folder name cannot hold get folders of their own
-            String baseName = toFolderName(getPlanName(context));
-            String name = baseName;
-            for (int i = 2; !planDirectoryNames.add(name.toLowerCase()); i++) {
-                name = baseName + "-" + i;
-            }
-            planDirectory = runDirectory.resolve(name);
+            planDirectory = directory.resolve(runFolder.getExecutionFileName(context.getExecutionId(), ReportNodePaths.planNameOf(context)));
             planDirectories.put(context.getExecutionId(), planDirectory);
         }
         return planDirectory;
     }
 
     private void appendToIndex(ExecutionContext context, ReportNode node, String nodePath, ExportedAttachment exported) throws IOException {
-        String line = Stream.of(getPlanName(context), nodePath, String.valueOf(node.getStatus()), node.getId().toHexString(),
+        String line = Stream.of(ReportNodePaths.planNameOf(context), nodePath, String.valueOf(node.getStatus()), node.getId().toHexString(),
                 exported.attachment().getName(),
-                exported.file() != null ? runDirectory.relativize(exported.file()).toString().replace('\\', '/') : "",
+                exported.file() != null ? directory.relativize(exported.file()).toString().replace('\\', '/') : "",
                 exported.skippedReason() != null ? exported.skippedReason() : "")
             .map(AttachmentExporter::toIndexField)
             .collect(Collectors.joining("\t"));
-        Files.writeString(runDirectory.resolve(INDEX_FILE_NAME), line + "\n", StandardCharsets.UTF_8, StandardOpenOption.APPEND);
-    }
-
-    private static String getPlanName(ExecutionContext context) {
-        Plan plan = context.getPlan();
-        String name = plan != null ? plan.getAttribute(AbstractOrganizableObject.NAME) : null;
-        return name != null ? name : context.getExecutionId();
+        Files.writeString(directory.resolve(INDEX_FILE_NAME), line + "\n", StandardCharsets.UTF_8, StandardOpenOption.APPEND);
     }
 
     private static String toIndexField(String value) {
         return value == null ? "" : value.replaceAll("[\\t\\r\\n]+", " ");
-    }
-
-    static String toFolderName(String name) {
-        String folderName = name == null ? "" : name.replaceAll("[^a-zA-Z0-9._-]+", "_");
-        if (folderName.length() > MAX_FOLDER_NAME_LENGTH) {
-            folderName = folderName.substring(0, MAX_FOLDER_NAME_LENGTH);
-        }
-        // Windows drops the dots ending a folder name
-        folderName = folderName.replaceAll("\\.+$", "");
-        return folderName.isEmpty() ? "_" : folderName;
     }
 
     static String toFileName(String name) {

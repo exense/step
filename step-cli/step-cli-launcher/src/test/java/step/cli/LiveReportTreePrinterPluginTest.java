@@ -26,6 +26,7 @@ import org.junit.rules.TemporaryFolder;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.Sequence;
+import step.cli.reports.ReportRunFolder;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionEngine;
@@ -104,6 +105,27 @@ public class LiveReportTreePrinterPluginTest {
         ), outputLines());
     }
 
+    /**
+     * The executions of a run being printed one after another to the same outputs
+     */
+    @Test
+    public void startsWithALineNamingThePlan() {
+        Plan plan = PlanBuilder.create()
+            .startBlock(sequence())
+            .add(echo("'main'"))
+            .endBlock().build();
+        plan.addAttribute(AbstractOrganizableObject.NAME, "Checkout");
+
+        execute(plan, LONG_HOLD_DELAY);
+
+        Assert.assertEquals(List.of(
+            "Live report of Checkout:",
+            "▶ Sequence",
+            "✔ Sequence > Echo(main) : PASSED (<duration>)",
+            "✔ Sequence : PASSED (<duration>)"
+        ), allOutputLines());
+    }
+
     @Test
     public void printsTheErrorOfAFailingNode() {
         Plan plan = PlanBuilder.create()
@@ -132,7 +154,7 @@ public class LiveReportTreePrinterPluginTest {
 
         Assert.assertEquals(List.of(
             "> Sequence",
-            "+ Sequence > Echo(main) : PASSED (<duration>)"
+            "v Sequence > Echo(main) : PASSED (<duration>)"
         ), outputLines().subList(0, 2));
         Assert.assertTrue(outputLines().get(2), outputLines().get(2).startsWith("x Sequence > Check(false) : FAILED (<duration>) "));
         Assert.assertEquals("x Sequence : FAILED (<duration>)", outputLines().get(3));
@@ -295,12 +317,12 @@ public class LiveReportTreePrinterPluginTest {
             .add(keyword("Place order", "token", "'expired'", "cartId", "'cart-1'"))
             .endBlock().build();
         plan.addAttribute(AbstractOrganizableObject.NAME, "Online shop");
-        AttachmentExporter exporter = new AttachmentExporter(reportDirectory.getRoot().toPath(), LocalDateTime.of(2026, 11, 2, 14, 30, 12));
+        AttachmentExporter exporter = new AttachmentExporter(new ReportRunFolder(reportDirectory.getRoot(), LocalDateTime.of(2026, 11, 2, 14, 30, 12)));
 
         PlanRunnerResult result = execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, exporter);
 
-        Path runDirectory = exporter.getRunDirectory();
-        Assert.assertEquals(reportDirectory.getRoot().toPath().resolve("20261102-143012-000000-attachments"), runDirectory);
+        Path runDirectory = exporter.getDirectory();
+        Assert.assertEquals(reportDirectory.getRoot().toPath().resolve("20261102-143012-000000").resolve("attachments"), runDirectory);
         Assert.assertEquals(List.of(
             "▶ Order with an expired token",
             "▶ Order with an expired token > Session",
@@ -353,11 +375,11 @@ public class LiveReportTreePrinterPluginTest {
             .startBlock(sequence())
             .add(echo("'main'"))
             .endBlock().build();
-        AttachmentExporter exporter = new AttachmentExporter(reportDirectory.getRoot().toPath());
+        AttachmentExporter exporter = new AttachmentExporter(new ReportRunFolder(reportDirectory.getRoot()));
 
         execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, exporter);
 
-        Assert.assertFalse(Files.exists(exporter.getRunDirectory()));
+        Assert.assertFalse(Files.exists(exporter.getDirectory()));
         Assert.assertEquals(0, exporter.getFileCount());
     }
 
@@ -452,7 +474,16 @@ public class LiveReportTreePrinterPluginTest {
         }
     }
 
+    /**
+     * @return the lines printed for the nodes, following the header naming the plan
+     */
     private List<String> outputLines() {
+        List<String> lines = allOutputLines();
+        Assert.assertTrue(lines.toString(), lines.get(0).startsWith("Live report of "));
+        return lines.subList(1, lines.size());
+    }
+
+    private List<String> allOutputLines() {
         String text = output.toString(outputCharset)
             .replaceAll("\\d+(\\.\\d)? (ms|s)\\)", "<duration>)");
         return Arrays.stream(text.split("\\R")).collect(Collectors.toList());

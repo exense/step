@@ -25,6 +25,7 @@ import step.cli.ExecuteAutomationPackageTool.ReportOutputMode;
 import step.cli.ExecuteAutomationPackageTool.ReportType;
 import step.cli.reports.JUnitReportCreator;
 import step.cli.reports.ReportFiles;
+import step.cli.reports.ReportRunFolder;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
@@ -40,15 +41,16 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
 /**
  * Produces the reports of a local execution chosen with {@code --reportType}, with the same outputs as for a remote
- * execution: the report files are written to the report directory and named the same way.
+ * execution: the report files are written to the folder of the run and named the same way.
  * <ul>
  *     <li>live is printed while the plans execute, to a single file for all of them</li>
  *     <li>tree and aggregated are produced once each plan has been executed</li>
@@ -65,8 +67,10 @@ public class LocalReports implements Closeable {
      */
     public static final List<Report> DEFAULT_REPORTS = List.of(new Report(ReportType.tree));
 
+    public static final String LIVE_REPORT_FILE_NAME = "live.txt";
+
     private final List<Report> reports;
-    private final File reportDir;
+    private final ReportRunFolder runFolder;
     private final CliToolLogging logging = new CliToolLogging() {
         @Override
         public void logError(String errorText, Throwable e) {
@@ -84,14 +88,16 @@ public class LocalReports implements Closeable {
         }
     };
     private PrintStream liveReportFile;
+    // The plans executed so far, by the id of their execution
+    private final Map<String, String> executionNames = new LinkedHashMap<>();
 
     /**
      * @param reports   the reports to produce
-     * @param reportDir the directory the report files are written to, created when the first of them is written
+     * @param runFolder the folder the report files are written to, created when the first of them is written
      */
-    public LocalReports(List<Report> reports, File reportDir) {
+    public LocalReports(List<Report> reports, ReportRunFolder runFolder) {
         this.reports = List.copyOf(Objects.requireNonNull(reports));
-        this.reportDir = Objects.requireNonNull(reportDir);
+        this.runFolder = Objects.requireNonNull(runFolder);
     }
 
     /**
@@ -113,10 +119,10 @@ public class LocalReports implements Closeable {
                     outputs.add(System.out);
                     break;
                 case file:
-                    File file = new File(ReportFiles.prepareOutputFolder(reportDir), ReportFiles.timestamp() + "-live.txt");
+                    File file = new File(runFolder.prepare(), LIVE_REPORT_FILE_NAME);
                     liveReportFile = new PrintStream(new FileOutputStream(file), true, StandardCharsets.UTF_8);
                     outputs.add(liveReportFile);
-                    logger.info("The live report is written to {}", file.toPath().toAbsolutePath().toUri());
+                    logger.info("The live report is written to {}", ReportFiles.toUri(file));
                     break;
                 default:
                     logger.error("Unsupported output mode ({}) for live report", outputMode);
@@ -133,33 +139,30 @@ public class LocalReports implements Closeable {
      */
     public void onPlanExecuted(String planName, PlanRunnerResult result, ExecutionEngineContext engineContext,
                                Function<ReportNode, List<String>> attachmentLines) {
+        executionNames.put(result.getExecutionId(), planName);
         List<ReportOutputMode> treeOutputModes = outputModesOf(ReportType.tree);
         if (!treeOutputModes.isEmpty()) {
-            ReportFiles.outputTextReport(reportDir(treeOutputModes), ReportType.tree, planName,
+            ReportFiles.outputTextReport(runFolder, ReportType.tree, result.getExecutionId(), planName,
                 getTreeAsString(result, attachmentLines), treeOutputModes, logging);
         }
         List<ReportOutputMode> aggregatedOutputModes = outputModesOf(ReportType.aggregated);
         if (!aggregatedOutputModes.isEmpty()) {
             AggregatedReportView view = new AggregatedReportViewBuilder(engineContext, result.getExecutionId()).buildAggregatedReportView();
-            ReportFiles.outputTextReport(reportDir(aggregatedOutputModes), ReportType.aggregated, planName,
+            ReportFiles.outputTextReport(runFolder, ReportType.aggregated, result.getExecutionId(), planName,
                 String.valueOf(view), aggregatedOutputModes, logging);
         }
     }
 
     /**
-     * Produces the reports of all the plans of the run, once they have been executed
+     * Produces the reports of all the plans of the run which have been executed, once they have all been
      */
-    public void onAllPlansExecuted(List<String> executionIds, ExecutionEngineContext engineContext) {
+    public void onAllPlansExecuted(ExecutionEngineContext engineContext) {
         List<ReportOutputMode> junitOutputModes = outputModesOf(ReportType.junit);
-        if (!junitOutputModes.isEmpty() && !executionIds.isEmpty()) {
+        if (!junitOutputModes.isEmpty() && !executionNames.isEmpty()) {
             try {
-                // Prepared in the report directory, as the remote ones are, whatever the output
-                File outputFolder = ReportFiles.prepareOutputFolder(reportDir);
                 JUnitReport report = new JUnitXmlReportBuilder(engineContext)
-                    .buildJunitZipReport(executionIds, true, JUnitReportCreator.getAttachmentsRootFolder(outputFolder));
-                File preparedReport = new File(outputFolder, report.getFileName());
-                Files.write(preparedReport.toPath(), report.getContent());
-                JUnitReportCreator.outputZipReport(preparedReport, outputFolder, junitOutputModes, logging);
+                    .buildJunitZipReport(new ArrayList<>(executionNames.keySet()), true, JUnitReportCreator.getAttachmentsRootFolder(runFolder));
+                JUnitReportCreator.outputZipReport(report.getFileName(), report.getContent(), new ArrayList<>(executionNames.values()), runFolder, junitOutputModes, logging);
             } catch (IOException e) {
                 logger.error("The {} report cannot be saved", ReportType.junit, e);
             }
@@ -186,10 +189,6 @@ public class LocalReports implements Closeable {
             logger.error("Error while writing execution tree: {}", writer, e);
             return "Error while writing tree. See logs for details.";
         }
-    }
-
-    private File reportDir(List<ReportOutputMode> outputModes) {
-        return outputModes.contains(ReportOutputMode.file) ? ReportFiles.prepareOutputFolder(reportDir) : reportDir;
     }
 
     private List<ReportOutputMode> outputModesOf(ReportType reportType) {

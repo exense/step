@@ -18,8 +18,11 @@
  ******************************************************************************/
 package step.cli;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.ExecutionContext;
+import step.core.plans.Plan;
 
 /**
  * The path of a report node from the root of its plan, as in {@code Load test > Thread 1 > [BEFORE] > Echo}, which
@@ -47,5 +50,15 @@ final class ReportNodePaths {
             prefix.append("[").append(parentSource.name()).append("]").append(PATH_SEPARATOR);
         }
         return prefix.toString();
+    }
+
+    /**
+     * @return the name of the plan the paths of an execution start from, or the id of the execution for a plan without
+     * name
+     */
+    static String planNameOf(ExecutionContext context) {
+        Plan plan = context.getPlan();
+        String name = plan != null ? plan.getAttribute(AbstractOrganizableObject.NAME) : null;
+        return name != null ? name : context.getExecutionId();
     }
 }

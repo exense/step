@@ -22,6 +22,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.cli.ExecuteAutomationPackageTool.Report;
+import step.cli.reports.ReportRunFolder;
 import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.agents.provisioning.local.LocalAgentProvisioningPlugin;
 import step.automation.packages.AutomationPackageFromInputStreamProvider;
@@ -67,8 +68,9 @@ public class ApLocalExecuteCommandHandler {
 
     /**
      * @param reports         the reports to produce, as chosen with --reportType
-     * @param reportDir       the directory the report files and the attachments are written to
-     * @param saveAttachments if the attachments of the report nodes are written to a new folder of the report directory
+     * @param reportDir       the directory holding the folder of the run, the report files and the attachments are
+     *                        written to
+     * @param saveAttachments if the attachments of the report nodes are written to the folder of the run
      */
     public void execute(File apFile, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
                         List<String> excludeCategories, Map<String, String> executionParameters,
@@ -76,14 +78,15 @@ public class ApLocalExecuteCommandHandler {
                         boolean saveAttachments) throws StepCliExecutionException {
         Objects.requireNonNull(reports);
         Objects.requireNonNull(reportDir);
-        AttachmentExporter attachmentExporter = saveAttachments ? new AttachmentExporter(reportDir.toPath()) : null;
+        ReportRunFolder runFolder = new ReportRunFolder(reportDir);
+        AttachmentExporter attachmentExporter = saveAttachments ? new AttachmentExporter(runFolder) : null;
         // The keywords run on real agents started as separate processes on this machine, so that a local execution
         // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
         // supports every keyword language rather than only the Java ones.
         // Declared before the engine, and therefore closed after it: the local grid it stops is still in use as long
         // as the engine has not released the class loaders of its local tokens. The same goes for the file of the
         // live report, written to until the engine is closed.
-        try (LocalReports localReports = new LocalReports(reports, reportDir);
+        try (LocalReports localReports = new LocalReports(reports, runFolder);
              LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
              ExecutionEngine executionEngine = buildExecutionEngine(localAgents, localReports.openLiveReportOutputs(), attachmentExporter)) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
@@ -114,7 +117,6 @@ public class ApLocalExecuteCommandHandler {
                 log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
 
                 List<String> failedPlans = new ArrayList<>();
-                List<String> executionIds = new ArrayList<>();
                 // The live report is only readable if the logs of the engine are not interleaved with it, unless they
                 // have been asked for with --verbose or --debug, which the configuration of the local agents reflects
                 boolean suppressExecutionLogs = localReports.printsLiveReportToStdout() && !localAgentConfiguration.isVerbose()
@@ -125,15 +127,15 @@ public class ApLocalExecuteCommandHandler {
                     ? attachmentExporter::describeAttachments : node -> List.of();
                 try {
                     for (StepClassParserResult parserResult : listPlans) {
-                        runPlan(parserResult, executionEngine, executionParameters, localReports, attachmentLines, executionIds, failedPlans);
+                        runPlan(parserResult, executionEngine, executionParameters, localReports, attachmentLines, failedPlans);
                     }
                 } finally {
                     restoreExecutionLogs.run();
                 }
-                localReports.onAllPlansExecuted(executionIds, executionEngine.getExecutionEngineContext());
+                localReports.onAllPlansExecuted(executionEngine.getExecutionEngineContext());
                 if (attachmentExporter != null && attachmentExporter.getFileCount() > 0) {
                     log.info("{} attachment(s) written to {}, listed in {}", attachmentExporter.getFileCount(),
-                        attachmentExporter.getRunDirectory().toAbsolutePath().toUri(), AttachmentExporter.INDEX_FILE_NAME);
+                        attachmentExporter.getDirectory().toAbsolutePath().toUri(), AttachmentExporter.INDEX_FILE_NAME);
                 }
 
                 // The details of each failure have been logged above. Reporting them here as well is what makes the
@@ -166,8 +168,7 @@ public class ApLocalExecuteCommandHandler {
     }
 
     private static void runPlan(StepClassParserResult parserResult, ExecutionEngine executionEngine, Map<String, String> executionParameters,
-                                LocalReports localReports, Function<ReportNode, List<String>> attachmentLines,
-                                List<String> executionIds, List<String> failedPlans) {
+                                LocalReports localReports, Function<ReportNode, List<String>> attachmentLines, List<String> failedPlans) {
         new AbstractLocalPlanRunner(parserResult, executionEngine) {
             @Override
             protected void onExecutionStart() {
@@ -193,7 +194,6 @@ public class ApLocalExecuteCommandHandler {
             }
 
             private void onPlanExecuted(PlanRunnerResult result) {
-                executionIds.add(result.getExecutionId());
                 localReports.onPlanExecuted(parserResult.getName(), result, executionEngine.getExecutionEngineContext(), attachmentLines);
             }
 

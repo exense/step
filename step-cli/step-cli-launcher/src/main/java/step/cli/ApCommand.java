@@ -249,12 +249,13 @@ public class ApCommand extends BaseCommand {
             + "Local executions print the tree report to stdout when no report type is given.")
         protected List<String> reportType;
 
-        @CommandLine.Option(names = {"--reportDir"}, description = "The local directory to store generated execution reports and saved attachments", defaultValue = "reports")
+        @CommandLine.Option(names = {"--reportDir"}, description = "The local directory to store generated execution reports and saved attachments, "
+            + "in a new subfolder for each run named after the time it started", defaultValue = "reports")
         protected File reportDir;
 
         @CommandLine.Option(names = {"--saveAttachments"}, defaultValue = "false",
             description = "Write the attachments of the executed report nodes, such as screenshots or the stack traces of technical errors, "
-                + "to a new subfolder of --reportDir, along with an index of the nodes they belong to. Currently supported for local executions only.",
+                + "to the attachments folder of the run in --reportDir, along with an index of the nodes they belong to. Currently supported for local executions only.",
             showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         protected boolean saveAttachments;
 
