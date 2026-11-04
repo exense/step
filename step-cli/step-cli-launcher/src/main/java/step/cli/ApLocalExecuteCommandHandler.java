@@ -83,10 +83,15 @@ public class ApLocalExecuteCommandHandler {
         // supports every keyword language rather than only the Java ones.
         // Declared before the engine, and therefore closed after it: the local grid it stops is still in use as long
         // as the engine has not released the class loaders of its local tokens. The same goes for the file of the
-        // live report, written to until the engine is closed.
+        // live report, written to until the engine is closed, and for the attachments the live reporting server
+        // stores, read until then.
+        // The live reporting server receives the files the keywords stream, which are only kept along with the other
+        // attachments: without it, the agents discard them.
         try (LocalReports localReports = new LocalReports(reports, runFolder, attachmentExporter);
+             LocalLiveReportingServer liveReportingServer = saveAttachments ? new LocalLiveReportingServer() : null;
              LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
-             ExecutionEngine executionEngine = buildExecutionEngine(localAgents, localReports.openLiveReportOutputs(), attachmentExporter)) {
+             ExecutionEngine executionEngine = buildExecutionEngine(localAgents, localReports.openLiveReportOutputs(),
+                 attachmentExporter, liveReportingServer)) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
             InputStream libFileInputStream = null;
@@ -157,8 +162,8 @@ public class ApLocalExecuteCommandHandler {
                 }
             }
         } catch (IOException e) {
-            // Only the file of the live report and the shutdown of the local agents can reach this: the body above
-            // handles its own IO errors
+            // Only the file of the live report, the live reporting server and the shutdown of the local agents can
+            // reach this: the body above handles its own IO errors
             throw new StepCliExecutionException("Error while preparing or stopping the local execution environment", e);
         }
     }
@@ -218,11 +223,15 @@ public class ApLocalExecuteCommandHandler {
     }
 
     private static ExecutionEngine buildExecutionEngine(LocalAgentProvisioningPlugin localAgents, List<PrintStream> liveReportOutputs,
-                                                        AttachmentExporter attachmentExporter) {
+                                                        AttachmentExporter attachmentExporter,
+                                                        LocalLiveReportingServer liveReportingServer) {
         ExecutionEngine.Builder builder = ExecutionEngine.builder()
             .withOperationMode(OperationMode.CLI)
             .withPlugin(localAgents)
             .withPlugin(new AgentProvisioningExecutionPlugin(new AgentProvisioningStatusAccessor(new InMemoryCollection<>())));
+        if (liveReportingServer != null) {
+            builder.withPlugin(liveReportingServer.getExecutionEnginePlugin());
+        }
         // If live reports are used register only LiveReportTreePrinterPlugin which also export attachments, for non-live reports AttachmentExportPlugin is used instead to export attachments directly
         if (!liveReportOutputs.isEmpty()) {
             builder.withPlugin(new LiveReportTreePrinterPlugin(liveReportOutputs, LiveReportTreePrinterPlugin.DEFAULT_HOLD_DELAY, attachmentExporter));

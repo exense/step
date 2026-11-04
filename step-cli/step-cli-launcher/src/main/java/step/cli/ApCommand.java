@@ -254,7 +254,8 @@ public class ApCommand extends BaseCommand {
         protected File reportDir;
 
         @CommandLine.Option(names = {"--saveAttachments"}, defaultValue = "false",
-            description = "Write the attachments of the executed report nodes, such as screenshots or the stack traces of technical errors, "
+            description = "Write the attachments of the executed report nodes, such as screenshots, the stack traces of technical errors "
+                + "or the files the keywords stream while running, "
                 + "to the attachments folder of the run in --reportDir, along with an index of the nodes they belong to. Currently supported for local executions only.",
             showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         protected boolean saveAttachments;
