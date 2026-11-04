@@ -34,6 +34,8 @@ import java.time.Duration;
  */
 public class StreamingKeywords extends AbstractKeyword {
 
+    public static final String KEYWORD = "Stream a log";
+    public static final String FAILING_KEYWORD = "Stream a log and fail";
     public static final String STREAMED_FILE_NAME = "java-keyword.log";
     public static final String STREAMED_CONTENT = "line 1\nline 2\n";
     public static final String ATTACHED_FILE_NAME = "summary.txt";
@@ -42,8 +44,23 @@ public class StreamingKeywords extends AbstractKeyword {
     /**
      * Streams a log while writing it, as a keyword following the progress of a long running process would
      */
-    @Keyword(name = "Stream a log")
+    @Keyword(name = KEYWORD)
     public void streamALog() throws Exception {
+        streamLog();
+        // An attachment of the output as well, which the same storage receives
+        output.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(ATTACHED_CONTENT.getBytes(StandardCharsets.UTF_8), ATTACHED_FILE_NAME));
+    }
+
+    /**
+     * Streams a log, then fails, as a keyword whose log tells why it failed
+     */
+    @Keyword(name = FAILING_KEYWORD)
+    public void streamALogAndFail() throws Exception {
+        streamLog();
+        output.setBusinessError("The log shows why");
+    }
+
+    private void streamLog() throws Exception {
         Path directory = Files.createTempDirectory("streamed-");
         File log = directory.resolve(STREAMED_FILE_NAME).toFile();
         try {
@@ -51,8 +68,6 @@ public class StreamingKeywords extends AbstractKeyword {
             StreamingUpload upload = liveReporting.fileUploads.startTextFileUpload(log);
             Files.writeString(log.toPath(), STREAMED_CONTENT);
             upload.complete(Duration.ofSeconds(30));
-            // An attachment of the output as well, which the same storage receives
-            output.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(ATTACHED_CONTENT.getBytes(StandardCharsets.UTF_8), ATTACHED_FILE_NAME));
         } finally {
             Files.deleteIfExists(log.toPath());
             Files.deleteIfExists(directory);

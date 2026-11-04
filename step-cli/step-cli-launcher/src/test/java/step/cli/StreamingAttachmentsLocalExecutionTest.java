@@ -52,6 +52,7 @@ import java.util.zip.ZipOutputStream;
 public class StreamingAttachmentsLocalExecutionTest {
 
     private static final List<Report> TREE_REPORT = List.of(new Report(ReportType.tree, List.of(ReportOutputMode.file)));
+    private static final List<Report> JUNIT_REPORT = List.of(new Report(ReportType.junit, List.of(ReportOutputMode.file)));
     private static final String NODE_KEYWORD_LIBRARY_ARCHIVE = "node-keyword-library.zip";
 
     @Rule
@@ -59,11 +60,30 @@ public class StreamingAttachmentsLocalExecutionTest {
 
     @Test
     public void savesTheFileStreamedByAJavaKeyword() throws Exception {
-        File reportDir = execute(buildJavaAutomationPackage(), new LocalAgentProvisioningConfiguration()
+        File reportDir = execute(buildJavaAutomationPackage(StreamingKeywords.KEYWORD), new LocalAgentProvisioningConfiguration()
             .setWorkDirectory(workDirectory.getRoot().toPath()));
 
         Assert.assertEquals(StreamingKeywords.STREAMED_CONTENT, Files.readString(findAttachment(reportDir, StreamingKeywords.STREAMED_FILE_NAME)));
         Assert.assertEquals(StreamingKeywords.ATTACHED_CONTENT, Files.readString(findAttachment(reportDir, StreamingKeywords.ATTACHED_FILE_NAME)));
+    }
+
+    /**
+     * The JUnit report includes the attachments of the failed nodes, the streamed files as the others, whether or not
+     * they are also saved
+     */
+    @Test
+    public void addsTheFileStreamedByAFailingKeywordToTheJUnitReportWithoutSavingAttachments() throws Exception {
+        File automationPackage = buildJavaAutomationPackage(StreamingKeywords.FAILING_KEYWORD);
+        File reportDir = new File(workDirectory.getRoot(), "reports");
+        Assert.assertThrows(StepCliExecutionException.class, () -> new ApLocalExecuteCommandHandler()
+            .execute(automationPackage, null, null, null, null, null, Map.of(),
+                new LocalAgentProvisioningConfiguration().setWorkDirectory(workDirectory.getRoot().toPath()), JUNIT_REPORT,
+                reportDir, false));
+
+        // In the folder of the JUnit report, the only one written
+        Path streamedFile = findAttachment(reportDir, StreamingKeywords.STREAMED_FILE_NAME);
+        Assert.assertTrue(streamedFile.toString(), streamedFile.toString().contains(File.separator + "junit" + File.separator));
+        Assert.assertEquals(StreamingKeywords.STREAMED_CONTENT, Files.readString(streamedFile));
     }
 
     @Test
@@ -97,9 +117,9 @@ public class StreamingAttachmentsLocalExecutionTest {
     }
 
     /**
-     * An automation package of the compiled {@link StreamingKeywords}, with a plan calling its keyword
+     * An automation package of the compiled {@link StreamingKeywords}, with a plan calling the given keyword
      */
-    private File buildJavaAutomationPackage() throws IOException {
+    private File buildJavaAutomationPackage(String keyword) throws IOException {
         File automationPackage = workDirectory.newFile("java-streaming-automation-package.jar");
         String className = StreamingKeywords.class.getName().replace('.', '/') + ".class";
         try (OutputStream out = Files.newOutputStream(automationPackage.toPath());
@@ -115,7 +135,7 @@ public class StreamingAttachmentsLocalExecutionTest {
                 "      testCase:",
                 "        children:",
                 "          - callKeyword:",
-                "              keyword: \"Stream a log\"",
+                "              keyword: \"" + keyword + "\"",
                 "").getBytes(StandardCharsets.UTF_8));
             zip.closeEntry();
             zip.putNextEntry(new ZipEntry(className));

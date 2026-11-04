@@ -85,10 +85,10 @@ public class ApLocalExecuteCommandHandler {
         // as the engine has not released the class loaders of its local tokens. The same goes for the file of the
         // live report, written to until the engine is closed, and for the attachments the live reporting server
         // stores, read until then.
-        // The live reporting server receives the files the keywords stream, which are only kept along with the other
-        // attachments: without it, the agents discard them.
+        // The live reporting server receives the files the keywords stream, stored with the other attachments of the
+        // nodes, as on a Step platform, for the reports to include them whether or not they are also saved.
         try (LocalReports localReports = new LocalReports(reports, runFolder, attachmentExporter);
-             LocalLiveReportingServer liveReportingServer = saveAttachments ? new LocalLiveReportingServer() : null;
+             LocalLiveReportingServer liveReportingServer = startLiveReportingServer();
              LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
              ExecutionEngine executionEngine = buildExecutionEngine(localAgents, localReports.openLiveReportOutputs(),
                  attachmentExporter, liveReportingServer)) {
@@ -162,8 +162,8 @@ public class ApLocalExecuteCommandHandler {
                 }
             }
         } catch (IOException e) {
-            // Only the file of the live report, the live reporting server and the shutdown of the local agents can
-            // reach this: the body above handles its own IO errors
+            // Only the file of the live report and the shutdown of the local agents can reach this: the body above
+            // handles its own IO errors
             throw new StepCliExecutionException("Error while preparing or stopping the local execution environment", e);
         }
     }
@@ -220,6 +220,19 @@ public class ApLocalExecuteCommandHandler {
                 return executionParameters;
             }
         }.runPlan();
+    }
+
+    /**
+     * @return the server, or null if it cannot be started: the execution then runs without it, the agents discarding
+     * the files the keywords stream
+     */
+    private static LocalLiveReportingServer startLiveReportingServer() {
+        try {
+            return new LocalLiveReportingServer();
+        } catch (IOException e) {
+            log.warn("The files streamed by the keywords will be missing from the reports and the saved attachments", e);
+            return null;
+        }
     }
 
     private static ExecutionEngine buildExecutionEngine(LocalAgentProvisioningPlugin localAgents, List<PrintStream> liveReportOutputs,
