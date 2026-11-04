@@ -245,7 +245,7 @@ public class ApCommand extends BaseCommand {
 
         @CommandLine.Option(names = {"--reportType"}, description = "The type of execution report to be generated, repeat the option for several reports. "
             + "Supported report types: junit (output to file by default), aggregated, tree, live (local executions only, each report node printed as it starts and ends), "
-            + "all of them output to stdout by default. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout. "
+            + "all of them output to stdout by default. Also (optional) you can specify the output destination, quoted for the shell: --reportType=\"junit;output=file,stdout\". "
             + "Local executions print the live report to stdout when no report type is given.")
         protected List<String> reportType;
 
