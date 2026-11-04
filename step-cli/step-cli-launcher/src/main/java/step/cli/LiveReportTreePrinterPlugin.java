@@ -49,20 +49,20 @@ import java.util.function.Predicate;
  * artefact are interleaved:
  * <pre>
  * Live report of MyPlan:
- * ↻ MyPlan
+ * ↻ MyPlan : RUNNING...
  * ✓ MyPlan > [BEFORE] > Echo(Setting up) : PASSED (12 ms)
- * ↻ MyPlan > ThreadGroup
- * ↻ MyPlan > ThreadGroup > Thread 1
- * ↻ MyPlan > ThreadGroup > Thread 1 > Session
- * ↻ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1
- * ↻ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword
+ * ↻ MyPlan > ThreadGroup : RUNNING...
+ * ↻ MyPlan > ThreadGroup > Thread 1 : RUNNING...
+ * ↻ MyPlan > ThreadGroup > Thread 1 > Session : RUNNING...
+ * ↻ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 : RUNNING...
+ * ↻ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword : RUNNING...
  * ✗ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword(Input={}, Output={}) : FAILED (2.1 s) Expected 'ok' but was 'ko'
  * ...
  * ✗ MyPlan : FAILED (2.4 s)
  * </pre>
  * Every node is printed once it ends, with its outcome, its details, status, duration and error. A node containing
- * other nodes is additionally printed with a ↻ before the first of them, and so is a node running for longer than
- * the hold delay, for a long running keyword not to go unnoticed.
+ * other nodes is additionally printed as running, with a ↻, before the first of them, and so is a node running for
+ * longer than the hold delay, for a long running keyword not to go unnoticed.
  * <p>
  * The report can be printed to several outputs, typically the console and a file. The markers fall back to ASCII
  * characters on an output whose charset cannot encode them, as a Windows console using a legacy code page. They are
@@ -200,7 +200,7 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
 
     private void printStart(RunningNode runningNode) {
         if (!runningNode.startPrinted) {
-            print(markers -> markers.start + " " + runningNode.path());
+            print(markers -> markers.start + " " + runningNode.path() + " : " + ReportNodeStatus.RUNNING + "...");
             runningNode.startPrinted = true;
             runningNode.holdTimeout.cancel(false);
         }
