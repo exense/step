@@ -77,7 +77,7 @@ public class ApLocalExecuteCommandHandlerTest {
                 reportFiles.stream().anyMatch(name -> name.matches(pattern)));
         }
         String liveReport = Files.readString(new File(runFolders[0], "live.txt").toPath());
-        Assert.assertTrue(liveReport, liveReport.contains("✔ "));
+        Assert.assertTrue(liveReport, liveReport.contains("✓ "));
         Assert.assertTrue("The JUnit report should contain its xml file",
             new File(runFolders[0], "junit/junit.xml").isFile());
 

@@ -41,6 +41,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Prints the report tree of an execution as it unfolds, after a line naming its plan, each line holding the path of
@@ -48,28 +49,30 @@ import java.util.function.Function;
  * artefact are interleaved:
  * <pre>
  * Live report of MyPlan:
- * ▶ MyPlan
- * ✔ MyPlan > [BEFORE] > Echo(Setting up) : PASSED (12 ms)
- * ▶ MyPlan > ThreadGroup
- * ▶ MyPlan > ThreadGroup > Thread 1
- * ▶ MyPlan > ThreadGroup > Thread 1 > Session
- * ▶ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1
- * ▶ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword
- * ✖ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword(Input={}, Output={}) : FAILED (2.1 s) Expected 'ok' but was 'ko'
+ * ► MyPlan
+ * ✓ MyPlan > [BEFORE] > Echo(Setting up) : PASSED (12 ms)
+ * ► MyPlan > ThreadGroup
+ * ► MyPlan > ThreadGroup > Thread 1
+ * ► MyPlan > ThreadGroup > Thread 1 > Session
+ * ► MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1
+ * ► MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword
+ * ✗ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword(Input={}, Output={}) : FAILED (2.1 s) Expected 'ok' but was 'ko'
  * ...
- * ✖ MyPlan : FAILED (2.4 s)
+ * ✗ MyPlan : FAILED (2.4 s)
  * </pre>
  * Every node is printed once it ends, with its outcome, its details, status, duration and error. A node containing
- * other nodes is additionally printed with a ▶ before the first of them, and so is a node running for longer than
+ * other nodes is additionally printed with a ► before the first of them, and so is a node running for longer than
  * the hold delay, for a long running keyword not to go unnoticed.
  * <p>
  * The report can be printed to several outputs, typically the console and a file. The markers fall back to ASCII
- * characters on an output whose charset cannot encode them, as a Windows console using a legacy code page.
+ * characters on an output whose charset cannot encode them, as a Windows console using a legacy code page. They are
+ * characters terminals do not draw as emoji, which would be wider than the space following them. On a terminal
+ * supporting colors, the markers of the passed nodes are printed in green and the ones of the failed nodes in red.
  * <p>
  * Given an {@link AttachmentExporter}, it writes the attachments of each node as soon as it ends, and prints where
  * below the node:
  * <pre>
- * ✖ MyPlan > MyKeyword(Input={}, Output={}) : TECHNICAL_ERROR (12 ms) Connection refused
+ * ✗ MyPlan > MyKeyword(Input={}, Output={}) : TECHNICAL_ERROR (12 ms) Connection refused
  *     attachment: file:///C:/work/reports/20261102-143012-123456/attachments/MyPlan/0001-MyKeyword/exception.log
  * </pre>
  */
@@ -110,8 +113,20 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
      * @param attachmentExporter writes the attachments of the nodes, null for them not to be written
      */
     public LiveReportTreePrinterPlugin(List<PrintStream> outs, Duration holdDelay, AttachmentExporter attachmentExporter) {
+        this(outs, holdDelay, attachmentExporter, out -> out == System.out && TerminalColors.isSupportedOnStdout());
+    }
+
+    /**
+     * @param inColors tells which of the outputs the markers are printed in colors to
+     */
+    LiveReportTreePrinterPlugin(List<PrintStream> outs, Duration holdDelay, AttachmentExporter attachmentExporter,
+                                Predicate<PrintStream> inColors) {
+        Objects.requireNonNull(inColors);
         this.outputs = Objects.requireNonNull(outs).stream()
-            .map(out -> new Output(out, Markers.UNICODE.canBeEncodedIn(out.charset()) ? Markers.UNICODE : Markers.ASCII))
+            .map(out -> {
+                Markers markers = Markers.UNICODE.canBeEncodedIn(out.charset()) ? Markers.UNICODE : Markers.ASCII;
+                return new Output(out, inColors.test(out) ? markers.inColors() : markers);
+            })
             .toList();
         this.holdDelay = Objects.requireNonNull(holdDelay);
         this.attachmentExporter = attachmentExporter;
@@ -265,8 +280,19 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
 
     private record Markers(String start, String passed, String failed, String other) {
 
-        private static final Markers UNICODE = new Markers("▶", "✔", "✖", "○");
+        private static final Markers UNICODE = new Markers("►", "✓", "✗", "○");
         private static final Markers ASCII = new Markers(">", "v", "x", "o");
+
+        private static final String GREEN = "\u001B[32m";
+        private static final String RED = "\u001B[31m";
+        private static final String RESET = "\u001B[0m";
+
+        /**
+         * @return the markers with the ANSI escape sequences printing the passed ones in green and the failed ones in red
+         */
+        private Markers inColors() {
+            return new Markers(start, GREEN + passed + RESET, RED + failed + RESET, other);
+        }
 
         private boolean canBeEncodedIn(Charset charset) {
             return charset.newEncoder().canEncode(start + passed + failed + other);

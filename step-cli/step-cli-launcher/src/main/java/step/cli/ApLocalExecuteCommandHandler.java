@@ -38,7 +38,6 @@ import step.artefacts.handlers.functions.AgentProvisioningExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.agents.provisioning.driver.AgentProvisioningStatusAccessor;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.reports.ReportNode;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
@@ -57,7 +56,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static step.cli.ExecuteAutomationPackageTool.getPlanFilters;
@@ -86,7 +84,7 @@ public class ApLocalExecuteCommandHandler {
         // Declared before the engine, and therefore closed after it: the local grid it stops is still in use as long
         // as the engine has not released the class loaders of its local tokens. The same goes for the file of the
         // live report, written to until the engine is closed.
-        try (LocalReports localReports = new LocalReports(reports, runFolder);
+        try (LocalReports localReports = new LocalReports(reports, runFolder, attachmentExporter);
              LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
              ExecutionEngine executionEngine = buildExecutionEngine(localAgents, localReports.openLiveReportOutputs(), attachmentExporter)) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
@@ -123,11 +121,9 @@ public class ApLocalExecuteCommandHandler {
                     && !localAgentConfiguration.isDebug();
                 Runnable restoreExecutionLogs = suppressExecutionLogs ? StepConsoleLogging.suppressExecutionLogs() : () -> {
                 };
-                Function<ReportNode, List<String>> attachmentLines = attachmentExporter != null
-                    ? attachmentExporter::describeAttachments : node -> List.of();
                 try {
                     for (StepClassParserResult parserResult : listPlans) {
-                        runPlan(parserResult, executionEngine, executionParameters, localReports, attachmentLines, failedPlans);
+                        runPlan(parserResult, executionEngine, executionParameters, localReports, failedPlans);
                     }
                 } finally {
                     restoreExecutionLogs.run();
@@ -168,7 +164,7 @@ public class ApLocalExecuteCommandHandler {
     }
 
     private static void runPlan(StepClassParserResult parserResult, ExecutionEngine executionEngine, Map<String, String> executionParameters,
-                                LocalReports localReports, Function<ReportNode, List<String>> attachmentLines, List<String> failedPlans) {
+                                LocalReports localReports, List<String> failedPlans) {
         new AbstractLocalPlanRunner(parserResult, executionEngine) {
             @Override
             protected void onExecutionStart() {
@@ -194,7 +190,7 @@ public class ApLocalExecuteCommandHandler {
             }
 
             private void onPlanExecuted(PlanRunnerResult result) {
-                localReports.onPlanExecuted(parserResult.getName(), result, executionEngine.getExecutionEngineContext(), attachmentLines);
+                localReports.onPlanExecuted(parserResult.getName(), result, executionEngine.getExecutionEngineContext());
             }
 
             @Override

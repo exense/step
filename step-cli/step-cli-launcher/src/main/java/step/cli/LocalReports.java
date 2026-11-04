@@ -26,7 +26,6 @@ import step.cli.ExecuteAutomationPackageTool.ReportType;
 import step.cli.reports.JUnitReportCreator;
 import step.cli.reports.ReportFiles;
 import step.cli.reports.ReportRunFolder;
-import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.artefacts.reports.junitxml.JUnitXmlReportBuilder;
@@ -46,7 +45,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * Produces the reports of a local execution chosen with {@code --reportType}, with the same outputs as for a remote
@@ -87,17 +85,21 @@ public class LocalReports implements Closeable {
             logger.debug(infoText, e);
         }
     };
+    private final AttachmentExporter attachmentExporter;
     private PrintStream liveReportFile;
     // The plans executed so far, by the id of their execution
     private final Map<String, String> executionNames = new LinkedHashMap<>();
 
     /**
      * @param reports   the reports to produce
-     * @param runFolder the folder the report files are written to, created when the first of them is written
+     * @param runFolder          the folder the report files are written to, created when the first of them is written
+     * @param attachmentExporter the exporter writing the attachments of the nodes, which the report tree tells where
+     *                           they have been written to, or null if they are not written
      */
-    public LocalReports(List<Report> reports, ReportRunFolder runFolder) {
+    public LocalReports(List<Report> reports, ReportRunFolder runFolder, AttachmentExporter attachmentExporter) {
         this.reports = List.copyOf(Objects.requireNonNull(reports));
         this.runFolder = Objects.requireNonNull(runFolder);
+        this.attachmentExporter = attachmentExporter;
     }
 
     /**
@@ -133,17 +135,13 @@ public class LocalReports implements Closeable {
 
     /**
      * Produces the reports of a plan which has been executed
-     *
-     * @param attachmentLines the lines printed below each node of the report tree, telling where its attachments have
-     *                        been written
      */
-    public void onPlanExecuted(String planName, PlanRunnerResult result, ExecutionEngineContext engineContext,
-                               Function<ReportNode, List<String>> attachmentLines) {
+    public void onPlanExecuted(String planName, PlanRunnerResult result, ExecutionEngineContext engineContext) {
         executionNames.put(result.getExecutionId(), planName);
         List<ReportOutputMode> treeOutputModes = outputModesOf(ReportType.tree);
         if (!treeOutputModes.isEmpty()) {
             ReportFiles.outputTextReport(runFolder, ReportType.tree, result.getExecutionId(), planName,
-                getTreeAsString(result, attachmentLines), treeOutputModes, logging);
+                getTreeAsString(result), treeOutputModes, logging);
         }
         List<ReportOutputMode> aggregatedOutputModes = outputModesOf(ReportType.aggregated);
         if (!aggregatedOutputModes.isEmpty()) {
@@ -177,13 +175,18 @@ public class LocalReports implements Closeable {
     }
 
     /**
-     * The tree of the execution with the details of the nodes, the stack traces of the technical errors, and where the
-     * attachments of the nodes have been written
+     * The tree of the execution with the details of the nodes. When the attachments are written, it tells where below
+     * each node, the stack trace of a technical error being in its exception.log. Otherwise, the stack traces are
+     * printed in the tree.
      */
-    static String getTreeAsString(PlanRunnerResult result, Function<ReportNode, List<String>> attachmentLines) {
+    private String getTreeAsString(PlanRunnerResult result) {
         StringWriter writer = new StringWriter();
         try {
-            result.printTree(writer, true, true, attachmentLines);
+            if (attachmentExporter != null) {
+                result.printTree(writer, true, false, attachmentExporter::describeAttachments);
+            } else {
+                result.printTree(writer, true, true);
+            }
             return writer.toString();
         } catch (IOException e) {
             logger.error("Error while writing execution tree: {}", writer, e);

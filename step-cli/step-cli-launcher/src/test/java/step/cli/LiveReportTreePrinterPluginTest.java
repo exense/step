@@ -94,14 +94,14 @@ public class LiveReportTreePrinterPluginTest {
 
         Assert.assertEquals(ReportNodeStatus.PASSED, result.getResult());
         Assert.assertEquals(List.of(
-            "▶ Sequence",
-            "✔ Sequence > [BEFORE] > Echo(before) : PASSED (<duration>)",
-            "✔ Sequence > Echo(main) : PASSED (<duration>)",
-            "▶ Sequence > Sequence",
-            "✔ Sequence > Sequence > Check(true) : PASSED (<duration>)",
-            "✔ Sequence > Sequence : PASSED (<duration>)",
-            "✔ Sequence > [AFTER] > Echo(after) : PASSED (<duration>)",
-            "✔ Sequence : PASSED (<duration>)"
+            "► Sequence",
+            "✓ Sequence > [BEFORE] > Echo(before) : PASSED (<duration>)",
+            "✓ Sequence > Echo(main) : PASSED (<duration>)",
+            "► Sequence > Sequence",
+            "✓ Sequence > Sequence > Check(true) : PASSED (<duration>)",
+            "✓ Sequence > Sequence : PASSED (<duration>)",
+            "✓ Sequence > [AFTER] > Echo(after) : PASSED (<duration>)",
+            "✓ Sequence : PASSED (<duration>)"
         ), outputLines());
     }
 
@@ -120,10 +120,26 @@ public class LiveReportTreePrinterPluginTest {
 
         Assert.assertEquals(List.of(
             "Live report of Checkout:",
-            "▶ Sequence",
-            "✔ Sequence > Echo(main) : PASSED (<duration>)",
-            "✔ Sequence : PASSED (<duration>)"
+            "► Sequence",
+            "✓ Sequence > Echo(main) : PASSED (<duration>)",
+            "✓ Sequence : PASSED (<duration>)"
         ), allOutputLines());
+    }
+
+    @Test
+    public void printsTheMarkersOfThePassedAndFailedNodesInColorsOnATerminal() {
+        Plan plan = PlanBuilder.create()
+            .startBlock(sequence())
+            .add(echo("'main'"))
+            .add(check("false"))
+            .endBlock().build();
+
+        execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, null, true);
+
+        List<String> lines = outputLines();
+        Assert.assertEquals("► Sequence", lines.get(0));
+        Assert.assertEquals("\u001B[32m✓\u001B[0m Sequence > Echo(main) : PASSED (<duration>)", lines.get(1));
+        Assert.assertTrue(lines.get(2), lines.get(2).startsWith("\u001B[31m✗\u001B[0m Sequence > Check(false) : FAILED (<duration>) "));
     }
 
     @Test
@@ -138,8 +154,8 @@ public class LiveReportTreePrinterPluginTest {
         Assert.assertEquals(ReportNodeStatus.FAILED, result.getResult());
         List<String> lines = outputLines();
         Assert.assertEquals(lines.toString(), 3, lines.size());
-        Assert.assertTrue(lines.get(1), lines.get(1).startsWith("✖ Sequence > Check(false) : FAILED (<duration>) "));
-        Assert.assertEquals("✖ Sequence : FAILED (<duration>)", lines.get(2));
+        Assert.assertTrue(lines.get(1), lines.get(1).startsWith("✗ Sequence > Check(false) : FAILED (<duration>) "));
+        Assert.assertEquals("✗ Sequence : FAILED (<duration>)", lines.get(2));
     }
 
     @Test
@@ -172,11 +188,11 @@ public class LiveReportTreePrinterPluginTest {
 
         // The start of the sequence is printed once, before its first child, although the sequence also outlasts the delay
         Assert.assertEquals(List.of(
-            "▶ Sequence",
-            "✔ Sequence > Echo(quick) : PASSED (<duration>)",
-            "▶ Sequence > Sleep",
-            "✔ Sequence > Sleep : PASSED (<duration>)",
-            "✔ Sequence : PASSED (<duration>)"
+            "► Sequence",
+            "✓ Sequence > Echo(quick) : PASSED (<duration>)",
+            "► Sequence > Sleep",
+            "✓ Sequence > Sleep : PASSED (<duration>)",
+            "✓ Sequence : PASSED (<duration>)"
         ), outputLines());
     }
 
@@ -192,14 +208,14 @@ public class LiveReportTreePrinterPluginTest {
 
         List<String> lines = outputLines();
         // Every line is written in one piece: an interleaving of the threads cannot break one
-        Pattern wellFormedLine = Pattern.compile("(▶ ThreadGroup( > [^>]+)*|✔ ThreadGroup( > [^>]+)* : PASSED \\(<duration>\\))");
+        Pattern wellFormedLine = Pattern.compile("(► ThreadGroup( > [^>]+)*|✓ ThreadGroup( > [^>]+)* : PASSED \\(<duration>\\))");
         lines.forEach(line -> Assert.assertTrue(line, wellFormedLine.matcher(line).matches()));
 
-        Assert.assertEquals("▶ ThreadGroup", lines.get(0));
-        Assert.assertEquals("✔ ThreadGroup : PASSED (<duration>)", lines.get(lines.size() - 1));
+        Assert.assertEquals("► ThreadGroup", lines.get(0));
+        Assert.assertEquals("✓ ThreadGroup : PASSED (<duration>)", lines.get(lines.size() - 1));
         for (String thread : List.of("Thread 1", "Thread 2")) {
-            Assert.assertTrue(lines.toString(), lines.contains("▶ ThreadGroup > " + thread));
-            long echoes = lines.stream().filter(line -> line.startsWith("✔ ThreadGroup > " + thread + " > ")
+            Assert.assertTrue(lines.toString(), lines.contains("► ThreadGroup > " + thread));
+            long echoes = lines.stream().filter(line -> line.startsWith("✓ ThreadGroup > " + thread + " > ")
                 && line.contains(" > Echo(iteration) : PASSED")).count();
             Assert.assertEquals(thread + " should have run 5 iterations: " + lines, 5, echoes);
         }
@@ -256,51 +272,51 @@ public class LiveReportTreePrinterPluginTest {
 
         Assert.assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
         Assert.assertEquals(List.of(
-            "▶ Online shop",
-            "▶ Online shop > Order an article",
-            "▶ Online shop > Order an article > Session",
-            "✔ Online shop > Order an article > Session > Echo(Logging in as alice) : PASSED (<duration>)",
-            "▶ Online shop > Order an article > Session > Log in",
-            "✔ Online shop > Order an article > Session > Log in > Check(output.token == 'token-alice') : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Log in > Set(token = token-alice) : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Log in(Input={\"user\":\"alice\"}, Output={\"token\":\"token-alice\"}) : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Echo(Searching the article) : PASSED (<duration>)",
-            "▶ Online shop > Order an article > Session > Search article",
-            "✔ Online shop > Order an article > Session > Search article > Check(output.articleId == 'article-keyboard') : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Search article > Set(articleId = article-keyboard) : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Search article(Input={\"token\":\"token-alice\",\"query\":\"keyboard\"}, Output={\"articleId\":\"article-keyboard\"}) : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Echo(Adding the article to the cart) : PASSED (<duration>)",
-            "▶ Online shop > Order an article > Session > Add article to cart",
-            "✔ Online shop > Order an article > Session > Add article to cart > Check(output.itemCount == '1') : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Add article to cart > Set(cartId = cart-1) : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Add article to cart(Input={\"token\":\"token-alice\",\"articleId\":\"article-keyboard\"}, Output={\"cartId\":\"cart-1\",\"itemCount\":\"1\"}) : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Echo(Placing the order) : PASSED (<duration>)",
-            "▶ Online shop > Order an article > Session > Place order",
-            "✔ Online shop > Order an article > Session > Place order > Check(output.orderId == 'order-1') : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session > Place order(Input={\"token\":\"token-alice\",\"cartId\":\"cart-1\"}, Output={\"orderId\":\"order-1\"}) : PASSED (<duration>)",
-            "✔ Online shop > Order an article > Session : PASSED (<duration>)",
-            "✔ Online shop > Order an article : PASSED (<duration>)",
-            "▶ Online shop > Search an unknown article",
-            "▶ Online shop > Search an unknown article > Session",
-            "✔ Online shop > Search an unknown article > Session > Echo(Logging in as bob) : PASSED (<duration>)",
-            "▶ Online shop > Search an unknown article > Session > Log in",
-            "✔ Online shop > Search an unknown article > Session > Log in > Set(token = token-bob) : PASSED (<duration>)",
-            "✔ Online shop > Search an unknown article > Session > Log in(Input={\"user\":\"bob\"}, Output={\"token\":\"token-bob\"}) : PASSED (<duration>)",
-            "✔ Online shop > Search an unknown article > Session > Echo(Searching an article which does not exist) : PASSED (<duration>)",
-            "▶ Online shop > Search an unknown article > Session > Search article",
+            "► Online shop",
+            "► Online shop > Order an article",
+            "► Online shop > Order an article > Session",
+            "✓ Online shop > Order an article > Session > Echo(Logging in as alice) : PASSED (<duration>)",
+            "► Online shop > Order an article > Session > Log in",
+            "✓ Online shop > Order an article > Session > Log in > Check(output.token == 'token-alice') : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Log in > Set(token = token-alice) : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Log in(Input={\"user\":\"alice\"}, Output={\"token\":\"token-alice\"}) : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Echo(Searching the article) : PASSED (<duration>)",
+            "► Online shop > Order an article > Session > Search article",
+            "✓ Online shop > Order an article > Session > Search article > Check(output.articleId == 'article-keyboard') : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Search article > Set(articleId = article-keyboard) : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Search article(Input={\"token\":\"token-alice\",\"query\":\"keyboard\"}, Output={\"articleId\":\"article-keyboard\"}) : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Echo(Adding the article to the cart) : PASSED (<duration>)",
+            "► Online shop > Order an article > Session > Add article to cart",
+            "✓ Online shop > Order an article > Session > Add article to cart > Check(output.itemCount == '1') : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Add article to cart > Set(cartId = cart-1) : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Add article to cart(Input={\"token\":\"token-alice\",\"articleId\":\"article-keyboard\"}, Output={\"cartId\":\"cart-1\",\"itemCount\":\"1\"}) : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Echo(Placing the order) : PASSED (<duration>)",
+            "► Online shop > Order an article > Session > Place order",
+            "✓ Online shop > Order an article > Session > Place order > Check(output.orderId == 'order-1') : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session > Place order(Input={\"token\":\"token-alice\",\"cartId\":\"cart-1\"}, Output={\"orderId\":\"order-1\"}) : PASSED (<duration>)",
+            "✓ Online shop > Order an article > Session : PASSED (<duration>)",
+            "✓ Online shop > Order an article : PASSED (<duration>)",
+            "► Online shop > Search an unknown article",
+            "► Online shop > Search an unknown article > Session",
+            "✓ Online shop > Search an unknown article > Session > Echo(Logging in as bob) : PASSED (<duration>)",
+            "► Online shop > Search an unknown article > Session > Log in",
+            "✓ Online shop > Search an unknown article > Session > Log in > Set(token = token-bob) : PASSED (<duration>)",
+            "✓ Online shop > Search an unknown article > Session > Log in(Input={\"user\":\"bob\"}, Output={\"token\":\"token-bob\"}) : PASSED (<duration>)",
+            "✓ Online shop > Search an unknown article > Session > Echo(Searching an article which does not exist) : PASSED (<duration>)",
+            "► Online shop > Search an unknown article > Session > Search article",
             "○ Online shop > Search an unknown article > Session > Search article > Check(output.articleId == 'article-unicorn') : NORUN (<duration>)",
-            "✖ Online shop > Search an unknown article > Session > Search article(Input={\"token\":\"token-bob\",\"query\":\"unicorn\"}, Output={}) : FAILED (<duration>) No article found for 'unicorn'",
-            "✖ Online shop > Search an unknown article > Session : FAILED (<duration>)",
-            "✖ Online shop > Search an unknown article : FAILED (<duration>)",
-            "▶ Online shop > Order with an expired token",
-            "▶ Online shop > Order with an expired token > Session",
-            "✔ Online shop > Order with an expired token > Session > Echo(Placing an order with an expired token) : PASSED (<duration>)",
-            "▶ Online shop > Order with an expired token > Session > Place order",
+            "✗ Online shop > Search an unknown article > Session > Search article(Input={\"token\":\"token-bob\",\"query\":\"unicorn\"}, Output={}) : FAILED (<duration>) No article found for 'unicorn'",
+            "✗ Online shop > Search an unknown article > Session : FAILED (<duration>)",
+            "✗ Online shop > Search an unknown article : FAILED (<duration>)",
+            "► Online shop > Order with an expired token",
+            "► Online shop > Order with an expired token > Session",
+            "✓ Online shop > Order with an expired token > Session > Echo(Placing an order with an expired token) : PASSED (<duration>)",
+            "► Online shop > Order with an expired token > Session > Place order",
             "○ Online shop > Order with an expired token > Session > Place order > Check(output.orderId != null) : NORUN (<duration>)",
-            "✖ Online shop > Order with an expired token > Session > Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}) : TECHNICAL_ERROR (<duration>) The token 'expired' is no longer valid",
-            "✖ Online shop > Order with an expired token > Session : TECHNICAL_ERROR (<duration>)",
-            "✖ Online shop > Order with an expired token : TECHNICAL_ERROR (<duration>)",
-            "✖ Online shop : TECHNICAL_ERROR (<duration>)"
+            "✗ Online shop > Order with an expired token > Session > Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}) : TECHNICAL_ERROR (<duration>) The token 'expired' is no longer valid",
+            "✗ Online shop > Order with an expired token > Session : TECHNICAL_ERROR (<duration>)",
+            "✗ Online shop > Order with an expired token : TECHNICAL_ERROR (<duration>)",
+            "✗ Online shop : TECHNICAL_ERROR (<duration>)"
         ), outputLines());
 
         result.printTree();
@@ -324,16 +340,16 @@ public class LiveReportTreePrinterPluginTest {
         Path runDirectory = exporter.getDirectory();
         Assert.assertEquals(reportDirectory.getRoot().toPath().resolve("20261102-143012-000000").resolve("attachments"), runDirectory);
         Assert.assertEquals(List.of(
-            "▶ Order with an expired token",
-            "▶ Order with an expired token > Session",
-            "✔ Order with an expired token > Session > Take screenshot(Input={}, Output={}) : PASSED (<duration>)",
+            "► Order with an expired token",
+            "► Order with an expired token > Session",
+            "✓ Order with an expired token > Session > Take screenshot(Input={}, Output={}) : PASSED (<duration>)",
             "    attachment: <run>/Online_shop/0001-Take_screenshot/page.png",
             "    attachment: <run>/Online_shop/0001-Take_screenshot/page-2.png",
             "    attachment: <run>/Online_shop/0001-Take_screenshot/console__12_11_.log",
-            "✖ Order with an expired token > Session > Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}) : TECHNICAL_ERROR (<duration>) The token 'expired' is no longer valid",
+            "✗ Order with an expired token > Session > Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}) : TECHNICAL_ERROR (<duration>) The token 'expired' is no longer valid",
             "    attachment: <run>/Online_shop/0002-Place_order/exception.log",
-            "✖ Order with an expired token > Session : TECHNICAL_ERROR (<duration>)",
-            "✖ Order with an expired token : TECHNICAL_ERROR (<duration>)"
+            "✗ Order with an expired token > Session : TECHNICAL_ERROR (<duration>)",
+            "✗ Order with an expired token : TECHNICAL_ERROR (<duration>)"
         ), withRunDirectoryReplaced(outputLines(), runDirectory));
 
         Path screenshots = runDirectory.resolve("Online_shop").resolve("0001-Take_screenshot");
@@ -408,11 +424,16 @@ public class LiveReportTreePrinterPluginTest {
     }
 
     private PlanRunnerResult execute(Plan plan, Duration holdDelay, Charset charset, AttachmentExporter attachmentExporter) {
+        return execute(plan, holdDelay, charset, attachmentExporter, false);
+    }
+
+    private PlanRunnerResult execute(Plan plan, Duration holdDelay, Charset charset, AttachmentExporter attachmentExporter,
+                                     boolean inColors) {
         outputCharset = charset;
         // Also written to the standard output, for the report to be reviewed in the output of the tests
         PrintStream out = new PrintStream(new TeeOutputStream(output, System.out), true, charset);
         try (ExecutionEngine executionEngine = ExecutionEngine.builder()
-            .withPlugin(new LiveReportTreePrinterPlugin(out, holdDelay, attachmentExporter))
+            .withPlugin(new LiveReportTreePrinterPlugin(List.of(out), holdDelay, attachmentExporter, o -> inColors))
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new BaseArtefactPlugin())
             .withPlugin(new FunctionPlugin())
