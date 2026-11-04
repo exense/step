@@ -63,7 +63,7 @@ public class LocalReports implements Closeable {
     /**
      * The reports of a local execution for which none has been chosen
      */
-    public static final List<Report> DEFAULT_REPORTS = List.of(new Report(ReportType.tree));
+    public static final List<Report> DEFAULT_REPORTS = List.of(new Report(ReportType.live));
 
     public static final String LIVE_REPORT_FILE_NAME = "live.txt";
 

@@ -49,25 +49,26 @@ import java.util.function.Predicate;
  * artefact are interleaved:
  * <pre>
  * Live report of MyPlan:
- * ► MyPlan
+ * ↻ MyPlan
  * ✓ MyPlan > [BEFORE] > Echo(Setting up) : PASSED (12 ms)
- * ► MyPlan > ThreadGroup
- * ► MyPlan > ThreadGroup > Thread 1
- * ► MyPlan > ThreadGroup > Thread 1 > Session
- * ► MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1
- * ► MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword
+ * ↻ MyPlan > ThreadGroup
+ * ↻ MyPlan > ThreadGroup > Thread 1
+ * ↻ MyPlan > ThreadGroup > Thread 1 > Session
+ * ↻ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1
+ * ↻ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword
  * ✗ MyPlan > ThreadGroup > Thread 1 > Session > Iteration 1 > MyKeyword(Input={}, Output={}) : FAILED (2.1 s) Expected 'ok' but was 'ko'
  * ...
  * ✗ MyPlan : FAILED (2.4 s)
  * </pre>
  * Every node is printed once it ends, with its outcome, its details, status, duration and error. A node containing
- * other nodes is additionally printed with a ► before the first of them, and so is a node running for longer than
+ * other nodes is additionally printed with a ↻ before the first of them, and so is a node running for longer than
  * the hold delay, for a long running keyword not to go unnoticed.
  * <p>
  * The report can be printed to several outputs, typically the console and a file. The markers fall back to ASCII
  * characters on an output whose charset cannot encode them, as a Windows console using a legacy code page. They are
  * characters terminals do not draw as emoji, which would be wider than the space following them. On a terminal
- * supporting colors, the markers of the passed nodes are printed in green and the ones of the failed nodes in red.
+ * supporting colors, the markers are printed in the colors of the statuses in the web UI of Step: blue for a running
+ * node, green for a passed one, red for a failed one and grey for the others.
  * <p>
  * Given an {@link AttachmentExporter}, it writes the attachments of each node as soon as it ends, and prints where
  * below the node:
@@ -280,18 +281,22 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
 
     private record Markers(String start, String passed, String failed, String other) {
 
-        private static final Markers UNICODE = new Markers("►", "✓", "✗", "○");
-        private static final Markers ASCII = new Markers(">", "v", "x", "o");
+        private static final Markers UNICODE = new Markers("↻", "✓", "✗", "○");
+        private static final Markers ASCII = new Markers("~", "v", "x", "o");
 
-        private static final String GREEN = "\u001B[32m";
-        private static final String RED = "\u001B[31m";
+        // The colors of the statuses in the web UI of Step, as the closest of the 256 colors terminals support
+        private static final String RUNNING_BLUE = "\u001B[38;5;32m"; // #0082cd
+        private static final String PASSED_GREEN = "\u001B[38;5;36m"; // #01a990
+        private static final String FAILED_RED = "\u001B[38;5;203m"; // #ff595b
+        private static final String NORUN_GREY = "\u001B[38;5;247m"; // #a0a0a0
         private static final String RESET = "\u001B[0m";
 
         /**
-         * @return the markers with the ANSI escape sequences printing the passed ones in green and the failed ones in red
+         * @return the markers with the ANSI escape sequences printing them in the colors of their statuses
          */
         private Markers inColors() {
-            return new Markers(start, GREEN + passed + RESET, RED + failed + RESET, other);
+            return new Markers(RUNNING_BLUE + start + RESET, PASSED_GREEN + passed + RESET, FAILED_RED + failed + RESET,
+                NORUN_GREY + other + RESET);
         }
 
         private boolean canBeEncodedIn(Charset charset) {
