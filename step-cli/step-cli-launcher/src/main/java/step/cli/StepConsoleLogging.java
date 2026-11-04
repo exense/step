@@ -19,14 +19,18 @@
 package step.cli;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.spi.FilterReply;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 
 import java.util.List;
 import java.util.Locale;
@@ -119,6 +123,43 @@ class StepConsoleLogging {
         patternEncoder.stop();
         patternEncoder.setPattern(pattern + "%nopex");
         patternEncoder.start();
+    }
+
+    /**
+     * Keeps the logs of the execution engine out of the output until the returned handle is closed, for them not to
+     * be interleaved with the report printed by {@link LiveReportTreePrinterPlugin}. Errors still get through, as do
+     * the logs of the CLI itself and those of the local agents, which say why the execution is waiting for them to
+     * start.
+     */
+    static Runnable suppressExecutionLogs() {
+        LoggerContext loggerContext = loggerContext();
+        if (loggerContext == null) {
+            return () -> {
+            };
+        }
+        return suppressExecutionLogs(loggerContext);
+    }
+
+    static Runnable suppressExecutionLogs(LoggerContext loggerContext) {
+        ExecutionLogsFilter filter = new ExecutionLogsFilter();
+        filter.start();
+        loggerContext.addTurboFilter(filter);
+        return () -> loggerContext.getTurboFilterList().remove(filter);
+    }
+
+    static class ExecutionLogsFilter extends TurboFilter {
+
+        static final List<String> LOGGERS_KEPT = List.of("step.cli", "step.agents.provisioning.local");
+
+        @Override
+        public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
+            if (level != null && level.isGreaterOrEqual(Level.ERROR)) {
+                return FilterReply.NEUTRAL;
+            }
+            String loggerName = logger.getName();
+            boolean kept = LOGGERS_KEPT.stream().anyMatch(name -> loggerName.equals(name) || loggerName.startsWith(name + "."));
+            return kept ? FilterReply.NEUTRAL : FilterReply.DENY;
+        }
     }
 
     private static boolean rendersTheException(String pattern) {

@@ -24,6 +24,7 @@ import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 import step.junit.runner.StepClassParserResult;
 
+import java.io.IOException;
 import java.util.Map;
 
 public abstract class AbstractLocalPlanRunner {
@@ -48,8 +49,7 @@ public abstract class AbstractLocalPlanRunner {
                 ReportNodeStatus resultStatus = result.getResult();
 
                 if (resultStatus == ReportNodeStatus.PASSED) {
-                    // We actually also want to see results when tests complete successfully
-                    result.printTree();
+                    onExecutionPassed(result);
                 } else if (resultStatus == ReportNodeStatus.FAILED) {
                     onExecutionError(result, "Plan execution failed", true);
                 } else if (resultStatus == ReportNodeStatus.TECHNICAL_ERROR) {
@@ -68,6 +68,13 @@ public abstract class AbstractLocalPlanRunner {
     }
 
     protected abstract void onExecutionStart();
+
+    /**
+     * Prints the report tree to the standard output: the results are also of interest when the plan passes
+     */
+    protected void onExecutionPassed(PlanRunnerResult result) throws IOException {
+        result.printTree();
+    }
 
     protected abstract void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError);
 

@@ -26,91 +26,99 @@ import step.client.executions.RemoteExecutionManager;
 import step.core.execution.model.Execution;
 import step.reports.CustomReportType;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class JUnitReportCreator implements ReportCreator {
 
     private final RemoteExecutionManager remoteExecutionManager;
-    private final File outputFolder;
+    private final ReportRunFolder runFolder;
 
-    public JUnitReportCreator(RemoteExecutionManager remoteExecutionManager, File outputFolder) {
+    public JUnitReportCreator(RemoteExecutionManager remoteExecutionManager, ReportRunFolder runFolder) {
         this.remoteExecutionManager = remoteExecutionManager;
-        this.outputFolder = outputFolder;
+        this.runFolder = runFolder;
     }
 
     @Override
     public void createReport(Map<String, Execution> executions, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException {
-        File preparedReport = prepareCustomReportOnServer(new ArrayList<>(executions.keySet()), logging);
+        List<String> executionIds = new ArrayList<>(executions.keySet());
+        // The links of the report to its attachments start with the folder of the run, sent as their root folder
+        RemoteExecutionManager.Report report = executionIds.size() > 1
+            ? remoteExecutionManager.getCustomMultiReport(executionIds, CustomReportType.JUNITZIP, true, getAttachmentsRootFolder(runFolder))
+            : remoteExecutionManager.getCustomReport(executionIds.get(0), CustomReportType.JUNITZIP, true, getAttachmentsRootFolder(runFolder));
+        List<String> executionNames = executions.entrySet().stream()
+            .map(execution -> ReportFiles.getExecutionName(execution.getKey(), execution.getValue()))
+            .toList();
+        outputZipReport(report.getFileName(), report.getContent(), executionNames, runFolder, outputModes, logging);
+    }
 
+    /**
+     * Outputs a JUnit report prepared as a zip archive, unzipping it to the folder of the run for
+     * {@link ExecuteAutomationPackageTool.ReportOutputMode#file}, to a folder named after the archive, and logging its
+     * xml file for {@link ExecuteAutomationPackageTool.ReportOutputMode#stdout}
+     *
+     * @param fileName       the name of the archive, {@code junit.zip}
+     * @param executionNames the names of the executions the report is about, typically their plans
+     */
+    public static void outputZipReport(String fileName, byte[] zip, List<String> executionNames, ReportRunFolder runFolder,
+                                       List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes,
+                                       CliToolLogging logging) throws IOException {
         for (ExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
             switch (outputMode) {
                 case file:
-                    // automatically unzip file
-                    File folderToUnzip = new File(outputFolder, Files.getNameWithoutExtension(preparedReport.getName()));
-                    if (!folderToUnzip.exists()) {
-                        folderToUnzip.mkdir();
-                    }
-                    logging.logInfo("Saving the report into " + folderToUnzip, null);
-                    FileHelper.unzip(preparedReport, folderToUnzip);
+                    File folder = new File(runFolder.prepare(), Files.getNameWithoutExtension(fileName));
+                    FileHelper.unzip(zip, folder);
+                    logging.logInfo("The " + ExecuteAutomationPackageTool.ReportType.junit + " report has been saved in "
+                        + ReportFiles.toUri(folder), null);
                     break;
                 case stdout:
-                    // create temp folder with unzipped report to read and print the content of the main .xml file
-                    File tempFolderToUnzip = new File(outputFolder, DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) + "-temp");
-                    tempFolderToUnzip.mkdir();
-                    FileHelper.unzip(preparedReport, tempFolderToUnzip);
-
-                    // according to the structure of zipped report, the main junit report is called like {timestamp}-junit.xml
-                    File[] xmlReports = tempFolderToUnzip.listFiles((dir, name) -> name.matches(".*-junit.xml"));
-                    if (xmlReports != null) {
-                        for (File xmlReport : xmlReports) {
-                            logging.logInfo("Junit report:\n" + new String(java.nio.file.Files.readAllBytes(xmlReport.toPath())), null);
-                        }
-                    }
-
-                    FileHelper.deleteFolder(tempFolderToUnzip);
+                    logging.logInfo(ReportFiles.title(ExecuteAutomationPackageTool.ReportType.junit, executionNames) + "\n"
+                        + readXmlReport(zip), null);
                     break;
                 default:
                     logging.logError("Unsupported output mode (" + outputMode + " ) for junit report", null);
             }
         }
-
-        // delete the downloaded zip-file
-        if (!preparedReport.delete()) {
-            logging.logInfo("File cannot be deleted: " + preparedReport.getAbsolutePath(), null);
-        }
     }
 
-    protected File prepareCustomReportOnServer(List<String> executionIds, CliToolLogging logging) throws IOException {
-        // only for zipped reports we want to include attachments
-        Boolean includeAttachments = true;
-
-        RemoteExecutionManager.Report customReport;
-        File outputFile;
-
-        Path currentFolder = new File("").toPath().toAbsolutePath();
-        Path relativePathToOutputDir = currentFolder.relativize(outputFolder.toPath().toAbsolutePath());
-
-        // report output directory is sent as a root folder for attachments
-        if (executionIds.size() > 1) {
-            customReport = remoteExecutionManager.getCustomMultiReport(executionIds, CustomReportType.JUNITZIP, includeAttachments, relativePathToOutputDir.toFile().getPath());
-            outputFile = new File(outputFolder, customReport.getFileName());
-        } else {
-            customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), CustomReportType.JUNITZIP, includeAttachments, relativePathToOutputDir.toFile().getPath());
-            outputFile = new File(outputFolder, customReport.getFileName());
+    /**
+     * @return the xml file at the root of the archive, the other files being its attachments
+     */
+    private static String readXmlReport(byte[] zip) throws IOException {
+        try (ZipInputStream entries = new ZipInputStream(new ByteArrayInputStream(zip))) {
+            for (ZipEntry entry = entries.getNextEntry(); entry != null; entry = entries.getNextEntry()) {
+                // Named junit.xml, or <timestamp>-junit.xml by the controllers of the versions before
+                if (!entry.isDirectory() && !entry.getName().contains("/") && entry.getName().endsWith("junit.xml")) {
+                    return new String(entries.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
         }
-        logging.logDebug("Saving execution report (" + ExecuteAutomationPackageTool.ReportType.junit + ") into " + outputFile.getAbsolutePath(), null);
+        throw new IOException("The JUnit report archive contains no xml report");
+    }
 
-        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-            fos.write(customReport.getContent());
+    /**
+     * @return the folder of the run relative to the working directory, which the links of the JUnit report to the
+     * attachments it contains start with. It is absolute when it cannot be relative, on another drive than the
+     * working directory on Windows.
+     */
+    public static String getAttachmentsRootFolder(ReportRunFolder runFolder) {
+        return getAttachmentsRootFolder(new File("").toPath().toAbsolutePath(), runFolder.getFolder().toPath().toAbsolutePath());
+    }
+
+    static String getAttachmentsRootFolder(Path currentFolder, Path runFolder) {
+        try {
+            return currentFolder.relativize(runFolder).toString();
+        } catch (IllegalArgumentException e) {
+            // The paths have different roots
+            return runFolder.toString();
         }
-        return outputFile;
     }
 }
