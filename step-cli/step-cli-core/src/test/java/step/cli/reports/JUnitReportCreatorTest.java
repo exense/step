@@ -19,6 +19,7 @@
 package step.cli.reports;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -26,6 +27,7 @@ import step.cli.CliToolLogging;
 import step.cli.ExecuteAutomationPackageTool.ReportOutputMode;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,6 +42,22 @@ public class JUnitReportCreatorTest {
 
     @Rule
     public final TemporaryFolder reportDir = new TemporaryFolder();
+
+    @Test
+    public void linksTheAttachmentsRelativelyToTheWorkingDirectory() {
+        Path currentFolder = Path.of("work").toAbsolutePath();
+
+        Assert.assertEquals(Path.of("reports", "20261103-101530").toString(),
+            JUnitReportCreator.getAttachmentsRootFolder(currentFolder, currentFolder.resolve("reports").resolve("20261103-101530")));
+    }
+
+    @Test
+    public void linksTheAttachmentsAbsolutelyOnAnotherDriveThanTheWorkingDirectory() {
+        Assume.assumeTrue("Drive letters are specific to Windows", File.separatorChar == '\\');
+
+        Assert.assertEquals("D:\\reports\\20261103-101530",
+            JUnitReportCreator.getAttachmentsRootFolder(Path.of("C:\\work"), Path.of("D:\\reports\\20261103-101530")));
+    }
 
     @Test
     public void unzipsTheReportToTheJunitFolderOfTheRun() throws IOException {

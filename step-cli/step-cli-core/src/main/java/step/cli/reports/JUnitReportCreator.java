@@ -106,10 +106,19 @@ public class JUnitReportCreator implements ReportCreator {
 
     /**
      * @return the folder of the run relative to the working directory, which the links of the JUnit report to the
-     * attachments it contains start with
+     * attachments it contains start with. It is absolute when it cannot be relative, on another drive than the
+     * working directory on Windows.
      */
     public static String getAttachmentsRootFolder(ReportRunFolder runFolder) {
-        Path currentFolder = new File("").toPath().toAbsolutePath();
-        return currentFolder.relativize(runFolder.getFolder().toPath().toAbsolutePath()).toFile().getPath();
+        return getAttachmentsRootFolder(new File("").toPath().toAbsolutePath(), runFolder.getFolder().toPath().toAbsolutePath());
+    }
+
+    static String getAttachmentsRootFolder(Path currentFolder, Path runFolder) {
+        try {
+            return currentFolder.relativize(runFolder).toString();
+        } catch (IllegalArgumentException e) {
+            // The paths have different roots
+            return runFolder.toString();
+        }
     }
 }
