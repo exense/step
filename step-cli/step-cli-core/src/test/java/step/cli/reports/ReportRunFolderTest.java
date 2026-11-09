@@ -57,9 +57,33 @@ public class ReportRunFolderTest {
 
     @Test
     public void namesTheFilesWithCharactersEveryFileSystemAccepts() {
-        Assert.assertEquals("Order_an_article", ReportRunFolder.toFileName("Order an article"));
-        Assert.assertEquals("Echo", ReportRunFolder.toFileName("Echo..."));
-        Assert.assertEquals("_", ReportRunFolder.toFileName(null));
-        Assert.assertEquals(50, ReportRunFolder.toFileName("x".repeat(80)).length());
+        Assert.assertEquals("Order_an_article", ReportRunFolder.toFileName("Order an article", "_"));
+        Assert.assertEquals("screenshot_1.png", ReportRunFolder.toFileName(" screenshot 1.png ", "_"));
+        Assert.assertEquals("a_b_c_d.txt", ReportRunFolder.toFileName("a/b\\c:d.txt", "_"));
+        Assert.assertEquals("console_12_11_.log", ReportRunFolder.toFileName("console: 12/11?.log", "_"));
+        Assert.assertEquals("Récupération_données", ReportRunFolder.toFileName("Récupération données", "_"));
+        Assert.assertEquals("Echo", ReportRunFolder.toFileName("Echo...", "_"));
+    }
+
+    @Test
+    public void namesTheFilesWithNothingLeftAfterTheFallback() {
+        Assert.assertEquals("_", ReportRunFolder.toFileName(null, "_"));
+        Assert.assertEquals("attachment", ReportRunFolder.toFileName("", "attachment"));
+        Assert.assertEquals("attachment", ReportRunFolder.toFileName("..", "attachment"));
+    }
+
+    @Test
+    public void truncatesTheNamesWithoutLosingTheirExtension() {
+        Assert.assertEquals("x".repeat(50), ReportRunFolder.toFileName("x".repeat(80), "_"));
+        Assert.assertEquals("x".repeat(46) + ".png", ReportRunFolder.toFileName("x".repeat(80) + ".png", "_"));
+        // Too long to be an extension
+        Assert.assertEquals("x." + "y".repeat(48), ReportRunFolder.toFileName("x." + "y".repeat(80), "_"));
+    }
+
+    @Test
+    public void prefixesTheNamesWindowsReserves() {
+        Assert.assertEquals("_CON", ReportRunFolder.toFileName("CON", "_"));
+        Assert.assertEquals("_Aux", ReportRunFolder.toFileName("Aux...", "_"));
+        Assert.assertEquals("_nul.txt", ReportRunFolder.toFileName("nul.txt", "_"));
     }
 }

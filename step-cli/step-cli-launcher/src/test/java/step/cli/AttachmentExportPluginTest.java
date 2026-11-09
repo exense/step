@@ -85,19 +85,11 @@ public class AttachmentExportPluginTest {
         Assert.assertEquals(List.of(
             "Shop: checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout/0001-Take_screenshot/page.png",
             "Shop: checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout/0001-Take_screenshot/page-2.png",
-            "Shop: checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout/0001-Take_screenshot/console__12_11_.log",
+            "Shop: checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout/0001-Take_screenshot/console_12_11_.log",
             "Shop/checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout-2/0002-Take_screenshot/page.png",
             "Shop/checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout-2/0002-Take_screenshot/page-2.png",
-            "Shop/checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout-2/0002-Take_screenshot/console__12_11_.log"
+            "Shop/checkout | Checkout > [BEFORE] > Take screenshot | Shop_checkout-2/0002-Take_screenshot/console_12_11_.log"
         ), pathsAndFiles);
-    }
-
-    @Test
-    public void namesTheFilesWithCharactersEveryFileSystemAccepts() {
-        Assert.assertEquals("screenshot_1.png", AttachmentExporter.toFileName(" screenshot 1.png "));
-        Assert.assertEquals("a_b_c_d.txt", AttachmentExporter.toFileName("a/b\\c:d.txt"));
-        Assert.assertEquals("attachment", AttachmentExporter.toFileName(""));
-        Assert.assertEquals("attachment", AttachmentExporter.toFileName(".."));
     }
 
     private static Plan screenshotPlan(String planName) {

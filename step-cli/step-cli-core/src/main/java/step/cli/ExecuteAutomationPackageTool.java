@@ -111,7 +111,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
             File reportDir = parameters.getReportOutputDir() == null ? new File(new File("").getAbsolutePath()) : parameters.getReportOutputDir();
             // Checked before the execution, the folder of the run only being created once a report is written to it
             if (reportDir.exists() && !reportDir.isDirectory()) {
-                throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + reportDir.getAbsolutePath());
+                throw new StepCliExecutionException("Report cannot be generated. Path exists but is not a directory: " + reportDir.getAbsolutePath());
             }
             runFolder = new ReportRunFolder(reportDir);
         }

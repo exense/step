@@ -71,7 +71,8 @@ public class AttachmentExporter {
     private final ReportRunFolder runFolder;
     private final Path directory;
 
-    // All the fields below are guarded by this instance
+    // The fields below are only used in synchronized methods: the nodes of parallel steps end in different threads,
+    // which export their attachments at the same time
     private final Map<String, Path> planDirectories = new HashMap<>();
     private final Map<ObjectId, List<ExportedAttachment>> exportedAttachments = new HashMap<>();
     private int nodeCount;
@@ -108,7 +109,7 @@ public class AttachmentExporter {
         try {
             Path planDirectory = getPlanDirectory(context);
             Path nodeDirectory = Files.createDirectories(planDirectory.resolve(
-                String.format("%04d-%s", ++nodeCount, ReportRunFolder.toFileName(node.getName()))));
+                String.format("%04d-%s", ++nodeCount, ReportRunFolder.toFileName(node.getName(), "_"))));
             for (AttachmentMeta attachment : attachments) {
                 ExportedAttachment exportedAttachment = export(context.getAttachmentStorage(), attachment, nodeDirectory);
                 exported.add(exportedAttachment);
@@ -142,7 +143,7 @@ public class AttachmentExporter {
         if (attachmentStorage == null || attachment.getId() == null) {
             return ExportedAttachment.skipped(attachment, "not stored by the execution");
         }
-        Path file = uniqueFile(nodeDirectory, toFileName(attachment.getName()));
+        Path file = uniqueFile(nodeDirectory, ReportRunFolder.toFileName(attachment.getName(), "attachment"));
         try (InputStream content = attachmentStorage.getAttachmentStream(attachment.getId().toHexString())) {
             Files.copy(content, file);
             fileCount++;
@@ -156,6 +157,7 @@ public class AttachmentExporter {
     private Path getPlanDirectory(ExecutionContext context) throws IOException {
         Path planDirectory = planDirectories.get(context.getExecutionId());
         if (planDirectory == null) {
+            // lazy initialization of the parent directory in case it doesn't exist yet
             if (!Files.isDirectory(directory)) {
                 Files.createDirectories(directory);
                 Files.writeString(directory.resolve(INDEX_FILE_NAME), INDEX_HEADER + "\n", StandardCharsets.UTF_8);
@@ -176,15 +178,9 @@ public class AttachmentExporter {
         Files.writeString(directory.resolve(INDEX_FILE_NAME), line + "\n", StandardCharsets.UTF_8, StandardOpenOption.APPEND);
     }
 
+    // Replace the characters that would break the TSV format: the tabs separate the columns, the line breaks the rows.
     private static String toIndexField(String value) {
         return value == null ? "" : value.replaceAll("[\\t\\r\\n]+", " ");
-    }
-
-    static String toFileName(String name) {
-        // Without white spaces, for the printed paths to be selected or clicked in a terminal as a whole
-        String fileName = name == null ? "" : name.trim().replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}\\s]", "_");
-        fileName = fileName.replaceAll("\\.+$", "");
-        return fileName.isEmpty() || fileName.equals(".") ? "attachment" : fileName;
     }
 
     private static Path uniqueFile(Path directory, String fileName) {

@@ -22,7 +22,8 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
-import step.core.plans.Plan;
+
+import java.util.Optional;
 
 /**
  * The path of a report node from the root of its plan, as in {@code Load test > Thread 1 > [BEFORE] > Echo}, which
@@ -57,8 +58,8 @@ final class ReportNodePaths {
      * name
      */
     static String planNameOf(ExecutionContext context) {
-        Plan plan = context.getPlan();
-        String name = plan != null ? plan.getAttribute(AbstractOrganizableObject.NAME) : null;
-        return name != null ? name : context.getExecutionId();
+        return Optional.ofNullable(context.getPlan())
+            .map(plan -> plan.getAttribute(AbstractOrganizableObject.NAME))
+            .orElseGet(context::getExecutionId);
     }
 }

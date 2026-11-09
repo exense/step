@@ -55,7 +55,7 @@ public abstract class AbstractLocalPlanRunner {
                 } else if (resultStatus == ReportNodeStatus.TECHNICAL_ERROR) {
                     onExecutionError(result, "Technical error while executing plan", false);
                 } else {
-                    onExecutionError(result, "The plan execution returned an unexpected status\" + result", false);
+                    onExecutionError(result, "The plan execution returned an unexpected status: " + resultStatus, false);
                 }
             } else {
                 onInitializingException(initializingException);

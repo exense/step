@@ -62,7 +62,7 @@ import java.util.function.Predicate;
  * </pre>
  * Every node is printed once it ends, with its outcome, its details, status, duration and error. A node containing
  * other nodes is additionally printed as running, with a ↻, before the first of them, and so is a node running for
- * longer than the hold delay, for a long running keyword not to go unnoticed.
+ * longer than the still running notice delay, for a long running keyword not to go unnoticed.
  * <p>
  * The report can be printed to several outputs, typically the console and a file. The markers fall back to ASCII
  * characters on an output whose charset cannot encode them, as a Windows console using a legacy code page. They are
@@ -81,31 +81,32 @@ import java.util.function.Predicate;
 @IgnoreDuringAutoDiscovery
 public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
 
-    public static final Duration DEFAULT_HOLD_DELAY = Duration.ofSeconds(1);
+    public static final Duration DEFAULT_STILL_RUNNING_NOTICE_DELAY = Duration.ofSeconds(1);
 
     private static final String ATTACHMENT_INDENT = "    ";
 
     private final List<Output> outputs;
-    private final Duration holdDelay;
+    private final Duration stillRunningNoticeDelay;
     private final AttachmentExporter attachmentExporter;
 
-    // All the fields below are guarded by this instance
+    // The fields below are only used in synchronized blocks: the nodes of parallel steps start and end in different
+    // threads, and the notice timer prints from its own thread
     private final Map<ObjectId, RunningNode> runningNodes = new HashMap<>();
-    private ScheduledThreadPoolExecutor holdTimer;
+    private ScheduledThreadPoolExecutor noticeTimer;
 
     public LiveReportTreePrinterPlugin() {
-        this(System.out, DEFAULT_HOLD_DELAY);
+        this(System.out, DEFAULT_STILL_RUNNING_NOTICE_DELAY);
     }
 
-    public LiveReportTreePrinterPlugin(PrintStream out, Duration holdDelay) {
-        this(out, holdDelay, null);
+    public LiveReportTreePrinterPlugin(PrintStream out, Duration stillRunningNoticeDelay) {
+        this(out, stillRunningNoticeDelay, null);
     }
 
     /**
      * @param attachmentExporter writes the attachments of the nodes, null for them not to be written
      */
-    public LiveReportTreePrinterPlugin(PrintStream out, Duration holdDelay, AttachmentExporter attachmentExporter) {
-        this(List.of(Objects.requireNonNull(out)), holdDelay, attachmentExporter);
+    public LiveReportTreePrinterPlugin(PrintStream out, Duration stillRunningNoticeDelay, AttachmentExporter attachmentExporter) {
+        this(List.of(Objects.requireNonNull(out)), stillRunningNoticeDelay, attachmentExporter);
     }
 
     /**
@@ -113,23 +114,23 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
      *                           encode
      * @param attachmentExporter writes the attachments of the nodes, null for them not to be written
      */
-    public LiveReportTreePrinterPlugin(List<PrintStream> outs, Duration holdDelay, AttachmentExporter attachmentExporter) {
-        this(outs, holdDelay, attachmentExporter, out -> out == System.out && TerminalColors.isSupportedOnStdout());
+    public LiveReportTreePrinterPlugin(List<PrintStream> outs, Duration stillRunningNoticeDelay, AttachmentExporter attachmentExporter) {
+        this(outs, stillRunningNoticeDelay, attachmentExporter, out -> out == System.out && TerminalColors.isSupportedOnStdout());
     }
 
     /**
-     * @param inColors tells which of the outputs the markers are printed in colors to
+     * @param supportsColors tells which of the outputs the markers are printed in colors to
      */
-    LiveReportTreePrinterPlugin(List<PrintStream> outs, Duration holdDelay, AttachmentExporter attachmentExporter,
-                                Predicate<PrintStream> inColors) {
-        Objects.requireNonNull(inColors);
+    LiveReportTreePrinterPlugin(List<PrintStream> outs, Duration stillRunningNoticeDelay, AttachmentExporter attachmentExporter,
+                                Predicate<PrintStream> supportsColors) {
+        Objects.requireNonNull(supportsColors);
         this.outputs = Objects.requireNonNull(outs).stream()
             .map(out -> {
                 Markers markers = Markers.UNICODE.canBeEncodedIn(out.charset()) ? Markers.UNICODE : Markers.ASCII;
-                return new Output(out, inColors.test(out) ? markers.inColors() : markers);
+                return new Output(out, supportsColors.test(out) ? markers.colored() : markers);
             })
             .toList();
-        this.holdDelay = Objects.requireNonNull(holdDelay);
+        this.stillRunningNoticeDelay = Objects.requireNonNull(stillRunningNoticeDelay);
         this.attachmentExporter = attachmentExporter;
     }
 
@@ -150,9 +151,9 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         }
 
         RunningNode runningNode = new RunningNode(ReportNodePaths.prefixOf(parent != null ? parent.path() : null, node), node.getName());
-        runningNode.holdTimeout = getHoldTimer().schedule(() -> printStartOfLongRunningNode(runningNode),
-            holdDelay.toMillis(), TimeUnit.MILLISECONDS);
-        // Registered once its timeout is scheduled, for no node to be found without one
+        runningNode.stillRunningNotice = getNoticeTimer().schedule(() -> printStillRunningNotice(runningNode),
+            stillRunningNoticeDelay.toMillis(), TimeUnit.MILLISECONDS);
+        // Added last to guarantee consumers that the running nodes always have a notice scheduled
         runningNodes.put(node.getId(), runningNode);
     }
 
@@ -163,7 +164,7 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
             RunningNode runningNode = runningNodes.remove(node.getId());
             if (runningNode != null) {
                 runningNode.ended = true;
-                runningNode.holdTimeout.cancel(false);
+                runningNode.stillRunningNotice.cancel(false);
                 parentPath = runningNode.parentPath;
             } else {
                 parentPath = "";
@@ -185,14 +186,14 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
     @Override
     public synchronized void executionFinally(ExecutionContext context) {
         runningNodes.clear();
-        if (holdTimer != null) {
-            holdTimer.shutdownNow();
-            holdTimer = null;
+        if (noticeTimer != null) {
+            noticeTimer.shutdownNow();
+            noticeTimer = null;
         }
     }
 
-    private synchronized void printStartOfLongRunningNode(RunningNode runningNode) {
-        // The node might have ended in the meantime, the cancellation of the timeout racing with its expiry
+    private synchronized void printStillRunningNotice(RunningNode runningNode) {
+        // The node might have ended in the meantime, its notice being cancelled while about to run
         if (!runningNode.ended) {
             printStart(runningNode);
         }
@@ -202,21 +203,21 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         if (!runningNode.startPrinted) {
             print(markers -> markers.start + " " + runningNode.path() + " : " + ReportNodeStatus.RUNNING + "...");
             runningNode.startPrinted = true;
-            runningNode.holdTimeout.cancel(false);
+            runningNode.stillRunningNotice.cancel(false);
         }
     }
 
-    private ScheduledThreadPoolExecutor getHoldTimer() {
-        if (holdTimer == null) {
-            holdTimer = new ScheduledThreadPoolExecutor(1, runnable -> {
+    private ScheduledThreadPoolExecutor getNoticeTimer() {
+        if (noticeTimer == null) {
+            noticeTimer = new ScheduledThreadPoolExecutor(1, runnable -> {
                 Thread thread = new Thread(runnable, "live-report-tree-printer");
                 thread.setDaemon(true);
                 return thread;
             });
-            // A timeout is scheduled for every node, and almost all of them are cancelled
-            holdTimer.setRemoveOnCancelPolicy(true);
+            // A notice is scheduled for every node, and almost all of them are cancelled
+            noticeTimer.setRemoveOnCancelPolicy(true);
         }
-        return holdTimer;
+        return noticeTimer;
     }
 
     /**
@@ -264,7 +265,7 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         private final String name;
         private boolean startPrinted;
         private boolean ended;
-        private ScheduledFuture<?> holdTimeout;
+        private ScheduledFuture<?> stillRunningNotice;
 
         private RunningNode(String parentPath, String name) {
             this.parentPath = parentPath;
@@ -294,7 +295,7 @@ public class LiveReportTreePrinterPlugin extends AbstractExecutionEnginePlugin {
         /**
          * @return the markers with the ANSI escape sequences printing them in the colors of their statuses
          */
-        private Markers inColors() {
+        private Markers colored() {
             return new Markers(RUNNING_BLUE + start + RESET, PASSED_GREEN + passed + RESET, FAILED_RED + failed + RESET,
                 NORUN_GREY + other + RESET);
         }

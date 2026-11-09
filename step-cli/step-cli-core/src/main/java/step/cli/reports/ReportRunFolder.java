@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.cli.reports;
 
+import step.automation.packages.ApFileNames;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * The folder of the report directory holding everything a run of the CLI writes, named after the time the run
@@ -49,10 +51,14 @@ public class ReportRunFolder {
     private static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS");
     // Keeps the paths of the files within the limits of Windows, the names of the plans and nodes being as long as one likes
     private static final int MAX_FILE_NAME_LENGTH = 50;
+    private static final int MAX_EXTENSION_LENGTH = 10;
+    // The characters Windows refuses in a file name, and the white spaces, for the printed paths to be clicked as a whole
+    private static final Pattern UNWANTED_FILE_NAME_CHARACTERS = Pattern.compile("[\\\\/:*?\"<>|\\p{Cntrl}\\s]+");
+    private static final Pattern TRAILING_DOTS = Pattern.compile("\\.+$");
 
     private final File folder;
 
-    // Guarded by this instance
+    // Only used in synchronized methods: the reports and the attachment export ask for names from different threads
     private final Map<String, String> executionFileNames = new HashMap<>();
     private final Set<String> usedExecutionFileNames = new HashSet<>();
 
@@ -91,7 +97,7 @@ public class ReportRunFolder {
     public synchronized String getExecutionFileName(String executionId, String executionName) {
         Objects.requireNonNull(executionId);
         return executionFileNames.computeIfAbsent(executionId, id -> {
-            String baseName = toFileName(executionName != null ? executionName : executionId);
+            String baseName = toFileName(executionName != null ? executionName : executionId, "_");
             String name = baseName;
             // Compared regardless of the case, which file systems like the ones of Windows ignore
             for (int i = 2; !usedExecutionFileNames.add(name.toLowerCase()); i++) {
@@ -102,15 +108,26 @@ public class ReportRunFolder {
     }
 
     /**
-     * @return the name, made of the characters every file system accepts in a file or folder name, and truncated
+     * Turns the name of a plan, a node or an attachment into a file or folder name. The characters Windows refuses and
+     * the white spaces become {@code _}, so that the printed paths can be selected or clicked in a terminal as a whole. The
+     * name is truncated without losing its extension, and a name Windows reserves, such as {@code CON}, is prefixed.
+     *
+     * @param fallback the name to use when nothing is left of {@code name}
      */
-    public static String toFileName(String name) {
-        String fileName = name == null ? "" : name.replaceAll("[^a-zA-Z0-9._-]+", "_");
-        if (fileName.length() > MAX_FILE_NAME_LENGTH) {
-            fileName = fileName.substring(0, MAX_FILE_NAME_LENGTH);
-        }
+    public static String toFileName(String name, String fallback) {
+        String fileName = name == null ? "" : UNWANTED_FILE_NAME_CHARACTERS.matcher(name.trim()).replaceAll("_");
         // Windows drops the dots ending a file name
-        fileName = fileName.replaceAll("\\.+$", "");
-        return fileName.isEmpty() ? "_" : fileName;
+        fileName = TRAILING_DOTS.matcher(fileName).replaceAll("");
+        if (fileName.length() > MAX_FILE_NAME_LENGTH) {
+            int extensionIndex = fileName.lastIndexOf('.');
+            String extension = extensionIndex > 0 && fileName.length() - extensionIndex <= MAX_EXTENSION_LENGTH
+                ? fileName.substring(extensionIndex) : "";
+            String baseName = fileName.substring(0, MAX_FILE_NAME_LENGTH - extension.length());
+            fileName = TRAILING_DOTS.matcher(baseName).replaceAll("") + extension;
+        }
+        if (fileName.isEmpty()) {
+            return fallback;
+        }
+        return ApFileNames.isReservedOnWindows(fileName) ? "_" + fileName : fileName;
     }
 }

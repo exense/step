@@ -68,8 +68,8 @@ import static step.planbuilder.FunctionArtefacts.keywordWithDynamicKeyValues;
 
 public class LiveReportTreePrinterPluginTest {
 
-    // Long enough for no node of these plans to be printed by the hold timer, except where the test intends it
-    private static final Duration LONG_HOLD_DELAY = Duration.ofMinutes(1);
+    // Long enough for no node of these plans to be printed as still running, except where the test intends it
+    private static final Duration LONG_STILL_RUNNING_NOTICE_DELAY = Duration.ofMinutes(1);
 
     @Rule
     public final TemporaryFolder reportDirectory = new TemporaryFolder();
@@ -90,7 +90,7 @@ public class LiveReportTreePrinterPluginTest {
             .endBlock()
             .endBlock().build();
 
-        PlanRunnerResult result = execute(plan, LONG_HOLD_DELAY);
+        PlanRunnerResult result = execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY);
 
         Assert.assertEquals(ReportNodeStatus.PASSED, result.getResult());
         Assert.assertEquals(List.of(
@@ -116,7 +116,7 @@ public class LiveReportTreePrinterPluginTest {
             .endBlock().build();
         plan.addAttribute(AbstractOrganizableObject.NAME, "Checkout");
 
-        execute(plan, LONG_HOLD_DELAY);
+        execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY);
 
         Assert.assertEquals(List.of(
             "Live report of Checkout:",
@@ -134,7 +134,7 @@ public class LiveReportTreePrinterPluginTest {
             .add(check("false"))
             .endBlock().build();
 
-        execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, null, true);
+        execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY, StandardCharsets.UTF_8, null, true);
 
         List<String> lines = outputLines();
         Assert.assertEquals("\u001B[38;5;32m↻\u001B[0m Sequence : RUNNING...", lines.get(0));
@@ -149,7 +149,7 @@ public class LiveReportTreePrinterPluginTest {
             .add(check("false"))
             .endBlock().build();
 
-        PlanRunnerResult result = execute(plan, LONG_HOLD_DELAY);
+        PlanRunnerResult result = execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY);
 
         Assert.assertEquals(ReportNodeStatus.FAILED, result.getResult());
         List<String> lines = outputLines();
@@ -166,7 +166,7 @@ public class LiveReportTreePrinterPluginTest {
             .add(check("false"))
             .endBlock().build();
 
-        execute(plan, LONG_HOLD_DELAY, StandardCharsets.US_ASCII);
+        execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY, StandardCharsets.US_ASCII);
 
         Assert.assertEquals(List.of(
             "~ Sequence : RUNNING...",
@@ -177,7 +177,7 @@ public class LiveReportTreePrinterPluginTest {
     }
 
     @Test
-    public void printsTheStartOfALeafRunningForLongerThanTheHoldDelay() {
+    public void printsTheStartOfALeafRunningForLongerThanTheStillRunningNoticeDelay() {
         Plan plan = PlanBuilder.create()
             .startBlock(sequence())
             .add(echo("'quick'"))
@@ -204,7 +204,7 @@ public class LiveReportTreePrinterPluginTest {
             .add(sleep(10))
             .endBlock().build();
 
-        execute(plan, LONG_HOLD_DELAY);
+        execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY);
 
         List<String> lines = outputLines();
         // Every line is written in one piece: an interleaving of the threads cannot break one
@@ -268,7 +268,7 @@ public class LiveReportTreePrinterPluginTest {
             .endBlock()
             .endBlock().build();
 
-        PlanRunnerResult result = execute(plan, LONG_HOLD_DELAY);
+        PlanRunnerResult result = execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY);
 
         Assert.assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
         Assert.assertEquals(List.of(
@@ -335,7 +335,7 @@ public class LiveReportTreePrinterPluginTest {
         plan.addAttribute(AbstractOrganizableObject.NAME, "Online shop");
         AttachmentExporter exporter = new AttachmentExporter(new ReportRunFolder(reportDirectory.getRoot(), LocalDateTime.of(2026, 11, 2, 14, 30, 12)));
 
-        PlanRunnerResult result = execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, exporter);
+        PlanRunnerResult result = execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY, StandardCharsets.UTF_8, exporter);
 
         Path runDirectory = exporter.getDirectory();
         Assert.assertEquals(reportDirectory.getRoot().toPath().resolve("20261102-143012-000000").resolve("attachments"), runDirectory);
@@ -345,7 +345,7 @@ public class LiveReportTreePrinterPluginTest {
             "✓ Order with an expired token > Session > Take screenshot(Input={}, Output={}) : PASSED (<duration>)",
             "    attachment: <run>/Online_shop/0001-Take_screenshot/page.png",
             "    attachment: <run>/Online_shop/0001-Take_screenshot/page-2.png",
-            "    attachment: <run>/Online_shop/0001-Take_screenshot/console__12_11_.log",
+            "    attachment: <run>/Online_shop/0001-Take_screenshot/console_12_11_.log",
             "✗ Order with an expired token > Session > Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}) : TECHNICAL_ERROR (<duration>) The token 'expired' is no longer valid",
             "    attachment: <run>/Online_shop/0002-Place_order/exception.log",
             "✗ Order with an expired token > Session : TECHNICAL_ERROR (<duration>)",
@@ -355,7 +355,7 @@ public class LiveReportTreePrinterPluginTest {
         Path screenshots = runDirectory.resolve("Online_shop").resolve("0001-Take_screenshot");
         Assert.assertEquals("before", Files.readString(screenshots.resolve("page.png")));
         Assert.assertEquals("after", Files.readString(screenshots.resolve("page-2.png")));
-        Assert.assertEquals("console", Files.readString(screenshots.resolve("console__12_11_.log")));
+        Assert.assertEquals("console", Files.readString(screenshots.resolve("console_12_11_.log")));
         String exceptionLog = Files.readString(runDirectory.resolve("Online_shop").resolve("0002-Place_order").resolve("exception.log"));
         Assert.assertTrue(exceptionLog, exceptionLog.contains("The token 'expired' is no longer valid"));
 
@@ -366,7 +366,7 @@ public class LiveReportTreePrinterPluginTest {
             "Plan\tPath\tStatus\tReport node\tAttachment\tFile\tSkipped reason",
             "Online shop\tOrder with an expired token > Session > Take screenshot\tPASSED\t<node id>\tpage.png\tOnline_shop/0001-Take_screenshot/page.png\t",
             "Online shop\tOrder with an expired token > Session > Take screenshot\tPASSED\t<node id>\tpage.png\tOnline_shop/0001-Take_screenshot/page-2.png\t",
-            "Online shop\tOrder with an expired token > Session > Take screenshot\tPASSED\t<node id>\tconsole: 12/11?.log\tOnline_shop/0001-Take_screenshot/console__12_11_.log\t",
+            "Online shop\tOrder with an expired token > Session > Take screenshot\tPASSED\t<node id>\tconsole: 12/11?.log\tOnline_shop/0001-Take_screenshot/console_12_11_.log\t",
             "Online shop\tOrder with an expired token > Session > Place order\tTECHNICAL_ERROR\t<node id>\texception.log\tOnline_shop/0002-Place_order/exception.log\t"
         ), index);
 
@@ -379,7 +379,7 @@ public class LiveReportTreePrinterPluginTest {
             "  Take screenshot(Input={}, Output={}):PASSED:",
             "   attachment: <run>/Online_shop/0001-Take_screenshot/page.png",
             "   attachment: <run>/Online_shop/0001-Take_screenshot/page-2.png",
-            "   attachment: <run>/Online_shop/0001-Take_screenshot/console__12_11_.log",
+            "   attachment: <run>/Online_shop/0001-Take_screenshot/console_12_11_.log",
             "  Place order(Input={\"token\":\"expired\",\"cartId\":\"cart-1\"}, Output={}):TECHNICAL_ERROR:The token 'expired' is no longer valid",
             "   attachment: <run>/Online_shop/0002-Place_order/exception.log"
         ), withRunDirectoryReplaced(Arrays.asList(tree.toString().split("\\R")), runDirectory));
@@ -393,7 +393,7 @@ public class LiveReportTreePrinterPluginTest {
             .endBlock().build();
         AttachmentExporter exporter = new AttachmentExporter(new ReportRunFolder(reportDirectory.getRoot()));
 
-        execute(plan, LONG_HOLD_DELAY, StandardCharsets.UTF_8, exporter);
+        execute(plan, LONG_STILL_RUNNING_NOTICE_DELAY, StandardCharsets.UTF_8, exporter);
 
         Assert.assertFalse(Files.exists(exporter.getDirectory()));
         Assert.assertEquals(0, exporter.getFileCount());
@@ -415,25 +415,25 @@ public class LiveReportTreePrinterPluginTest {
         Assert.assertEquals("61.3 s", LiveReportTreePrinterPlugin.formatDuration(61270));
     }
 
-    private PlanRunnerResult execute(Plan plan, Duration holdDelay) {
-        return execute(plan, holdDelay, StandardCharsets.UTF_8);
+    private PlanRunnerResult execute(Plan plan, Duration stillRunningNoticeDelay) {
+        return execute(plan, stillRunningNoticeDelay, StandardCharsets.UTF_8);
     }
 
-    private PlanRunnerResult execute(Plan plan, Duration holdDelay, Charset charset) {
-        return execute(plan, holdDelay, charset, null);
+    private PlanRunnerResult execute(Plan plan, Duration stillRunningNoticeDelay, Charset charset) {
+        return execute(plan, stillRunningNoticeDelay, charset, null);
     }
 
-    private PlanRunnerResult execute(Plan plan, Duration holdDelay, Charset charset, AttachmentExporter attachmentExporter) {
-        return execute(plan, holdDelay, charset, attachmentExporter, false);
+    private PlanRunnerResult execute(Plan plan, Duration stillRunningNoticeDelay, Charset charset, AttachmentExporter attachmentExporter) {
+        return execute(plan, stillRunningNoticeDelay, charset, attachmentExporter, false);
     }
 
-    private PlanRunnerResult execute(Plan plan, Duration holdDelay, Charset charset, AttachmentExporter attachmentExporter,
+    private PlanRunnerResult execute(Plan plan, Duration stillRunningNoticeDelay, Charset charset, AttachmentExporter attachmentExporter,
                                      boolean inColors) {
         outputCharset = charset;
         // Also written to the standard output, for the report to be reviewed in the output of the tests
         PrintStream out = new PrintStream(new TeeOutputStream(output, System.out), true, charset);
         try (ExecutionEngine executionEngine = ExecutionEngine.builder()
-            .withPlugin(new LiveReportTreePrinterPlugin(List.of(out), holdDelay, attachmentExporter, o -> inColors))
+            .withPlugin(new LiveReportTreePrinterPlugin(List.of(out), stillRunningNoticeDelay, attachmentExporter, o -> inColors))
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new BaseArtefactPlugin())
             .withPlugin(new FunctionPlugin())

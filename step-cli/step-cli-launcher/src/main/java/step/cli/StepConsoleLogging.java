@@ -126,25 +126,46 @@ class StepConsoleLogging {
     }
 
     /**
-     * Keeps the logs of the execution engine out of the output until the returned handle is closed, for them not to
-     * be interleaved with the report printed by {@link LiveReportTreePrinterPlugin}. Errors still get through, as do
-     * the logs of the CLI itself and those of the local agents, which say why the execution is waiting for them to
-     * start.
+     * Keeps the logs of the execution engine out of the output until the returned {@link Restorer} is closed, for them
+     * not to be interleaved with the report printed by {@link LiveReportTreePrinterPlugin}. Errors still get through,
+     * as do the logs of the CLI itself and those of the local agents, which say why the execution is waiting for them
+     * to start.
+     *
+     * @return the autocloseable restoring the logs once closed. The suppressions nest: the logs are restored once all of them are closed.
      */
-    static Runnable suppressExecutionLogs() {
+    static Restorer suppressExecutionLogsUntilClosed() {
         LoggerContext loggerContext = loggerContext();
         if (loggerContext == null) {
-            return () -> {
-            };
+            return Restorer.NOTHING;
         }
-        return suppressExecutionLogs(loggerContext);
+        return suppressExecutionLogsUntilClosed(loggerContext);
     }
 
-    static Runnable suppressExecutionLogs(LoggerContext loggerContext) {
+    /**
+     * @see #suppressExecutionLogsUntilClosed()
+     */
+    static Restorer suppressExecutionLogsUntilClosed(LoggerContext loggerContext) {
         ExecutionLogsFilter filter = new ExecutionLogsFilter();
         filter.start();
         loggerContext.addTurboFilter(filter);
+        // Removes this filter only, the one of another suppression staying in place
         return () -> loggerContext.getTurboFilterList().remove(filter);
+    }
+
+    /**
+     * Undoes what created it once closed, typically in a try-with-resources. Closing it again does nothing.
+     */
+    @FunctionalInterface
+    interface Restorer extends AutoCloseable {
+
+        /**
+         * Restores nothing, when there is nothing to undo
+         */
+        Restorer NOTHING = () -> {
+        };
+
+        @Override
+        void close();
     }
 
     static class ExecutionLogsFilter extends TurboFilter {

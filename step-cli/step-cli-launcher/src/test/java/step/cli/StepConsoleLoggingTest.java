@@ -29,6 +29,7 @@ import ch.qos.logback.core.read.ListAppender;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import step.cli.StepConsoleLogging.Restorer;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -137,18 +138,35 @@ public class StepConsoleLoggingTest {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         rootLoggerWriting(output, "%msg%n");
 
-        Runnable restore = StepConsoleLogging.suppressExecutionLogs(loggerContext);
-        loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").info("engine info");
-        loggerContext.getLogger("step.commons.activation.Activator").warn("engine warning");
-        loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").error("engine error");
-        loggerContext.getLogger("step.cli.ApLocalExecuteCommandHandler").info("cli info");
-        loggerContext.getLogger("step.agents.provisioning.local.LocalProcessAgentProvisioningDriver").info("agent info");
-        loggerContext.getLogger("step.client.SomeClient").info("other info");
-        restore.run();
+        try (Restorer ignored = StepConsoleLogging.suppressExecutionLogsUntilClosed(loggerContext)) {
+            loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").info("engine info");
+            loggerContext.getLogger("step.commons.activation.Activator").warn("engine warning");
+            loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").error("engine error");
+            loggerContext.getLogger("step.cli.ApLocalExecuteCommandHandler").info("cli info");
+            loggerContext.getLogger("step.agents.provisioning.local.LocalProcessAgentProvisioningDriver").info("agent info");
+            loggerContext.getLogger("step.client.SomeClient").info("other info");
+        }
         loggerContext.getLogger("step.core.execution.ExecutionEngineRunner").info("engine info after");
 
         Assert.assertEquals("engine error\ncli info\nagent info\nengine info after\n",
             output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n"));
+    }
+
+    @Test
+    public void restoresTheExecutionLogsOnceAllTheSuppressionsAreClosed() {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        rootLoggerWriting(output, "%msg%n");
+        Logger engineLogger = loggerContext.getLogger("step.core.execution.ExecutionEngineRunner");
+
+        Restorer first = StepConsoleLogging.suppressExecutionLogsUntilClosed(loggerContext);
+        Restorer second = StepConsoleLogging.suppressExecutionLogsUntilClosed(loggerContext);
+        first.close();
+        first.close();
+        engineLogger.info("one suppression left");
+        second.close();
+        engineLogger.info("none left");
+
+        Assert.assertEquals("none left\n", output.toString(StandardCharsets.UTF_8).replace("\r\n", "\n"));
     }
 
     private PatternLayoutEncoder rootLoggerEncoder(String pattern) {

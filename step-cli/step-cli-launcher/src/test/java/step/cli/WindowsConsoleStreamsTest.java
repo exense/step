@@ -31,6 +31,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Runs on every OS: the functions of Windows are replaced by {@link Console}, a fake {@link Kernel32} written in Java.
+ * These tests cover the logic of the class, not the calls to Windows, which only {@link WindowsConsoleStreams#install()}
+ * makes, on Windows only.
+ */
 public class WindowsConsoleStreamsTest {
 
     @Test

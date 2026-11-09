@@ -39,7 +39,7 @@ public class AttachmentExportPlugin extends AbstractExecutionEnginePlugin {
 
     private final AttachmentExporter exporter;
 
-    // Guarded by this instance
+    // Only used in synchronized blocks: the nodes of parallel steps start and end in different threads
     private final Map<ObjectId, String> runningNodePaths = new HashMap<>();
 
     public AttachmentExportPlugin(AttachmentExporter exporter) {

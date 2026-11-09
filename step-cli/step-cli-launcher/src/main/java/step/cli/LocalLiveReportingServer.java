@@ -64,9 +64,10 @@ import java.nio.file.Files;
  * listens on the loopback interface only, the agents running on this machine.
  * <p>
  * Its {@link #getExecutionEnginePlugin() plugin} makes it the storage of all the attachments of the executions, the
- * streamed ones as the others, as the controller does. They are kept in a temporary folder deleted once the server
- * is closed, which the {@link AttachmentExporter} writes them to the report folder from before. The live measures and
- * metrics are received and dropped, a local execution having no use for them.
+ * streamed ones as well as regular ones, just like the controller does. They are kept in a temporary folder, which is
+ * deleted when the server is closed. The reports and the {@link AttachmentExporter} copy the attachments they need to
+ * the report folder before that. The live measures and metrics are received and dropped, a local execution having no
+ * use for them.
  */
 public class LocalLiveReportingServer implements AutoCloseable {
 
