@@ -48,18 +48,33 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
                                         StreamingResourcesStorageBackend storage,
                                         Function<String, StreamingResourceReference> referenceProducerFunction,
                                         StreamingResourceUploadContexts uploadContexts) {
-        super(catalog, storage, referenceProducerFunction, uploadContexts);
-
-        authorizationManager = globalContext.get(AuthorizationManager.class);
-        objectHookRegistry = globalContext.get(ObjectHookRegistry.class);
+        this(catalog, storage, referenceProducerFunction, uploadContexts, globalContext.get(AuthorizationManager.class),
+            globalContext.get(ObjectHookRegistry.class), QuotaLimits.fromStepProperties(globalContext.getConfiguration()));
         if (authorizationManager == null || objectHookRegistry == null) {
             // this shouldn't happen in production, but may be the case in some unit tests where it's harmless and not required
             logger.warn("AuthorizationManager and/or ObjectHookRegistry missing from context, all permission checks will refuse access");
         }
+        logger.info("Streaming attachment global quotas (null==unlimited): {}", QuotaLimits.fromStepProperties(globalContext.getConfiguration()));
+    }
 
-        QuotaLimits globalLimits = QuotaLimits.fromStepProperties(globalContext.getConfiguration());
-        logger.info("Streaming attachment global quotas (null==unlimited): {}", globalLimits);
-        quotaCheckers = new QuotaCheckers(globalLimits);
+    /**
+     * @param authorizationManager checks the permissions to download the resources, null for every download to be
+     *                             refused, as for a local execution which has no download endpoint
+     * @param objectHookRegistry   checks the access to the resources in the context of the session, null as well for
+     *                             every download to be refused
+     * @param globalLimits         the quotas of the resources, which are not enforced if they are unlimited
+     */
+    public StepStreamingResourceManager(StreamingResourceCollectionCatalogBackend catalog,
+                                        StreamingResourcesStorageBackend storage,
+                                        Function<String, StreamingResourceReference> referenceProducerFunction,
+                                        StreamingResourceUploadContexts uploadContexts,
+                                        AuthorizationManager<User, Session<User>> authorizationManager,
+                                        ObjectHookRegistry objectHookRegistry,
+                                        QuotaLimits globalLimits) {
+        super(catalog, storage, referenceProducerFunction, uploadContexts);
+        this.authorizationManager = authorizationManager;
+        this.objectHookRegistry = objectHookRegistry;
+        quotaCheckers = new QuotaCheckers(Objects.requireNonNull(globalLimits));
     }
 
     @Override
