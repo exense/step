@@ -15,6 +15,7 @@ import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
+import step.core.proxy.ProxySelectors;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.SchedulerServices;
 import step.framework.server.CORSRequestResponseFilter;
@@ -41,6 +42,14 @@ public class StepControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void init(GlobalContext context) throws Exception {
+        // Initialize global proxy selector settings early on;
+        // invalid configurations cause a fatal error.
+        try {
+            ProxySelectors.initialize(context.getConfiguration());
+        } catch (Exception e) {
+            throw new PluginCriticalException(e.getMessage(), e);
+        }
+
         controller = new Controller(context);
         controller.init(context.getServiceRegistrationCallback());
         context.put(Controller.class, controller);
