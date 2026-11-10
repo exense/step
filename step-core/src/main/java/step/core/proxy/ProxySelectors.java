@@ -37,7 +37,8 @@ public class ProxySelectors {
 
     public static ProxySelectors getInstance() {
         if (INSTANCE == null) {
-            throw new IllegalStateException("ProxySelectors instance has not been initialized");
+            logger.warn("Proxy selector configuration not initialized, no proxy settings are defined; all connections will be unproxied.");
+            return new ProxySelectors(null);
         }
         return INSTANCE;
     }
