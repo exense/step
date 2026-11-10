@@ -51,6 +51,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -238,6 +239,24 @@ public class PlanRunnerResult {
      * @throws IOException
      */
     public PlanRunnerResult printTree(Writer writer, boolean printNodeDetails, boolean printAttachments) throws IOException {
+        return printTree(writer, printNodeDetails, printAttachments, node -> List.of());
+    }
+
+    /**
+     * Prints the result tree to the {@link Writer} provided as input
+     *
+     * @param writer
+     * @param printNodeDetails        if the details of the report nodes should be printed out
+     * @param printAttachments        if the attachments of the report nodes have to be
+     *                                printed out (currently restricted to attachments
+     *                                called "exception.log")
+     * @param additionalLinesProducer the lines to be printed below each report node, one level deeper
+     * @return this instance
+     * @throws IOException
+     */
+    public PlanRunnerResult printTree(Writer writer, boolean printNodeDetails, boolean printAttachments,
+                                      Function<ReportNode, List<String>> additionalLinesProducer) throws IOException {
+        Objects.requireNonNull(additionalLinesProducer);
         BufferedWriter bWriter = new BufferedWriter(writer);
         AtomicReference<ParentSource> previousParentSource = new AtomicReference<>(ParentSource.MAIN);
         AtomicInteger previousStackSize = new AtomicInteger(0);
@@ -273,6 +292,12 @@ public class PlanRunnerResult {
                 }
                 bWriter.write(row.toString());
                 bWriter.write("\n");
+
+                for (String additionalLine : additionalLinesProducer.apply(node)) {
+                    indent(indentSize + 1, bWriter);
+                    bWriter.write(additionalLine);
+                    bWriter.write("\n");
+                }
 
                 if (printAttachments) {
                     List<AttachmentMeta> attachments = node.getAttachments();
