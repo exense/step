@@ -21,7 +21,9 @@ package step.automation.packages;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 /**
  * The one convention by which every file an automation package holds is named after its entity - the YAML
@@ -48,6 +50,19 @@ public class ApFileNamesTest {
         assertEquals("a_b", ApFileNames.sanitize("a*b"));
         assertEquals("_nul", ApFileNames.sanitize("nul"));
         assertEquals("_CON", ApFileNames.sanitize("CON"));
+        assertEquals("_nul.backup", ApFileNames.sanitize("nul.backup"));
+    }
+
+    @Test
+    public void recognizesTheNamesWindowsReserves() {
+        assertTrue(ApFileNames.isReservedOnWindows("CON"));
+        assertTrue(ApFileNames.isReservedOnWindows("aux.txt"));
+        assertTrue(ApFileNames.isReservedOnWindows("Com0.tar.gz"));
+        assertTrue(ApFileNames.isReservedOnWindows("LPT¹"));
+        assertTrue(ApFileNames.isReservedOnWindows("conout$"));
+        assertFalse(ApFileNames.isReservedOnWindows("CON-tree.txt"));
+        assertFalse(ApFileNames.isReservedOnWindows("COM10"));
+        assertFalse(ApFileNames.isReservedOnWindows(".nul"));
     }
 
     /**
