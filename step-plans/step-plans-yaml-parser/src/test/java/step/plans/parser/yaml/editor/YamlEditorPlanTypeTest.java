@@ -14,12 +14,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import static step.plans.parser.yaml.YamlPlanReaderTest.replaceYamlVersionWithCurrentOne;
 
 public class YamlEditorPlanTypeTest {
 
     private static final Logger log = LoggerFactory.getLogger(YamlEditorPlanTypeTest.class);
+
+    public YamlEditorPlanTypeTest() {
+        // networknt error messages are localized. Fix it to English for consistent assertions across developer machines
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     @Test
     public void testNewPlan() throws Exception {
@@ -40,17 +46,19 @@ public class YamlEditorPlanTypeTest {
             @Override
             protected void doAsserts(List<PlanCompilationError> errors) {
                 Assert.assertEquals(1, errors.size());
-                Assert.assertEquals("#: 0 subschemas matched instead of one", errors.get(0).getMessage());
-                Assert.assertEquals(4, ((YamlEditorPlanTypeCompiler.YamlEditorPlanCompilationError) errors.get(0)).getLine());
+                Assert.assertEquals("property 'wrongArtefact' is not defined in the schema and the schema does not allow additional properties", errors.get(0).getMessage());
+                Assert.assertEquals(7, ((YamlEditorPlanTypeCompiler.YamlEditorPlanCompilationError) errors.get(0)).getLine());
             }
         }.check("src/test/resources/step/plans/parser/yaml/invalid/test-invalid-plan-2.yml");
 
         new CheckValidationErrors() {
             @Override
             protected void doAsserts(List<PlanCompilationError> errors) {
-                Assert.assertEquals(1, errors.size());
-                Assert.assertEquals("#: required key [name] not found", errors.get(0).getMessage());
-                Assert.assertEquals(1, ((YamlEditorPlanTypeCompiler.YamlEditorPlanCompilationError) errors.get(0)).getLine());
+                Assert.assertEquals(2, errors.size());
+                Assert.assertEquals("property 'name' is not defined in the schema and the schema does not allow additional properties", errors.get(0).getMessage());
+                Assert.assertEquals("required property 'name' not found", errors.get(1).getMessage());
+                Assert.assertEquals(3, ((YamlEditorPlanTypeCompiler.YamlEditorPlanCompilationError) errors.get(0)).getLine());
+                Assert.assertEquals(1, ((YamlEditorPlanTypeCompiler.YamlEditorPlanCompilationError) errors.get(1)).getLine());
             }
         }.check("src/test/resources/step/plans/parser/yaml/invalid/test-invalid-plan-1.yml");
     }

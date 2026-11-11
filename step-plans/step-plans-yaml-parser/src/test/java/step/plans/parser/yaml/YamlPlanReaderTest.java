@@ -33,13 +33,21 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.planbuilder.BaseArtefacts;
+import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
-import step.plans.parser.yaml.model.YamlPlanVersions;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Locale;
 
 public class YamlPlanReaderTest {
 
@@ -60,6 +68,9 @@ public class YamlPlanReaderTest {
             true,
             null
         );
+
+        // networknt error messages are localized. Fix it to English for consistent assertions across developer machines
+        Locale.setDefault(Locale.ENGLISH);
 
         this.technicalPlanMapper = createTechnicalPlanObjectMapper();
     }
@@ -182,8 +193,9 @@ public class YamlPlanReaderTest {
         // The selectionAttributes field isn't migrated for plans declaring the version 1.3.0, the call plan has then neither plan nor planId
         try (FileInputStream is = new FileInputStream("src/test/resources/step/plans/parser/yaml/call-plan/test-call-plan-legacy-selection-attributes.yml")) {
             RuntimeException exception = Assert.assertThrows(RuntimeException.class, () -> yamlReader.readYamlPlan(is));
-            Assert.assertEquals("Unable to read the plan 'Plan1': The callPlan 'Call Plan2' must define either 'plan' or 'planId'. " +
-                "Note that since the version 1.3.0 of the yaml format, the 'selectionAttributes' field has been replaced by the 'plan' field.", exception.getMessage());
+            // TODO: SED-5000 we need to review if this more generic error message is a valid solution to SED-5028
+            Assert.assertEquals("YAML Plan Validation Errors occurred:\n" +
+                "Line 8, Column 11: property 'selectionAttributes' is not defined in the schema and the schema does not allow additional properties", exception.getMessage());
         }
     }
 
@@ -251,7 +263,10 @@ public class YamlPlanReaderTest {
 
                 Assert.fail("Validation exception should be thrown");
             } catch (YamlPlanValidationException ex) {
-                Assert.assertEquals("#: required key [name] not found", ex.getMessage());
+                Assert.assertEquals("""
+                    YAML Plan Validation Errors occurred:
+                    Line 3, Column 5: property 'name' is not defined in the schema and the schema does not allow additional properties
+                    Line 1, Column 1: required property 'name' not found""", ex.getMessage());
                 log.info("OK - Validation exception caught", ex);
             }
 

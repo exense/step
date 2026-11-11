@@ -19,9 +19,9 @@
 package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
-import org.apache.poi.ss.formula.functions.T;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.attachments.FileResolver;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.ScriptAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
@@ -111,20 +111,18 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
     public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean scanAnnotations) throws AutomationPackageReadingException {
-        try {
-            if (automationPackageArchive.hasAutomationPackageDescriptor()) {
-                try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
-                    AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream,
-                        Objects.toString(automationPackageArchive.getDescriptorYamlUrl(), null), automationPackageArchive.getAutomationPackageName());
-                    return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, scanAnnotations);
-                }
-            } else if (scanAnnotations) {
-                return buildAutomationPackage(null, automationPackageArchive, apVersion, scanAnnotations);
-            } else {
-                return null;
+        if (automationPackageArchive.hasAutomationPackageDescriptor()) {
+            try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
+                AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream,
+                    FileResolver.resourceApPathFromPackageBase(automationPackageArchive.getOriginalFile().toURI(), automationPackageArchive.getDescriptorYamlUrl().toURI()), automationPackageArchive.getAutomationPackageName());
+                return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, scanAnnotations);
+            } catch (URISyntaxException | IOException ex) {
+                throw new AutomationPackageReadingException("Unable to read the automation package", ex);
             }
-        } catch (IOException ex) {
-            throw new AutomationPackageReadingException("Unable to read the automation package", ex);
+        } else if (scanAnnotations) {
+            return buildAutomationPackage(null, automationPackageArchive, apVersion, scanAnnotations);
+        } else {
+            return null;
         }
     }
 
@@ -204,42 +202,37 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             if (!upgrade && readDeclaredSchemaVersion(reader, descriptorUrl) == null) {
                 throw new NoAutomationPackageSchemaVersionSetException(STEP_YAML_SCHEMA_VERSION.toString());
             }
-            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, descriptorUrl.toString(), archive.getOriginalFileName());
+            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, FileResolver.resourceApPathFromPackageBase(archive.getOriginalFile().toURI(), archive.getDescriptorYamlUrl().toURI()), archive.getOriginalFileName());
             boolean noVersionDeclared = descriptor.getVersion().getValue() == null;
 
-            try {
-                Path descriptorPath = Path.of(descriptorUrl.toURI());
-                descriptor.setFragmentPath(descriptorPath);
-                AutomationPackageContent content = newContentInstance();
-                // Keeps the order the fragments are read in, which decides the fragment reported as outdated
-                Set<AutomationPackageFragmentYaml> fragments = new LinkedHashSet<>();
-                List<Plan> plainTextPlans = new ArrayList<>();
-                fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments, plainTextPlans, null);
-                AutomationPackage automationPackage = new AutomationPackage();
-                automationPackage.setStatus(AutomationPackageStatus.EDITING);
-                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
-                AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext, plainTextPlans);
+            Path descriptorPath = Path.of(descriptorUrl.toURI());
+            descriptor.setFragmentPath(descriptorPath);
+            AutomationPackageContent content = newContentInstance();
+            // Keeps the order the fragments are read in, which decides the fragment reported as outdated
+            Set<AutomationPackageFragmentYaml> fragments = new LinkedHashSet<>();
+            List<Plan> plainTextPlans = new ArrayList<>();
+            fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments, plainTextPlans, null);
+            AutomationPackage automationPackage = new AutomationPackage();
+            automationPackage.setStatus(AutomationPackageStatus.EDITING);
+            StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
+            AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext, plainTextPlans);
 
-                // The descriptor and each fragment may declare their own version, if any use a legacy version, upgrade is required
-                List<AutomationPackageFragmentYaml> outdatedFragments = fragmentManager.getOutdatedFragments();
-                if (!upgrade) {
-                    if (!outdatedFragments.isEmpty()) {
-                        throw legacySchemaVersionException(descriptor, outdatedFragments);
-                    }
-                } else if (noVersionDeclared || !outdatedFragments.isEmpty()) {
-                    fragmentManager.upgradeToCurrentSchemaVersion();
+            // The descriptor and each fragment may declare their own version, if any use a legacy version, upgrade is required
+            List<AutomationPackageFragmentYaml> outdatedFragments = fragmentManager.getOutdatedFragments();
+            if (!upgrade) {
+                if (!outdatedFragments.isEmpty()) {
+                    throw legacySchemaVersionException(descriptor, outdatedFragments);
                 }
-                // Transform resource references to AP resources as during AP deployment. Only required for plans  as
-                // keywords plugins map their own resource references while the fragments are read;
-                AutomationPackagePlansAttributesApplier.applySpecialAttributesToPlans(stagingContext,
-                    fragmentManager.getBusinessObjects(Plan.class));
-                return fragmentManager;
-            } catch (FileSystemNotFoundException | URISyntaxException e) {
-                throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +
-                    "an automation package as a packaged jar. This is not supported and expected behaviour", e);
+            } else if (noVersionDeclared || !outdatedFragments.isEmpty()) {
+                fragmentManager.upgradeToCurrentSchemaVersion();
             }
-        } catch (IOException e) {
-            throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
+            // Transform resource references to AP resources as during AP deployment. Only required for plans  as
+            // keywords plugins map their own resource references while the fragments are read;
+            AutomationPackagePlansAttributesApplier.applySpecialAttributesToPlans(stagingContext,
+                fragmentManager.getBusinessObjects(Plan.class));
+            return fragmentManager;
+        } catch (URISyntaxException | FileSystemNotFoundException | IOException ex) {
+            throw new AutomationPackageReadingException("Failed to read automation package for editing", ex);
         }
     }
 
@@ -305,7 +298,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 }
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = AutomationPackageArchive.openStreamWithoutCaching(resource)) {
-                        AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName(), packageVersion);
+                        AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream,
+                            FileResolver.resourceApPathFromPackageBase(archive.getOriginalFile().toURI(), resource.toURI()), archive.getAutomationPackageName(), packageVersion);
                         fragments.add(referencedFragment);
                         try {
                             referencedFragment.setFragmentPath(Path.of(resource.toURI()));

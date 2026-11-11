@@ -27,6 +27,7 @@ import step.resources.ResourceRevisionFileHandle;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 
 public class FileResolver {
@@ -60,6 +61,19 @@ public class FileResolver {
     public FileResolver(ResourceManager resourceManager) {
         super();
         this.resourceManager = resourceManager;
+    }
+
+    public static String resourceApPathFromPackageBase(URI packageBase, URI resourceUri) {
+        if ("jar".equals(resourceUri.getScheme())) {
+            String ssp = resourceUri.getSchemeSpecificPart();
+            int sep = ssp.indexOf("!/");
+            if (sep < 0 ) {
+                throw new IllegalArgumentException("Not a jar entry URI: " + resourceUri);
+            }
+            return AP_RESOURCE_PREFIX + Path.of(ssp.substring(sep + 2));
+        }
+
+        return AP_RESOURCE_PREFIX + packageBase.relativize(resourceUri).getPath();
     }
 
     public ResourceManager getResourceManager() {
@@ -213,6 +227,7 @@ public class FileResolver {
      * and {@code /}, collapses {@code .}/{@code ..} segments) and rejects any path that escapes its
      * root. Used both to look the entry up in the archive and to build the on-disk cache target, so
      * a {@code ..} traversal cannot reach outside {@code <cacheRoot>/<apId>/}.
+     *
      * @throws IllegalArgumentException if the path is empty or escapes the archive root. Note that a
      *                                  path the file system itself cannot represent surfaces as an
      *                                  {@code InvalidPathException}, which is one too
