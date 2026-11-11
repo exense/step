@@ -369,8 +369,8 @@ public class JUnit4ReportWriter implements ReportWriter {
             }
 
             // all reports prepared as zip are unzipped into the subdirectory with the same name as main xml report (without extension)
-            // so for report folder `target\step-reports\` the link should
-            // target\step-reports\20241118-173029-281662-junit\attachments\673b4f80cf93b812604f084c\exception.log
+            // so for the folder `target\step-reports\20241118-173029-281662\` of the run the link should be
+            // target\step-reports\20241118-173029-281662\junit\attachments\673b4f80cf93b812604f084c\exception.log
             String subfolders = Files.getNameWithoutExtension(reportFileName) + File.separator;
             subfolders += junit4ReportConfig.getAttachmentsSubfolder() == null ? "" : junit4ReportConfig.getAttachmentsSubfolder();
             if (!subfolders.isEmpty()) {
@@ -403,6 +403,9 @@ public class JUnit4ReportWriter implements ReportWriter {
     }
 
     private String prepareReportFileName() {
+        if (junit4ReportConfig.getReportName() != null) {
+            return junit4ReportConfig.getReportName() + ".xml";
+        }
         // use timestamp instead of plan name, because plan name can contain forbidden characters for file name
         String formattedTimestamp = getCurrentTimestamp();
         String fileName = formattedTimestamp + "-" + CustomReportType.JUNITXML.getNameInFile().toLowerCase();

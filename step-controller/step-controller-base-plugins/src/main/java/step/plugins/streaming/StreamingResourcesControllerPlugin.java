@@ -7,14 +7,10 @@ import jakarta.websocket.server.HandshakeRequest;
 import jakarta.websocket.server.ServerEndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
 import step.core.deployment.ObjectHookControllerPlugin;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.resources.ResourceManagerControllerPlugin;
 import step.streaming.common.StreamingResourceUploadContexts;
@@ -65,7 +61,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         context.setAttachmentStorage(manager);
         context.getServiceRegistrationCallback().registerService(StreamingResourceServices.class);
 
-        context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeUploadConfig(manager));
+        context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeUploadConfig(manager, sessionsHandler));
         context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeDownloadConfig(manager));
         logger.info("Streaming Websockets plugin started, upload/download URLs: {}, {}", websocketBaseUri + UPLOAD_PATH, websocketBaseUri + DOWNLOAD_PATH);
     }
@@ -95,7 +91,10 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         }
     }
 
-    private ServerEndpointConfig makeUploadConfig(StreamingResourceManager manager) {
+    /**
+     * @return the endpoint the keywords upload the files they stream to, at {@link #UPLOAD_PATH}
+     */
+    public static ServerEndpointConfig makeUploadConfig(StreamingResourceManager manager, WebsocketServerEndpointSessionsHandler sessionsHandler) {
         return ServerEndpointConfig.Builder.create(StepWebsocketUploadEndpoint.class, UPLOAD_PATH)
             .configurator(new EndpointConfigurator(() -> new StepWebsocketUploadEndpoint(manager, sessionsHandler)))
             .build();
@@ -109,24 +108,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new AbstractExecutionEnginePlugin() {
-            @Override
-            public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-                // Makes streaming available to the execution
-                executionContext.put(StreamingResourceUploadContexts.class, uploadContexts);
-                executionContext.put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
-                // Note: this URL is also used by the measures streaming to determine the hostname.
-                executionContext.put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, controllerUrl);
-            }
-
-
-            @Override
-            public void afterExecutionEnd(ExecutionContext context) {
-                // unregisters the execution with manager (registration is on-demand,
-                // but execution end needs to be signaled explicitly)
-                manager.unregisterExecution(context.getExecutionId());
-            }
-        };
+        return new StreamingUploadsExecutionPlugin(manager, uploadContexts, controllerUrl);
     }
 
     @Override

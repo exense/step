@@ -49,6 +49,11 @@ public class JUnitXmlReportBuilder {
     private static final Logger log = LoggerFactory.getLogger(JUnitXmlReportBuilder.class);
 
     public static final String DEFAULT_ATTACHMETS_SUBFOLDER = "attachments";
+    /**
+     * The name of the zip archive and of the xml report it contains, the CLI and the maven plugin writing it to the
+     * folder of their run
+     */
+    public static final String ZIP_REPORT_NAME = "junit";
 
     private final ReportNodeAccessor reportNodeAccessor;
     private final AttachmentStorage attachmentStorage;
@@ -76,8 +81,8 @@ public class JUnitXmlReportBuilder {
 
     /**
      * Builds the JUnit report as zip archive with the following structure:
-     * {attachmentsRootFolder} - the configured output folder for CLI or maven plugin
-     * {timestamp}-junit.xml - the report (containing relative links to attached files)
+     * {attachmentsRootFolder} - the folder of the run of the CLI or maven plugin, the archive being unzipped to its junit subfolder
+     * junit.xml - the report (containing relative links to attached files)
      * attachments - the folder with attachments
      * {testCaseId} - the subfoler with attachments per testCase (to avoid collisions by file names in case we have the same name for several attachments like exception.log)
      * exception.log - some attachments
@@ -95,6 +100,7 @@ public class JUnitXmlReportBuilder {
             .setAttachmentStorage(attachmentStorage)
             .setAddLinksToStepFrontend(true)
             .setServerConfiguration(configuration)
+            .setReportName(ZIP_REPORT_NAME)
             .createConfig();
 
         JUnit4ReportWriter reportWriter = new JUnit4ReportWriter(junit4ReportConfig);
