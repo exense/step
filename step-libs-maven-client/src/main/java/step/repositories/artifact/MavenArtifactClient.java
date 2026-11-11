@@ -19,6 +19,10 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.*;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.eclipse.aether.transfer.ArtifactTransferException;
+import org.eclipse.aether.transfer.MetadataNotFoundException;
+import org.eclipse.aether.transfer.MetadataTransferException;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
@@ -106,7 +110,15 @@ public class MavenArtifactClient {
         artifactRequest.setRepositories(enabledRepositoriesFromProfile);
         File result;
 
-        ArtifactResult artifactResult = repositorySystem.resolveArtifact(session, artifactRequest);
+        ArtifactResult artifactResult;
+        try {
+            artifactResult = repositorySystem.resolveArtifact(session, artifactRequest);
+        } catch (ArtifactResolutionException e) {
+            ArtifactResolutionException reportedException = withRemoteRepositoryFailures(artifact, e);
+            // This is the single place where the full failure (including stack trace) is logged. Callers only propagate the message.
+            logger.error("Error while resolving artifact {} from repositories {}", artifact, enabledRepositoriesFromProfile, reportedException);
+            throw reportedException;
+        }
         Artifact resolvedArtifact = artifactResult.getArtifact();
         if (resolvedArtifact != null) {
             result = resolvedArtifact.getFile();
@@ -116,6 +128,68 @@ public class MavenArtifactClient {
         } else {
             artifactResult.getExceptions().forEach(e -> logger.error("Error while resolving artifact " + artifact.toString(), e));
             throw new RuntimeException("The resolution of the artifact failed. See the logs for more details");
+        }
+    }
+
+    /**
+     * The resolver only reports its first failure in the exception message. For versions resolved through
+     * maven-metadata.xml (LATEST, RELEASE, ranges and SNAPSHOTs), that is the miss in the local repository, which
+     * hides remote repositories that could not be accessed (unknown host, connection refused, authentication...),
+     * typically due to an incorrect settings.xml. When such failures occur, they are all reported in the message.
+     *
+     * @return a new exception listing the failures to access remote repositories, or the original exception if there are none
+     */
+    static ArtifactResolutionException withRemoteRepositoryFailures(Artifact artifact, ArtifactResolutionException e) {
+        List<Exception> failures = new ArrayList<>();
+        for (ArtifactResult result : e.getResults()) {
+            for (Exception exception : result.getExceptions()) {
+                failures.add(exception);
+                if (exception instanceof VersionResolutionException versionResolutionException) {
+                    VersionResult versionResult = versionResolutionException.getResult();
+                    if (versionResult != null) {
+                        failures.addAll(versionResult.getExceptions());
+                    }
+                }
+            }
+        }
+
+        Map<String, Exception> accessFailures = new LinkedHashMap<>();
+        Set<String> notFoundMessages = new LinkedHashSet<>();
+        for (Exception failure : failures) {
+            if (!isFromRemoteRepository(failure)) {
+                continue;
+            }
+            if (failure instanceof MetadataNotFoundException || failure instanceof ArtifactNotFoundException) {
+                notFoundMessages.add(failure.getMessage());
+            } else {
+                accessFailures.putIfAbsent(failure.getMessage(), failure);
+            }
+        }
+
+        if (accessFailures.isEmpty()) {
+            return e;
+        }
+
+        StringBuilder message = new StringBuilder("Failed to resolve artifact ").append(artifact)
+            .append(". Some remote repositories could not be accessed, please check the repositories configured in the Maven settings.xml: ")
+            .append(String.join("; ", accessFailures.keySet()));
+        if (!notFoundMessages.isEmpty()) {
+            message.append(". Other repositories reported: ").append(String.join("; ", notFoundMessages));
+        }
+
+        Iterator<Exception> accessFailureIterator = accessFailures.values().iterator();
+        ArtifactResolutionException reportedException = new ArtifactResolutionException(e.getResults(), message.toString(), accessFailureIterator.next());
+        accessFailureIterator.forEachRemaining(reportedException::addSuppressed);
+        return reportedException;
+    }
+
+    private static boolean isFromRemoteRepository(Exception failure) {
+        if (failure instanceof MetadataTransferException) {
+            return ((MetadataTransferException) failure).getRepository() != null;
+        } else if (failure instanceof ArtifactTransferException) {
+            return ((ArtifactTransferException) failure).getRepository() != null;
+        } else {
+            return false;
         }
     }
 
