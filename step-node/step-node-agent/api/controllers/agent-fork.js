@@ -26,6 +26,70 @@ const session = new Session();
 let pendingUnhandledRejection = null;
 let pendingUncaughtException = null;
 
+// stdout/stderr are pipes to the agent that forked this process (fork(..., { silent: true })).
+// When the agent dies, the next write to them fails with an asynchronous 'error' (EPIPE). Without a
+// listener it would become an uncaughtException, whose handler logs to the same dead pipe, raising
+// another EPIPE: an endless loop that burns CPU and, for keywords that copy their output to a file,
+// fills the disk (SED-5045). A failed stream is therefore remembered and never written to by this
+// file again, and losing the IPC channel ends the process: nobody is left to receive the result.
+const failedStreams = new Set();
+for (const stream of [process.stdout, process.stderr]) {
+  stream.on('error', () => failedStreams.add(stream));
+}
+
+function streamUsable(stream) {
+  return !failedStreams.has(stream) && !stream.destroyed && stream.writable;
+}
+
+// Logs only through a stream that has not failed. Used by the process-level handlers, which must
+// never write to a broken pipe: that write is what would trigger them again.
+function safeLog(stream, ...args) {
+  if (!streamUsable(stream)) {
+    return;
+  }
+  try {
+    (stream === process.stderr ? console.error : console.log)(...args);
+  } catch {
+    // Logging must never throw from a process-level handler
+  }
+}
+
+// The session is released at most once, whether the agent asked for it (KILL) or went away
+// (disconnect), or both: the agent can die while a KILL is being processed.
+let sessionRelease = null;
+function releaseSession() {
+  if (!sessionRelease) {
+    sessionRelease = session.asyncDispose();
+  }
+  return sessionRelease;
+}
+
+// How long the fork may spend releasing its session once the agent is gone. The agent passes its own
+// shutdown timeout (agentForker.shutdownTimeoutMs), the budget a normal close gets for the same work.
+const DEFAULT_SHUTDOWN_TIMEOUT_MS = 40000;
+function shutdownTimeoutMs() {
+  const configured = Number(process.env.STEP_AGENT_FORK_SHUTDOWN_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured >= 0 ? configured : DEFAULT_SHUTDOWN_TIMEOUT_MS;
+}
+
+// Nobody is left to receive the keyword's result: release the session, so the resources the keyword
+// stored there (browsers, servers, child processes...) don't outlive it, then exit. The release is
+// bounded: a close() that never settles must not keep the orphaned fork alive.
+process.on('disconnect', async () => {
+  const timeoutMs = shutdownTimeoutMs();
+  safeLog(process.stderr, `[Agent fork] Disconnected from the agent. Releasing the session (timeout ${timeoutMs}ms) and exiting...`);
+  setTimeout(() => {
+    safeLog(process.stderr, `[Agent fork] The session could not be released within ${timeoutMs}ms. Exiting...`);
+    process.exit(1);
+  }, timeoutMs);
+  try {
+    await releaseSession();
+  } catch (e) {
+    safeLog(process.stderr, '[Agent fork] Error while releasing session:', e);
+  }
+  process.exit(1);
+});
+
 process.on('message', async ({ type, projectPath, functionName, input, properties, keywordDirectory }) => {
   if (type === 'KEYWORD') {
     // Snapshot any errors that fired between keywords, then clear for this execution.
@@ -131,7 +195,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     }
     console.log("[Agent fork] Releasing session...")
     try {
-      await session.asyncDispose();
+      await releaseSession();
     } catch (e) {
       // A disposal failure must never prevent the process from exiting, otherwise the fork
       // would stay alive forever and the parent's close() would hang waiting for its exit.
@@ -194,16 +258,16 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
 });
 
 process.on('unhandledRejection', error => {
-  console.log('[Agent fork] Unhandled promise rejection:', error)
   pendingUnhandledRejection = error;
+  safeLog(process.stdout, '[Agent fork] Unhandled promise rejection:', error)
 })
 
 process.on('uncaughtException', error => {
-  console.log('[Agent fork] Uncaught exception:', error)
   pendingUncaughtException = error;
+  safeLog(process.stdout, '[Agent fork] Uncaught exception:', error)
 })
 
 process.on('SIGTERM', () => {
-  console.log("[Agent fork] Received SIGTERM. Exiting...")
+  safeLog(process.stdout, "[Agent fork] Received SIGTERM. Exiting...")
   process.exit(1);
 });

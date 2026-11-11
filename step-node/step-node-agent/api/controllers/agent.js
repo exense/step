@@ -400,7 +400,8 @@ class ForkedAgent {
     fs.cpSync(path.join(__dirname, 'live-reporting'), path.join(agentForkerLibPath, 'live-reporting'), { recursive: true });
     this.agentForkerLibPath = agentForkerLibPath;
     this.startupChunks = [];
-    const forkEnv = { ...process.env };
+    // The fork uses the same budget to release its session on its own if this agent goes away
+    const forkEnv = { ...process.env, STEP_AGENT_FORK_SHUTDOWN_TIMEOUT_MS: String(this.shutdownTimeoutMs) };
     if (wsModulePath) {
       forkEnv.STEP_AGENT_WS_MODULE = wsModulePath;
     }
