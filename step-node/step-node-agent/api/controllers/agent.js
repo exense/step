@@ -376,6 +376,14 @@ async function readStepKeywordDirectory(npmProjectPath) {
   }
 }
 
+// A timeout from the agent configuration, as a number of milliseconds. A missing, empty, blank,
+// non-numeric or negative value falls back to the default: Number('') is 0, which would otherwise
+// silently disable the timeout.
+function timeoutMsOrDefault(value, defaultMs) {
+  const configured = typeof value === 'string' ? (value.trim() ? Number(value) : NaN) : Number(value ?? NaN);
+  return Number.isFinite(configured) && configured >= 0 ? configured : defaultMs;
+}
+
 function createForkedAgent(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs) {
   return new ForkedAgent(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs);
 }
@@ -383,8 +391,8 @@ function createForkedAgent(keywordProjectPath, shutdownTimeoutMs, terminationGra
 class ForkedAgent {
 
   constructor(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs) {
-    this.shutdownTimeoutMs = shutdownTimeoutMs ?? DEFAULT_FORK_SHUTDOWN_TIMEOUT_MS;
-    this.terminationGracePeriodMs = terminationGracePeriodMs ?? DEFAULT_FORK_TERMINATION_GRACE_PERIOD_MS;
+    this.shutdownTimeoutMs = timeoutMsOrDefault(shutdownTimeoutMs, DEFAULT_FORK_SHUTDOWN_TIMEOUT_MS);
+    this.terminationGracePeriodMs = timeoutMsOrDefault(terminationGracePeriodMs, DEFAULT_FORK_TERMINATION_GRACE_PERIOD_MS);
     // Each fork gets its own lib directory: several forks can share the same keyword project (local
     // runs work directly in it, and a token whose session is re-created gets a new fork while the
     // previous one may still be closing). close() deletes this directory, so a fixed path would let
@@ -614,5 +622,7 @@ class CategorizedError extends Error {
 module.exports = Agent;
 // Exposed for testing the shutdown of forked keyword processes
 module.exports.ForkedAgent = ForkedAgent;
+// Exposed for testing the parsing of the configured fork timeouts
+module.exports.timeoutMsOrDefault = timeoutMsOrDefault;
 // Exposed for testing the npm command run in keyword projects
 module.exports.getNpmInstallArgs = getNpmInstallArgs;

@@ -56,19 +56,22 @@ function safeLog(stream, ...args) {
 
 // The session is released at most once, whether the agent asked for it (KILL) or went away
 // (disconnect), or both: the agent can die while a KILL is being processed.
-let sessionRelease = null;
+// The promise of that single release is kept, so that every caller awaits the same one.
+let sessionReleasePromise = null;
 function releaseSession() {
-  if (!sessionRelease) {
-    sessionRelease = session.asyncDispose();
+  if (!sessionReleasePromise) {
+    sessionReleasePromise = session.asyncDispose();
   }
-  return sessionRelease;
+  return sessionReleasePromise;
 }
 
 // How long the fork may spend releasing its session once the agent is gone. The agent passes its own
 // shutdown timeout (agentForker.shutdownTimeoutMs), the budget a normal close gets for the same work.
 const DEFAULT_SHUTDOWN_TIMEOUT_MS = 40000;
 function shutdownTimeoutMs() {
-  const configured = Number(process.env.STEP_AGENT_FORK_SHUTDOWN_TIMEOUT_MS);
+  // An empty or blank value falls back to the default too: Number('') would be 0
+  const raw = process.env.STEP_AGENT_FORK_SHUTDOWN_TIMEOUT_MS;
+  const configured = raw?.trim() ? Number(raw) : NaN;
   return Number.isFinite(configured) && configured >= 0 ? configured : DEFAULT_SHUTDOWN_TIMEOUT_MS;
 }
 
