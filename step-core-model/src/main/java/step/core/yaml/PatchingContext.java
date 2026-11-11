@@ -2,10 +2,12 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
+import step.core.yaml.deserialization.PatchingParserDelegate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -71,6 +73,25 @@ public class PatchingContext {
         return getChunkBounds(entity).isPresent();
     }
 
+    public String getUnclaimedChunkBefore(PatchableYamlModel item) {
+        Optional<ChunkBounds> chunkBoundsOptional = getChunkBounds(item);
+        if (chunkBoundsOptional.isEmpty()) {
+            return "";
+        }
+        ChunkBounds chunkBounds = chunkBoundsOptional.get();
+        ChunkBounds chunkBefore = chunks.lowerKey(chunkBounds);
+        if (chunkBefore == null) {
+            if (chunkBounds.startLineNumber > 1) {
+                return getChunk(new ChunkBounds(1, chunkBounds.startLineNumber - 1, ChunkBounds.Portion.BODY));
+            }
+            return "";
+        }
+        if (chunkBefore.endLineNumber + 1 < chunkBounds.startLineNumber) {
+            return getChunk(new ChunkBounds(chunkBefore.endLineNumber() + 1, chunkBounds.startLineNumber - 1, ChunkBounds.Portion.BODY));
+        }
+        return "";
+    }
+
     /**
      * @return whether the entity starts a line of its own with the item indicator ("- "), as the items of a block
      * sequence do. The items of a flow sequence ("[a, b]") share their lines with the sequence and with each other:
@@ -82,7 +103,21 @@ public class PatchingContext {
             .orElse(false);
     }
 
-
+    /**
+     * Record of Chunk bounds to define the location of a chunk of yaml as stored in the initialLines array. The initialLines array
+     * stores the lines as read from the original file, thus preserving the formatting of the entities which were not marked as modified
+     * when saving.
+     * New entities which were not part of the yaml when reading are added to the end of initialLines. However, sometimes this ordering is
+     * far from ideal, such as when adding a "version: " field. intuitively these fields are expected to be at the very top of the file.
+     * For this reason, a "Portion" attribute was added to the ChunkBounds record. This controls to which portion of the file (HEAD or BODY)
+     * The field gets attached. The BODY starts where the very first yaml object was deserialized in the original yaml file
+     * (i.e. first non-comment, non-empty line). The portion attribute is only used in the final processing order of the chunks when the
+     * new yaml file is written.
+     *
+     * @param startLineNumber the line number of the first line belonging to the object (starting with 1) in initialLines
+     * @param endLineNumber   the line number of the last line belonging to the object in initialLines
+     * @param portion         portion to adjust the final order of appearance of the chunk in the new yaml.
+     */
     public record ChunkBounds(int startLineNumber, int endLineNumber, Portion portion) implements Comparable<ChunkBounds> {
 
         public enum Portion {
@@ -206,7 +241,7 @@ public class PatchingContext {
         String onlyIndent = contextIndent.replace('-', ' ');
         AtomicBoolean firstLine = new AtomicBoolean(true);
         return chunk.lines()
-            .map(line -> firstLine.getAndSet(false) ? contextIndent + line : onlyIndent + line)
+            .map(line -> firstLine.getAndSet(false) ? contextIndent + line : line.isEmpty() ? line : onlyIndent + line)
             .collect(Collectors.joining("\n", "", "\n"));
     }
 
@@ -263,9 +298,33 @@ public class PatchingContext {
     }
 
 
-    public ChunkBounds claimChunk(JsonLocation startLocation, JsonLocation endLocation, PatchableYamlModel entity) {
-        int startLineNumber = startLocation.getLineNr();
-        int endLineNumber = endLocation.getLineNr();
+    public ChunkBounds claimChunk(JsonLocation startLocation, PatchingParserDelegate parser, PatchableYamlModel entity) {
+        PatchingParserDelegate.TokenLocationPair pair = parser.getTokenLocationPair();
+
+        // Scan back to first token which does NOT indicate the end of an object or array,
+        // unless it is an empty object or array.
+        // This is so far the most generic way to find the last non-empty and non-comment line of an object
+        // of an empty object respectively array.
+        while (pair.location() != startLocation && pair.previous() != null &&
+            ((pair.token() == JsonToken.END_OBJECT && pair.previous().token() != JsonToken.START_OBJECT)
+                || (pair.token() == JsonToken.END_ARRAY && pair.previous().token() != JsonToken.START_ARRAY))) {
+            pair = pair.previous();
+        }
+        int endLine = pair.location().getLineNr();
+
+        // Only exception found ist when the last scalar is a string defined via one of the block
+        // definition methods (|, |-, |+, >, >-, >+). In this case, there is no ending quote indicating the
+        // end of the string on its proper ending line, and so the parser location after parsing the
+        // VALUE_STRING token ends up on the next non-comment, non-empty line.
+        if (pair.token() == JsonToken.VALUE_STRING
+            && pair.location().getColumnNr() == 1 && startLocation.getLineNr() < endLine) {
+
+            endLine--;
+        }
+        return claimChunk(startLocation.getLineNr(), endLine, entity);
+    }
+
+    public ChunkBounds claimChunk(int startLineNumber, int endLineNumber, PatchableYamlModel entity) {
         ChunkBounds bounds = new ChunkBounds(startLineNumber, endLineNumber, ChunkBounds.Portion.BODY);
         chunks.put(bounds, entity);
         return bounds;

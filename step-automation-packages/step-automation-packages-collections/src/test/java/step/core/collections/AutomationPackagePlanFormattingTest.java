@@ -21,6 +21,7 @@ package step.core.collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import step.artefacts.Script;
 import step.automation.packages.AutomationPackageReadingException;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.YamlPlan;
@@ -48,31 +49,63 @@ public class AutomationPackagePlanFormattingTest extends AutomationPackageCollec
     @Test
     public void testPlanFieldOrdering() throws IOException {
 
-        Optional<Plan> optionalPlan = planCollection.find(Filters.equals("attributes.name", "FieldOrdering"), null, null, null, 100).findFirst();
-
-        Assert.assertTrue(optionalPlan.isPresent());
-
-        Plan plan = optionalPlan.get();
-        planCollection.save(plan);
-
-        optionalPlan = planCollection.find(Filters.equals("attributes.name", "Some plan"), null, null, null, 100).findFirst();
-        plan = optionalPlan.get();
-        planCollection.save(plan);
-
+        planCollection.save(loadPlan("FieldOrdering"));
+        planCollection.save(loadPlan("Some plan"));
 
         assertFilesEqual(expectedFilesPath.resolve("FieldOrdering.yml"), destinationDirectory.toPath().resolve("plans").resolve("FieldOrdering.yml"));
     }
 
     @Test
     public void testCallEntities() throws IOException {
+        planCollection.save(loadPlan("CallEntities"));
+        assertFilesEqual(expectedFilesPath.resolve("CallEntities.yml"), destinationDirectory.toPath().resolve("plans").resolve("CallEntities.yml"));
+    }
 
-        Optional<Plan> optionalPlan = planCollection.find(Filters.equals("attributes.name", "CallEntities"), null, null, null, 100).findFirst();
+    @Test
+    public void testMultiLineYamlStringsNoModification() throws IOException {
+        planCollection.save(loadPlan("MultiLineScalars - Single Line Field with empty line"));
+        planCollection.save(loadPlan("MultiLineScalars - Before single line field"));
+        planCollection.save(loadPlan("MultiLineScalars - End of Object with empty line"));
+        planCollection.save(loadPlan("MultiLineScalars - End of Object"));
+        planCollection.save(loadPlan("MultiLineScalars - End of File"));
 
-        Assert.assertTrue(optionalPlan.isPresent());
+        assertFilesEqual(expectedFilesPath.resolve("MultiLineScalarsNoModification.yml"), destinationDirectory.toPath().resolve("plans").resolve("MultiLineScalars.yml"));
+    }
 
-        Plan plan = optionalPlan.get();
+    @Test
+    public void testMultiLineYamlStringsAfterModification() throws IOException {
+        Plan plan = loadPlan("MultiLineScalars - Before single line field");
+
+        plan.getRoot().getChildren().get(0).setDescription("""
+            This description was expanded upon and now stretches...
+
+            ...over multiple lines
+            """);
+
         planCollection.save(plan);
 
-        assertFilesEqual(expectedFilesPath.resolve("CallEntities.yml"), destinationDirectory.toPath().resolve("plans").resolve("CallEntities.yml"));
+        plan = loadPlan("MultiLineScalars - End of Object with empty line");
+
+        Script script = (Script) plan.getRoot().getChildren().get(0);
+        script.setDescription("The new description fits one line");
+        script.setScript("nothing");
+
+        planCollection.save(plan);
+
+        plan = loadPlan("MultiLineScalars - End of Object");
+
+        planCollection.save(plan);
+
+        plan = loadPlan("MultiLineScalars - End of File");
+
+        planCollection.save(plan);
+
+        assertFilesEqual(expectedFilesPath.resolve("MultiLineScalarsAfterModification.yml"), destinationDirectory.toPath().resolve("plans").resolve("MultiLineScalars.yml"));
+    }
+
+    private Plan loadPlan(String name) {
+        Optional<Plan> optionalPlan = planCollection.find(Filters.equals("attributes.name", name), null, null, null, 100).findFirst();
+        Assert.assertTrue(optionalPlan.isPresent());
+        return optionalPlan.get();
     }
 }
