@@ -47,6 +47,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Locale;
 
 public class YamlPlanReaderTest {
 
@@ -67,6 +68,9 @@ public class YamlPlanReaderTest {
             true,
             null
         );
+
+        // networknt error messages are localized. Fix it to English for consistent assertions across developer machines
+        Locale.setDefault(Locale.ENGLISH);
 
         this.technicalPlanMapper = createTechnicalPlanObjectMapper();
     }

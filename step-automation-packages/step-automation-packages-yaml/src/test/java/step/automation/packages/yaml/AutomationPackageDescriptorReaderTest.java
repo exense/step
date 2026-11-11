@@ -42,10 +42,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -64,6 +61,9 @@ public class AutomationPackageDescriptorReaderTest {
         AutomationPackageScheduleRegistration.registerSerialization(serializationRegistry);
         serializationRegistry.register(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
         reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, serializationRegistry);
+
+        // networknt error messages are localized. Fix it to English for consistent assertions accross developer machines
+        Locale.setDefault(Locale.ENGLISH);
     }
 
     @Test

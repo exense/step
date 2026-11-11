@@ -14,12 +14,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import static step.plans.parser.yaml.YamlPlanReaderTest.replaceYamlVersionWithCurrentOne;
 
 public class YamlEditorPlanTypeTest {
 
     private static final Logger log = LoggerFactory.getLogger(YamlEditorPlanTypeTest.class);
+
+    public YamlEditorPlanTypeTest() {
+        // networknt error messages are localized. Fix it to English for consistent assertions across developer machines
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     @Test
     public void testNewPlan() throws Exception {

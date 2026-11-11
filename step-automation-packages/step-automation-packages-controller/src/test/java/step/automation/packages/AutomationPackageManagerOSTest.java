@@ -58,13 +58,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -111,6 +105,11 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
 
     // 3 parameters from one fragment and 1 from another
     public static final int PARAMETERS_COUNT = 4;
+
+    public AutomationPackageManagerOSTest() {
+        // networknt error messages are localized. Fix it to English for consistent assertions across developer machines
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     @Test
     public void testCrud() throws IOException {

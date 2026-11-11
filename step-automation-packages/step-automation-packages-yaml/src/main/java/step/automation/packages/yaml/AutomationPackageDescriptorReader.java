@@ -149,7 +149,7 @@ public class AutomationPackageDescriptorReader {
     }
 
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(String location, InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
-        return readAutomationPackageYamlFile(FileResolver.resourceApPathFromURL(location), yaml, targetClass, packageName, null);
+        return readAutomationPackageYamlFile(location, yaml, targetClass, packageName, null);
     }
 
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(String location, InputStream yaml, Class<T> targetClass, String packageName, String inheritedVersion) throws AutomationPackageReadingException {

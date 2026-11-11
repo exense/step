@@ -27,6 +27,7 @@ import step.resources.ResourceRevisionFileHandle;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 
 public class FileResolver {
@@ -62,8 +63,17 @@ public class FileResolver {
         this.resourceManager = resourceManager;
     }
 
-    public static String resourceApPathFromURL(String url) {
-        return AP_RESOURCE_PREFIX + normalizeApRelativePath(url.replaceAll("^jar:.*?!", ""));
+    public static String resourceApPathFromPackageBase(URI packageBase, URI resourceUri) {
+        if ("jar".equals(resourceUri.getScheme())) {
+            String ssp = resourceUri.getSchemeSpecificPart();
+            int sep = ssp.indexOf("!/");
+            if (sep < 0 ) {
+                throw new IllegalArgumentException("Not a jar entry URI: " + resourceUri);
+            }
+            return AP_RESOURCE_PREFIX + Path.of(ssp.substring(sep + 2));
+        }
+
+        return AP_RESOURCE_PREFIX + packageBase.relativize(resourceUri).getPath();
     }
 
     public ResourceManager getResourceManager() {
