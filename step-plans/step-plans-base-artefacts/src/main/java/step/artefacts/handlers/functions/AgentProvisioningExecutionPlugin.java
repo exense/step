@@ -104,7 +104,7 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
                 if (!criteriaWithoutMatch.isEmpty()) {
                     throw new ProvisioningException(agentProvisioningDriver.getUnmatchedCriteriaMessage(criteriaWithoutMatch));
                 }
-                logger.info("Calculated agent pool requirements: {}", requiredAgentPools);
+                logger.debug("Calculated agent pool requirements: {}", requiredAgentPools);
             } else {
                 List<AgentPoolRequirementSpec> configuredAgentPools = planAgentConfiguration.getAgentPoolRequirementSpecs();
                 // this checks here feels a bit odd but keeping it as it's legacy
@@ -121,7 +121,10 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
                 tokenForecastingContext.getAgentPoolRequirementSpec(), tokenForecastingContext.getCriteriaWithoutMatch());
         }
 
-        if (planAgentConfiguration.enableAgentProvisioning() || !requiredAgentPools.isEmpty()) {
+        // Only involve the driver when there is something to provision: an empty request would still be "provisioned",
+        // persisted and de-provisioned by the driver, and checked against the license restrictions and quotas
+        if (!requiredAgentPools.isEmpty()) {
+            logger.info("Provisioning agents for execution {} with agent pool requirements {}", context.getExecutionId(), requiredAgentPools);
             // Delegate the provisioning of the agent tokens to the driver according to the calculated forecast
             AgentProvisioningRequest request = new AgentProvisioningRequest();
             request.executionId = context.getExecutionId();
@@ -151,7 +154,9 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
                 }
             }
             logger.debug("Successfully provisioned agents for execution {}", context.getExecutionId());
-        } else if (!agentProvisioningDriver.alwaysProvisionAgents()) {
+        } else if (planAgentConfiguration.enableAgentProvisioning() || agentProvisioningDriver.alwaysProvisionAgents()) {
+            logger.info("No agent required for execution {}, skipping the agent provisioning", context.getExecutionId());
+        } else {
             logger.info("Agent provisioning is disabled for this plan");
         }
     }
