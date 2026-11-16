@@ -2,7 +2,7 @@ const { EventEmitter } = require('events')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
-const { ForkedAgent } = require('../api/controllers/agent')
+const { ForkedAgent, timeoutMsOrDefault } = require('../api/controllers/agent')
 
 // close() must always return, even when the forked process never exits on its own: a stuck fork
 // would otherwise block the release of its token indefinitely.
@@ -176,4 +176,18 @@ describe('ForkedAgent lib directory isolation', () => {
     await second.close()
     expect(fs.existsSync(libsRoot)).toBe(false)
   }, 15000)
+})
+describe('timeoutMsOrDefault()', () => {
+
+  test.each([
+    [undefined], [null], [''], ['   '], ['abc'], [-1], ['-1'], [NaN], [Infinity],
+  ])('falls back to the default for %p', (value) => {
+    expect(timeoutMsOrDefault(value, 40000)).toBe(40000)
+  })
+
+  test.each([
+    [0, 0], ['0', 0], [1000, 1000], ['1000', 1000], [' 250 ', 250],
+  ])('uses the configured value %p', (value, expected) => {
+    expect(timeoutMsOrDefault(value, 40000)).toBe(expected)
+  })
 })
