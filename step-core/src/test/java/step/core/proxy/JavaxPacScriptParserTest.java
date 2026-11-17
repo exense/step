@@ -144,6 +144,35 @@ public class JavaxPacScriptParserTest {
         p.evaluate(TestUtil.HTTP_TEST_URI.toString(), "host.does.not.matter");
     }
 
+    /**
+     * The url and host arguments must be passed to the PAC script as data, never be interpreted as code.
+     */
+    @Test
+    public void shouldNotInjectCodeViaArguments() throws ProxyException {
+        PacScriptSource source = new PacScriptSource() {
+            @Override
+            public String getScriptContent() {
+                return """
+                    function FindProxyForURL(url, host) {
+                      return (typeof injected === 'undefined' ? 'CLEAN:' : 'INJECTED:') + url + '|' + host;
+                    }
+                    """;
+            }
+
+            @Override
+            public boolean isScriptValid() {
+                return true;
+            }
+        };
+        PacScriptParser p = new JavaxPacScriptParser(source);
+
+        String maliciousUrl = "x\"); injected = true; (\"";
+        String maliciousHost = "y\\\"); injected = true; //\n";
+        Assert.assertEquals("CLEAN:" + maliciousUrl + "|" + maliciousHost, p.evaluate(maliciousUrl, maliciousHost));
+        // Also no side effects visible in later evaluations
+        Assert.assertEquals("CLEAN:http://example.com/|example.com", p.evaluate("http://example.com/", "example.com"));
+    }
+
     /*************************************************************************
      * Helper method to build the url to the given test file
      *

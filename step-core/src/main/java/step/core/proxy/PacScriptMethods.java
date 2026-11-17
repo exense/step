@@ -139,10 +139,17 @@ public class PacScriptMethods implements ScriptMethods {
         if (host == null || host.length() == 0) {
             return false;
         }
-        long lhost = parseIpAddressToLong(host);
-        long lpattern = parseIpAddressToLong(pattern);
-        long lmask = parseIpAddressToLong(mask);
-        return (lhost & lmask) == lpattern;
+        try {
+            long lhost = parseIpAddressToLong(host);
+            long lpattern = parseIpAddressToLong(pattern);
+            long lmask = parseIpAddressToLong(mask);
+            return (lhost & lmask) == lpattern;
+        } catch (NumberFormatException e) {
+            // Should not happen for the host (see dnsResolve), but may for invalid patterns or masks in the PAC script.
+            // Like browsers, we return false instead of failing the entire PAC evaluation (which would result in DIRECT).
+            logger.warn("isInNet: invalid IPv4 address(es) host={}, pattern={}, mask={}, returning false", host, pattern, mask);
+            return false;
+        }
     }
 
     /*************************************************************************
@@ -176,9 +183,16 @@ public class PacScriptMethods implements ScriptMethods {
      ************************************************************************/
 
     public String dnsResolve(String host) {
+        // As defined by the PAC specification (and implemented by browsers), this only considers IPv4 addresses;
+        // IPv6 is supported by the dnsResolveEx() and isInNetEx() variants. Returning an IPv6 address here
+        // would e.g. break isInNet(), and scripts comparing the result with IPv4 addresses.
         try {
-            InetAddress ina = InetAddress.getByName(host);
-            return ina.getHostAddress();
+            for (InetAddress address : InetAddress.getAllByName(host)) {
+                if (address instanceof Inet4Address) {
+                    return address.getHostAddress();
+                }
+            }
+            logger.debug("DNS name has no IPv4 address: {}", host);
         } catch (UnknownHostException e) {
             logger.warn("DNS name not resolvable: {}", host);
         }
@@ -627,17 +641,32 @@ public class PacScriptMethods implements ScriptMethods {
             int cidrBits = Integer.parseInt(cidrParts[1]);
 
             byte[] addressBytes = InetAddress.getByName(ipOrHost).getAddress();
+            byte[] rangeBytes = InetAddress.getByName(cidrRange).getAddress();
+            if (addressBytes.length != rangeBytes.length) {
+                // IPv4 address vs. IPv6 range or vice versa: can never match
+                return false;
+            }
+            int maxBits = addressBytes.length * 8;
+            if (cidrBits < 0 || cidrBits > maxBits) {
+                logger.warn("isInNetEx: invalid prefix length in CIDR {} (must be between 0 and {}), returning false", cidr, maxBits);
+                return false;
+            }
+
             BigInteger ip = new BigInteger(addressBytes);
             BigInteger mask = addressBytes.length == 4 ? HIGH_32_INT.shiftLeft(32 - cidrBits)
                 : HIGH_128_INT.shiftLeft(128 - cidrBits);
 
-            byte[] rangeBytes = InetAddress.getByName(cidrRange).getAddress();
             BigInteger range = new BigInteger(rangeBytes);
             BigInteger lowIP = range.and(mask);
             BigInteger highIP = lowIP.add(mask.not());
 
             return lowIP.compareTo(ip) <= 0 && highIP.compareTo(ip) >= 0;
         } catch (UnknownHostException e) {
+            return false;
+        } catch (NumberFormatException e) {
+            // Invalid CIDR in the PAC script. Like browsers, we return false instead of failing the entire PAC
+            // evaluation (which would result in DIRECT).
+            logger.warn("isInNetEx: invalid prefix length in CIDR {}, returning false", cidr);
             return false;
         }
     }

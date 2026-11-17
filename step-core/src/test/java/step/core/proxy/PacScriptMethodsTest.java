@@ -10,6 +10,7 @@ import java.util.Calendar;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /*****************************************************************************
  * Tests for the global PAC script methods that are used as context inside of
@@ -87,6 +88,24 @@ public class PacScriptMethodsTest {
         assertEquals(true, buildParser().isInNet("10.13.75.47", "10.13.72.0", "255.255.252.0"));
     }
 
+    @Test
+    public void testIsInNetWithIpv6Host() {
+        // isInNet is IPv4 only: an IPv6 host never matches, and must not fail the PAC evaluation
+        assertFalse(buildParser().isInNet("::1", "127.0.0.0", "255.0.0.0"));
+        assertTrue(buildParser().isInNet("127.0.0.1", "127.0.0.0", "255.0.0.0"));
+    }
+
+    @Test
+    public void testIsInNetWithInvalidPattern() {
+        assertFalse(buildParser().isInNet("127.0.0.1", "not.an.ip.address", "255.0.0.0"));
+    }
+
+    @Test
+    public void testDnsResolveIsIpv4Only() {
+        assertEquals("", buildParser().dnsResolve("::1"));
+        assertEquals("127.0.0.1", buildParser().dnsResolve("127.0.0.1"));
+    }
+
     /*************************************************************************
      * Test method
      ************************************************************************/
@@ -117,6 +136,26 @@ public class PacScriptMethodsTest {
         assertEquals(true, buildParser().isInNetEx("3ffe:8311:ffff:1111:0:0:0:0", "3ffe:8311:ffff::/48"));
 
         assertEquals(false, buildParser().isInNetEx("3ffe:8312:ffff:1111:0:0:0:0", "3ffe:8311:ffff::/48"));
+    }
+
+    @Test
+    public void testIsInNetExWithInvalidPrefixLength() {
+        // Must return false instead of failing the entire PAC evaluation
+        assertFalse(buildParser().isInNetEx("198.95.249.79", "198.95.0.0/16x"));
+        assertFalse(buildParser().isInNetEx("198.95.249.79", "198.95.0.0/"));
+        // Out of range: would silently result in a wrong mask otherwise
+        assertFalse(buildParser().isInNetEx("198.95.249.79", "198.95.0.0/33"));
+        assertFalse(buildParser().isInNetEx("198.95.249.79", "198.95.0.0/-1"));
+        assertFalse(buildParser().isInNetEx("3ffe:8311:ffff::", "3ffe:8311:ffff::/129"));
+        // Boundaries are valid
+        assertTrue(buildParser().isInNetEx("198.95.249.79", "198.95.249.79/32"));
+        assertTrue(buildParser().isInNetEx("3ffe:8311:ffff::", "3ffe:8311:ffff::/128"));
+    }
+
+    @Test
+    public void testIsInNetExWithMixedAddressFamilies() {
+        assertFalse(buildParser().isInNetEx("198.95.249.79", "3ffe:8311:ffff::/48"));
+        assertFalse(buildParser().isInNetEx("3ffe:8311:ffff::", "198.95.0.0/16"));
     }
 
     /*************************************************************************

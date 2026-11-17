@@ -16,6 +16,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.DSAPrivateKey;
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.Arrays;
 import java.util.Base64;
@@ -36,7 +37,9 @@ public class SingleClientCertKeyManager implements X509KeyManager {
 
     private static KeyStore loadKeyStore(String keystoreFilename, String passwordBase64) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
         KeyStore store = KeyStore.getInstance("PKCS12");
-        store.load(new FileInputStream(keystoreFilename), decodeBase64(passwordBase64).toCharArray());
+        try (FileInputStream in = new FileInputStream(keystoreFilename)) {
+            store.load(in, decodeBase64(passwordBase64).toCharArray());
+        }
         return store;
     }
 
@@ -49,10 +52,16 @@ public class SingleClientCertKeyManager implements X509KeyManager {
         this.passwordB64 = passwordB64;
 
         Enumeration<String> aliases = store.aliases();
+        if (!aliases.hasMoreElements()) {
+            throw new Exception("Keystore is empty, no aliases found");
+        }
         alias = aliases.nextElement();
         if (aliases.hasMoreElements()) throw new Exception("Too many aliases in Keystore, expected exactly one");
         // verify that private key can be loaded, will throw an exception of something is wrong.
         PrivateKey pk = getPrivateKey(alias);
+        if (pk == null) {
+            throw new Exception("Keystore entry '" + alias + "' does not contain a private key");
+        }
         keyAlgorithm = getAlgorithmOfKey(pk);
         if (logger.isDebugEnabled()) {
             logger.debug("Client Authentication enabled, alias=" + alias);
@@ -64,6 +73,8 @@ public class SingleClientCertKeyManager implements X509KeyManager {
             return "RSA";
         } else if (pk instanceof DSAPrivateKey) {
             return "DSA";
+        } else if (pk instanceof ECPrivateKey) {
+            return "EC";
         } else {
             throw new RuntimeException("Unsupported private key class: " + pk.getClass().getName());
         }

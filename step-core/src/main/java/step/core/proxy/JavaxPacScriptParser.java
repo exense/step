@@ -133,11 +133,15 @@ public class JavaxPacScriptParser implements PacScriptParser {
      ************************************************************************/
     public String evaluate(String url, String host) throws ProxyEvaluationException {
         try {
-            StringBuilder script = new StringBuilder(this.source.getScriptContent());
-            String evalMethod = " ;FindProxyForURL (\"" + url + "\",\"" + host + "\")";
-            script.append(evalMethod);
-            Object result = this.engine.eval(script.toString());
-            return (String) result;
+            String script = this.source.getScriptContent();
+            synchronized (engine) {
+                // (Re-)defines FindProxyForURL; the script content may have been refreshed by the source in the meantime
+                this.engine.eval(script);
+                // url and host are passed as actual arguments rather than being concatenated into JavaScript code,
+                // which would allow code injection through specially crafted values.
+                Object result = this.engine.getSandboxedInvocable().invokeFunction("FindProxyForURL", url, host);
+                return (String) result;
+            }
         } catch (Exception e) {
             logger.error("JS evaluation error.", e);
             throw new ProxyEvaluationException("Error while executing PAC script: " + e.getMessage(), e);
