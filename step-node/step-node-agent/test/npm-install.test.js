@@ -33,7 +33,7 @@ describe('npm install', () => {
 
   async function executeEcho(agent, projectPath, tokenId) {
     const outputBuilder = new OutputBuilder()
-    await agent.executeKeyword('Echo', projectPath, tokenId, { Param1: 'Val1' }, {}, outputBuilder, 30000)
+    await agent.executeKeyword('Echo', projectPath, tokenId, { Param1: 'Val1' }, {}, outputBuilder, Date.now() + 30000)
     return outputBuilder.build()
   }
 
@@ -79,7 +79,7 @@ describe('npm install', () => {
     const outputBuilder = new OutputBuilder()
 
     await agent.executeKeyword('Echo', createProject(true), 'token-skipping-npm-install', { Param1: 'Val1' },
-      { skipNpmInstall: 'true' }, outputBuilder, 30000)
+      { skipNpmInstall: 'true' }, outputBuilder, Date.now() + 30000)
 
     expect(npmInstall).not.toHaveBeenCalled()
     expect(outputBuilder.build().payload.payload.Param1).toBe('Val1')
