@@ -92,6 +92,10 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
 
     @Override
     public void provisionRequiredResources(ExecutionContext context) {
+        if (context.isSimulation()) {
+            logger.info("Skipping agent provisioning in simulated execution {}", context.getExecutionId());
+            return;
+        }
         AgentProvisioningConfiguration planAgentConfiguration = getPlanAgentPoolConfiguratorOrDefault(context);
         TokenForecastingContext tokenForecastingContext = TokenForecastingExecutionPlugin.getTokenForecastingContext(context);
         List<AgentPoolRequirementSpec> requiredAgentPools;
