@@ -57,7 +57,12 @@ describe('keyword call deadline', () => {
     expect(Date.now()).toBeLessThan(deadline + 1000)
   }, 15000)
 
-  test('a deadline already passed times out immediately', async () => {
-    await expect(run('HangKW', {}, Date.now() - 1000)).rejects.toThrow('Keyword execution timed out')
+  test('a deadline already passed times out immediately, without sending the keyword to the fork', async () => {
+    const send = jest.spyOn(forkedAgent.forkProcess, 'send')
+
+    await expect(run('HangKW', {}, Date.now() - 1000)).rejects.toThrow(/^Keyword execution timed out before the keyword could start: /)
+    expect(send).not.toHaveBeenCalled()
+
+    send.mockRestore()
   }, 15000)
 })

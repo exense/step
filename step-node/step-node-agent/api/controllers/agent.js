@@ -450,6 +450,15 @@ class ForkedAgent {
         const stdChunks = [...this.startupChunks];
         this.startupChunks = [];
 
+        // The deadline can already be over, typically after an npm install that took longer than the call
+        // timeout. The keyword is then not sent at all: nobody would wait for its result, and it would run
+        // unattended in the fork, possibly next to the following keyword of this token.
+        if (deadline != null && Date.now() >= deadline) {
+          reject(new CategorizedError(`Keyword execution timed out before the keyword could start: `
+            + `the call timeout expired at ${new Date(deadline).toISOString()}`, buildProcessOutputAttachment(stdChunks)));
+          return;
+        }
+
         const stdoutListener = (data) => {
           stdChunks.push(data);
           if(redirectIO) {
@@ -477,7 +486,7 @@ class ForkedAgent {
           let processOutputAttachment = buildProcessOutputAttachment(stdChunks);
           reject(new CategorizedError(`Keyword execution timed out after ${Date.now() - startTime}ms: `
             + `the call timeout expired at ${new Date(deadline).toISOString()}`, processOutputAttachment));
-        }, Math.max(0, deadline - startTime)) : null;
+        }, deadline - startTime) : null;
 
         const cleanup = () => {
           clearTimeout(timeoutHandle);
