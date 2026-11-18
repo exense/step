@@ -255,6 +255,83 @@ public class MavenArtifactClientTest {
         Assert.assertEquals("Should return the correct local repository", tempDirectory.toFile(), localRepo);
     }
 
+    @Test
+    public void testUnreachableRepositoriesWithFixedVersion() throws SettingsBuildingException, IOException {
+        assertUnreachableRepositoriesReported("1.0.0");
+    }
+
+    @Test
+    public void testUnreachableRepositoriesWithLatestVersion() throws SettingsBuildingException, IOException {
+        assertUnreachableRepositoriesReported("LATEST");
+    }
+
+    @Test
+    public void testUnreachableRepositoriesWithReleaseVersion() throws SettingsBuildingException, IOException {
+        assertUnreachableRepositoriesReported("RELEASE");
+    }
+
+    @Test
+    public void testUnreachableRepositoriesWithSnapshotVersion() throws SettingsBuildingException, IOException {
+        assertUnreachableRepositoriesReported("1.0.0-SNAPSHOT");
+    }
+
+    @Test
+    public void testUnreachableRepositoriesWithVersionRange() throws SettingsBuildingException, IOException {
+        assertUnreachableRepositoriesReported("[1.0,)");
+    }
+
+    @Test
+    public void testArtifactNotFoundIsNotReportedAsUnreachableRepository() throws SettingsBuildingException, IOException {
+        Path tempDirectory = Files.createTempDirectory("maven-repo-not-found-test");
+        MavenArtifactClient client = createTestClient(tempDirectory, null, null);
+        try {
+            client.getArtifact(new DefaultArtifact("ch.notexisting.step", "notreal-package", "jar", "LATEST"));
+            Assert.fail("The resolution of a non-existing artifact should fail");
+        } catch (ArtifactResolutionException e) {
+            Assert.assertTrue(e.getMessage(), e.getMessage().startsWith("Failed to resolve version for ch.notexisting.step:notreal-package:jar:LATEST"));
+            Assert.assertFalse(e.getMessage(), e.getMessage().contains("could not be accessed"));
+        }
+    }
+
+    private void assertUnreachableRepositoriesReported(String version) throws SettingsBuildingException, IOException {
+        Path tempDirectory = Files.createTempDirectory("maven-repo-unreachable-test");
+        MavenArtifactClient client = new MavenArtifactClient(
+            "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\">\n" +
+                "    <profiles>\n" +
+                "        <profile>\n" +
+                "            <id>default</id>\n" +
+                "            <repositories>\n" +
+                "                <repository>\n" +
+                "                    <id>unreachable-1</id>\n" +
+                "                    <url>https://repo-1.step-unreachable.invalid/maven2/</url>\n" +
+                "                </repository>\n" +
+                "                <repository>\n" +
+                "                    <id>unreachable-2</id>\n" +
+                "                    <url>https://repo-2.step-unreachable.invalid/maven2/</url>\n" +
+                "                </repository>\n" +
+                "            </repositories>\n" +
+                "        </profile>\n" +
+                "    </profiles>\n" +
+                "    <activeProfiles>\n" +
+                "        <activeProfile>default</activeProfile>\n" +
+                "    </activeProfiles>\n" +
+                "</settings>",
+            tempDirectory.toFile(), null, null);
+        try {
+            client.getArtifact(new DefaultArtifact("ch.notexisting.step", "notreal-package", "jar", version));
+            Assert.fail("The resolution from unreachable repositories should fail");
+        } catch (ArtifactResolutionException e) {
+            String message = e.getMessage();
+            Assert.assertTrue(message, message.contains("could not be accessed, please check the repositories configured in the Maven settings.xml"));
+            Assert.assertTrue(message, message.contains("repo-1.step-unreachable.invalid"));
+            Assert.assertTrue(message, message.contains("repo-2.step-unreachable.invalid"));
+            Assert.assertFalse(message, message.contains("in local"));
+            // One failure per repository: the first one as cause, the other one suppressed
+            Assert.assertNotNull(e.getCause());
+            Assert.assertEquals(1, e.getSuppressed().length);
+        }
+    }
+
     private MavenArtifactClient createTestClient(Path tempDirectory, Duration maxAge, Duration frequency) throws SettingsBuildingException {
         return new MavenArtifactClient(
             "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" " +
