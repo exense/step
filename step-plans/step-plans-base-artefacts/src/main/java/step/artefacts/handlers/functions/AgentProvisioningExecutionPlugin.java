@@ -121,6 +121,11 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
                 tokenForecastingContext.getAgentPoolRequirementSpec(), tokenForecastingContext.getCriteriaWithoutMatch());
         }
 
+        if (context.isSimulation()) {
+            logger.info("Skipping agent provisioning in simulated execution {}", context.getExecutionId());
+            return;
+        }
+
         // Only involve the driver when there is something to provision: an empty request would still be "provisioned",
         // persisted and de-provisioned by the driver, and checked against the license restrictions and quotas
         if (!requiredAgentPools.isEmpty()) {
