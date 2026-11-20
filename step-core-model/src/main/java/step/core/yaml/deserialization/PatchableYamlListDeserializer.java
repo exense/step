@@ -43,13 +43,22 @@ public class PatchableYamlListDeserializer extends CollectionDeserializer {
 
     @Override
     public Collection<Object> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (p instanceof PatchingParserDelegate) {
-            PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
-            JsonLocation startLocation = patchingParser.getLastLocationForToken(JsonToken.FIELD_NAME);
+        if (p instanceof PatchingParserDelegate patchingParser) {
+
+            PatchingParserDelegate.TokenLocationPair pair = patchingParser.getTokenLocationPair();
+            while (pair != null && pair.token() != JsonToken.FIELD_NAME) {
+                pair = pair.previous();
+            }
+            if (pair == null) {
+                // Field name token not found, should never happen with current schema.
+                // would amount to having an array at root of the yaml document.
+                pair = patchingParser.getTokenLocationPair();
+            }
+            JsonLocation startLocation = pair.location();
+
             Collection<Object> entity = delegate.deserialize(p, ctxt, new ArrayList<>());
             PatchableYamlList<Object> patchableYamlList = new PatchableYamlList<>(entity, patchingParser.getPatchingContext(), patchingParser.currentName());
             patchableYamlList.onParsed(startLocation, patchingParser);
-            //patchableYamlList.getPatchingContext().claimChunk(, patchableYamlList);
             return patchableYamlList;
         }
         return super.deserialize(p, ctxt);
