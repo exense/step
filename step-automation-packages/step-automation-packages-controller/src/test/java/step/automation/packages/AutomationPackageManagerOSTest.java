@@ -211,7 +211,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result.getId())).collect(Collectors.toList());
         Assert.assertEquals(2, allParameters.size());
 
-        Parameter parameter = allParameters.stream().filter(p -> "myKey" .equals(p.getKey())).findFirst().orElseThrow();
+        Parameter parameter = allParameters.stream().filter(p -> "myKey".equals(p.getKey())).findFirst().orElseThrow();
         assertEquals("myValue", parameter.getValue().get());
         assertEquals("some description", parameter.getDescription());
         assertEquals("abc", parameter.getActivationExpression().getScript());
@@ -221,7 +221,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         assertEquals(ParameterScope.GLOBAL, parameter.getScope());
         assertEquals(null, parameter.getScopeEntity());
 
-        parameter = allParameters.stream().filter(p -> "myKey2" .equals(p.getKey())).findFirst().orElseThrow();
+        parameter = allParameters.stream().filter(p -> "myKey2".equals(p.getKey())).findFirst().orElseThrow();
         assertEquals("some description 2", parameter.getDescription());
 
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
@@ -477,7 +477,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                 "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
                 , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            Plan inlinePlanWithSleep = r.storedPlans.stream().filter(plan -> "Inline Plan" .equals(plan.getAttribute(AbstractOrganizableObject.NAME))).findFirst().orElseThrow(() -> new RuntimeException("No 'Inline Plan' found"));
+            Plan inlinePlanWithSleep = r.storedPlans.stream().filter(plan -> "Inline Plan".equals(plan.getAttribute(AbstractOrganizableObject.NAME))).findFirst().orElseThrow(() -> new RuntimeException("No 'Inline Plan' found"));
 
             try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
                 String executionId = executionEngine.initializeExecution(new ExecutionParameters(inlinePlanWithSleep, null));
@@ -1198,7 +1198,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
 
         // deploy should not fail
         Assert.assertEquals(AutomationPackageUpdateStatus.CREATED, result.getStatus());
-        Optional<Plan> plan = planAccessor.stream().filter(p -> "Call keyword with external lib" .equals(p.getAttribute(AbstractOrganizableObject.NAME))).findFirst();
+        Optional<Plan> plan = planAccessor.stream().filter(p -> "Call keyword with external lib".equals(p.getAttribute(AbstractOrganizableObject.NAME))).findFirst();
         if (plan.isEmpty()) {
             fail("The plan Call keyword with external lib was not found");
         }
@@ -1617,7 +1617,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             if (function instanceof GeneralScriptFunction) {
                 GeneralScriptFunction generalScriptFunction = (GeneralScriptFunction) function;
                 String kwName = generalScriptFunction.getAttribute(AbstractOrganizableObject.NAME);
-                if ("GeneralScript keyword from AP" .equals(kwName)) {
+                if ("GeneralScript keyword from AP".equals(kwName)) {
                     //this is a KW defined in YAML directly with explicit lib
                     assertFalse(generalScriptFunction.getLibrariesFile().get().isEmpty());
                     assertNotEquals(generalScriptFunction.getScriptFile().get(), r.storedPackage.getAutomationPackageLibraryResource());

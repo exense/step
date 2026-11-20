@@ -225,7 +225,7 @@ public class AutomationPackageDescriptorReaderTest {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageDescriptorReader readerWithoutSchema = new AutomationPackageDescriptorReader(null, serializationRegistry);
         for (AutomationPackageDescriptorReader r : List.of(reader, readerWithoutSchema)) {
-            InputStream is = new ByteArrayInputStream("~" .getBytes(StandardCharsets.UTF_8));
+            InputStream is = new ByteArrayInputStream("~".getBytes(StandardCharsets.UTF_8));
             assertThrows(AutomationPackageReadingException.class, () -> r.readAutomationPackageDescriptor(is, ""));
         }
     }
