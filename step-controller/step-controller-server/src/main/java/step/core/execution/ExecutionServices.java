@@ -83,6 +83,8 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 
     protected static final Logger logger = LoggerFactory.getLogger(ExecutionServices.class);
 
+    public static final String EXECUTION_CUSTOM_FIELD_DESCRIPTION = "description";
+
     protected ExecutionAccessor executionAccessor;
     private TableService tableService;
     private ExecutionDiversion executionDiversion;
@@ -173,16 +175,40 @@ public class ExecutionServices extends AbstractStepAsyncServices {
         return new ExecutionOverview(execution, executionNoticeManager.resolve(execution));
     }
 
-    @Operation(description = "Stops the execution with the given execution id.")
+    @Operation(description = "Sets the description of the execution with the given execution id.")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/description")
+    @Secured(right = "execution-write")
+    public void setExecutionDescription(@PathParam("id") String id, String description) {
+        Execution execution = executionAccessor.get(id);
+        execution.addCustomField(EXECUTION_CUSTOM_FIELD_DESCRIPTION, description);
+        executionAccessor.save(execution);
+    }
+
+    @Operation(description = "Stops the execution with the given execution id. The optional abort reason is appended to the execution description.")
     @GET
     @Path("/{id}/stop")
     @Secured(right = "plan-execute")
-    public Void abort(@PathParam("id") String executionID) {
+    public Void abort(@PathParam("id") String executionID, @QueryParam("abortReason") String abortReason) {
         ExecutionContext context = getExecutionRunnable(executionID);
         if (context != null) {
+            if (abortReason != null && !abortReason.isBlank()) {
+                appendToExecutionDescription(executionID, abortReason);
+            }
             ExecutionEngineRunner.abort(context);
         }
         return null;
+    }
+
+    private void appendToExecutionDescription(String executionId, String text) {
+        Execution execution = executionAccessor.get(executionId);
+        String existingDescription = execution.getCustomField(EXECUTION_CUSTOM_FIELD_DESCRIPTION, String.class);
+        String newDescription = (existingDescription == null || existingDescription.isBlank())
+            ? text
+            : existingDescription + "\n" + text;
+        execution.addCustomField(EXECUTION_CUSTOM_FIELD_DESCRIPTION, newDescription);
+        executionAccessor.save(execution);
     }
 
     @Operation(description = "Force stop the execution with the given execution id.")
@@ -513,10 +539,10 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Path("/bulk/stop")
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "plan-bulk-execute")
-    public AsyncTaskStatus<TableBulkOperationReport> stopExecutions(TableBulkOperationRequest request) {
+    public AsyncTaskStatus<TableBulkOperationReport> stopExecutions(TableBulkOperationRequest request, @QueryParam("abortReason") String abortReason) {
         Consumer<String> consumer = t -> {
             try {
-                abort(t);
+                abort(t, abortReason);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
