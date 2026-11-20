@@ -15,6 +15,11 @@ const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const DEFAULT_FORK_SHUTDOWN_TIMEOUT_MS = 40000;
 const DEFAULT_FORK_TERMINATION_GRACE_PERIOD_MS = 5000;
 
+// Reserved keyword property holding the time (epoch milliseconds, as a string like the other properties)
+// at which the agent stops waiting for the keyword. It complements $keywordTimeout, set by the controller,
+// which is a duration and doesn't tell how much of it was already spent before the keyword started.
+const KEYWORD_DEADLINE_PROPERTY = '$keywordDeadline';
+
 // Resolve the bundled `ws` module path once, so it can be injected into forked keyword processes
 // (whose own require() resolves against the keyword project, not the agent). Used by live reporting
 // for streaming file uploads. If ws is missing, file uploads degrade to discarding.
@@ -102,6 +107,9 @@ class Agent {
     const keywordName = input.function
     let offset = 1000;
     const callTimeoutMs = Math.max(offset, input.functionCallTimeout ? input.functionCallTimeout : 180000 - offset);
+    // The deadline is set on reception, as close as possible to the controller's own timer: the time spent
+    // downloading the keyword package, installing its dependencies and starting the fork counts against it
+    const deadline = Date.now() + callTimeoutMs;
     const argument = input.payload
     const properties = input.properties
 
@@ -122,7 +130,7 @@ class Agent {
         Object.entries(additionalProperties).forEach(([key, value]) => { properties[key] = value })
       }
 
-      output = await this.process_(tokenId, keywordName, argument, properties, callTimeoutMs)
+      output = await this.process_(tokenId, keywordName, argument, properties, deadline)
     } else {
       const outputBuilder = new OutputBuilder();
       outputBuilder.fail("The token '" + tokenId + " doesn't exist on this agent. This usually means that the agent crashed and restarted.");
@@ -131,7 +139,8 @@ class Agent {
     res.json(output)
   }
 
-  async process_(tokenId, keywordName, argument, properties, callTimeoutMs) {
+  // `deadline` (epoch milliseconds) is optional: the runner calls keywords without any timeout
+  async process_(tokenId, keywordName, argument, properties, deadline) {
     const outputBuilder = new OutputBuilder();
     try {
       let fileId = properties['$node.js.file.id'];
@@ -164,7 +173,7 @@ class Agent {
         workspacePath = npmProjectPath;
       }
       try {
-        await this.executeKeyword(keywordName, workspacePath, tokenId, argument, properties, outputBuilder, callTimeoutMs)
+        await this.executeKeyword(keywordName, workspacePath, tokenId, argument, properties, outputBuilder, deadline)
       } finally {
         if (this.mode === 'agent') {
           this.markWorkspaceFree(workspacePath);
@@ -180,7 +189,7 @@ class Agent {
     return outputBuilder.build();
   }
 
-  async executeKeyword(keywordName, npmProjectPath, tokenId, argument, properties, outputBuilder, callTimeoutMs) {
+  async executeKeyword(keywordName, npmProjectPath, tokenId, argument, properties, outputBuilder, deadline) {
     let isDebugEnabled = properties['debug'] === 'true';
     let npmAttachment = null;
     let forkedAgentProcessOutputAttachment = null;
@@ -225,7 +234,7 @@ class Agent {
 
       const keywordDirectory = session.get('keywordDirectory');
       logger.info('Executing keyword \'' + keywordName + '\' in ' + npmProjectPath + ' for token ' + tokenId)
-      const { result, processOutputAttachment } = await forkedAgent.runKeywordTask(npmProjectPath, keywordName, argument, properties, callTimeoutMs, this.redirectIO, keywordDirectory);
+      const { result, processOutputAttachment } = await forkedAgent.runKeywordTask(npmProjectPath, keywordName, argument, properties, deadline, this.redirectIO, keywordDirectory);
       outputBuilder.merge(result.payload)
       if (result?.payload?.error || isDebugEnabled) {
         forkedAgentProcessOutputAttachment = processOutputAttachment;
@@ -429,12 +438,26 @@ class ForkedAgent {
     });
   }
 
-  runKeywordTask(keywordProjectPath, functionName, input, properties, timeoutMs, redirectIO, keywordDirectory) {
+  /**
+   * Runs a keyword in the fork. `deadline` (epoch milliseconds, optional) is the time at which the call
+   * times out. It is passed to the keyword as the property $keywordDeadline, so that a long-running
+   * keyword can stop itself in time and still report what it did.
+   */
+  runKeywordTask(keywordProjectPath, functionName, input, properties, deadline, redirectIO, keywordDirectory) {
     return new Promise((resolve, reject) => {
       try {
         // Include any output captured before this task started (e.g. startup crashes)
         const stdChunks = [...this.startupChunks];
         this.startupChunks = [];
+
+        // The deadline can already be over, typically after an npm install that took longer than the call
+        // timeout. The keyword is then not sent at all: nobody would wait for its result, and it would run
+        // unattended in the fork, possibly next to the following keyword of this token.
+        if (deadline != null && Date.now() >= deadline) {
+          reject(new CategorizedError(`Keyword execution timed out before the keyword could start: `
+            + `the call timeout expired at ${new Date(deadline).toISOString()}`, buildProcessOutputAttachment(stdChunks)));
+          return;
+        }
 
         const stdoutListener = (data) => {
           stdChunks.push(data);
@@ -457,11 +480,13 @@ class ForkedAgent {
           this.forkProcess.stderr.on('data', stderrListener);
         }
 
-        const timeoutHandle = timeoutMs != null ? setTimeout(() => {
+        const startTime = Date.now();
+        const timeoutHandle = deadline != null ? setTimeout(() => {
           cleanup();
           let processOutputAttachment = buildProcessOutputAttachment(stdChunks);
-          reject(new CategorizedError(`Keyword execution timed out after ${timeoutMs}ms`, processOutputAttachment));
-        }, timeoutMs) : null;
+          reject(new CategorizedError(`Keyword execution timed out after ${Date.now() - startTime}ms: `
+            + `the call timeout expired at ${new Date(deadline).toISOString()}`, processOutputAttachment));
+        }, deadline - startTime) : null;
 
         const cleanup = () => {
           clearTimeout(timeoutHandle);
@@ -489,7 +514,8 @@ class ForkedAgent {
           reject(new CategorizedError('Error while calling forked agent: ' + err.message, processOutputAttachment));
         });
 
-        this.forkProcess.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties, keywordDirectory });
+        const keywordProperties = deadline != null ? { ...properties, [KEYWORD_DEADLINE_PROPERTY]: String(deadline) } : properties;
+        this.forkProcess.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties: keywordProperties, keywordDirectory });
       } catch (e) {
         logger.error('Unexpected error while calling forked agent:', e)
         reject(new Error('Unexpected error while calling forked agent. See agent logs for more details.'));
