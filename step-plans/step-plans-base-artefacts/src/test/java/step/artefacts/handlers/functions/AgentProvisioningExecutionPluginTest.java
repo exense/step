@@ -207,6 +207,67 @@ public class AgentProvisioningExecutionPluginTest {
         }
     }
 
+    /**
+     * A plan with the default automatic provisioning whose token forecasting requires no agent: the driver is not
+     * involved, no status is persisted and nothing is de-provisioned (SED-4997)
+     */
+    @Test
+    public void provisionsNothingWhenTheForecastRequiresNoAgent() {
+        RecordingDriver driver = new RecordingDriver(Map.of("$agenttype", "default"));
+        AgentProvisioningStatusAccessor accessor = new AgentProvisioningStatusAccessor(new InMemoryCollection<>());
+
+        try (ExecutionEngine executionEngine = newExecutionEngine(driver, accessor)) {
+            PlanRunnerResult result = executionEngine.execute(planWithoutKeyword());
+
+            assertEquals(ReportNodeStatus.PASSED, result.getResult());
+            assertNull(driver.request);
+            assertEquals(0, driver.deprovisionCount.get());
+            assertFalse(accessor.getAll().hasNext());
+            assertNull(executionEngine.getExecutionEngineContext().getExecutionAccessor()
+                .get(result.getExecutionId()).getCustomField(AGENT_PROVISIONING_STATUS_ID_CUSTOM_FIELD));
+        }
+    }
+
+    /**
+     * The same when the plan configures its agent pools and the driver resolves them to none, as the local driver
+     * does for a plan whose keywords need no agent (SED-4997)
+     */
+    @Test
+    public void provisionsNothingWhenTheDriverResolvesNoAgentPool() {
+        RecordingDriver driver = new RecordingDriver(Map.of("$agenttype", "default")) {
+            @Override
+            public List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(AgentProvisioningConfiguration agentProvisioningConfiguration,
+                                                                              List<AgentPoolRequirementSpec> forecasted,
+                                                                              Set<Map<String, Interest>> criteriaWithoutMatch) {
+                return List.of();
+            }
+        };
+        AgentProvisioningStatusAccessor accessor = new AgentProvisioningStatusAccessor(new InMemoryCollection<>());
+        Plan plan = plan();
+        AgentPoolProvisioningConfiguration configuredPool = new AgentPoolProvisioningConfiguration();
+        configuredPool.pool = POOL;
+        configuredPool.replicas = 1;
+        ManualAgentProvisioningConfiguration agentConfiguration = new ManualAgentProvisioningConfiguration();
+        agentConfiguration.configuredAgentPools = List.of(configuredPool);
+        plan.setAgents(agentConfiguration);
+
+        try (ExecutionEngine executionEngine = newExecutionEngine(driver, accessor)) {
+            PlanRunnerResult result = executionEngine.execute(plan);
+
+            assertEquals(ReportNodeStatus.PASSED, result.getResult());
+            assertNull(driver.request);
+            assertEquals(0, driver.deprovisionCount.get());
+            assertFalse(accessor.getAll().hasNext());
+        }
+    }
+
+    private static Plan planWithoutKeyword() {
+        return PlanBuilder.create()
+            .startBlock(BaseArtefacts.testCase())
+            .add(BaseArtefacts.echo("'no keyword'"))
+            .endBlock().build();
+    }
+
     private static Plan planDisablingTheProvisioning() {
         Plan plan = plan();
         ManualAgentProvisioningConfiguration agentConfiguration = new ManualAgentProvisioningConfiguration();

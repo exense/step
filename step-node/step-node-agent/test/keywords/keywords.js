@@ -209,3 +209,39 @@ exports.SendNoArgCompatKW = async (input, output) => {
 exports.SendWithPayloadCompatKW = async (input, output) => {
   output.send({ result: 'ok' })
 }
+
+// --- agent disappearing while a keyword runs (SED-5045) ---
+
+// Logs to stdout every `intervalMs` until `durationMs` has elapsed. If `teePath` is set, every
+// stdout/stderr write is also appended to that file, like keywords that copy their output to a log.
+// The tee stops at `teeMaxBytes` (default 1 MB) so a runaway write loop can never fill the disk.
+// `closePath` stores a session resource whose close() writes that file; `hangingClose` stores one
+// whose close() never settles.
+exports.LongRunningLoggingKW = async (input, output, session) => {
+  const fs = require('fs')
+  if (input['closePath']) {
+    session.set('resource', { close() { fs.writeFileSync(input['closePath'], 'closed') } })
+  }
+  if (input['hangingClose']) {
+    session.set('hangingResource', { close: () => new Promise(() => {}) })
+  }
+  if (input['teePath']) {
+    const teeMaxBytes = input['teeMaxBytes'] ?? 1024 * 1024
+    let teeBytes = 0
+    for (const stream of [process.stdout, process.stderr]) {
+      const originalWrite = stream.write.bind(stream)
+      stream.write = (chunk, ...rest) => {
+        if (teeBytes < teeMaxBytes) {
+          teeBytes += Buffer.byteLength(chunk)
+          try { fs.appendFileSync(input['teePath'], chunk) } catch { /* best effort */ }
+        }
+        return originalWrite(chunk, ...rest)
+      }
+    }
+  }
+  const end = Date.now() + (input['durationMs'] ?? 60000)
+  while (Date.now() < end) {
+    console.log('[LongRunningLoggingKW] still running')
+    await new Promise(r => setTimeout(r, input['intervalMs'] ?? 50))
+  }
+}
