@@ -66,6 +66,11 @@
       <artifactId>step-cli-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- Writes to the consoles of Windows in UTF-16, whatever their code page (see WindowsConsoleStreams) -->
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+    </dependency>
 
     <!-- To run plans in isolation like in JUnit runner-->
     <dependency>

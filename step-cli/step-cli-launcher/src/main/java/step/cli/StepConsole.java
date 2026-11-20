@@ -207,6 +207,8 @@ public class StepConsole extends BaseCommand {
     }
 
     public static void main(String... args) {
+        // Before anything is printed or logged
+        WindowsConsoleStreams.install();
         System.exit(executeMain(args));
     }
 

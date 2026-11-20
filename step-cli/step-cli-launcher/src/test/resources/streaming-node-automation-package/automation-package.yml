@@ -1,0 +1,13 @@
+version: 1.3.0
+name: "Node.js streaming attachments"
+keywords:
+  - Node:
+      name: "NodeStreamALog"
+      jsfile: "node-keyword-library.zip"
+plans:
+  - name: "Node.js streaming plan"
+    root:
+      testCase:
+        children:
+          - callKeyword:
+              keyword: "NodeStreamALog"

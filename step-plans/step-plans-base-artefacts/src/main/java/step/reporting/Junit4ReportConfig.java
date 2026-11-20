@@ -29,17 +29,19 @@ public class Junit4ReportConfig {
     private String attachmentsRootFolder;
     private AttachmentStorage attachmentStorage;
     private Configuration serverConfiguration;
+    private final String reportName;
 
     private Junit4ReportConfig(String attachmentsSubfolder, String attachmentsRootFolder,
                                AttachmentStorage attachmentStorage,
                                boolean addAttachments, boolean addLinksToStepFrontend,
-                               Configuration serverConfiguration) {
+                               Configuration serverConfiguration, String reportName) {
         this.attachmentsSubfolder = attachmentsSubfolder;
         this.attachmentsRootFolder = attachmentsRootFolder;
         this.attachmentStorage = attachmentStorage;
         this.addAttachments = addAttachments;
         this.addLinksToStepFrontend = addLinksToStepFrontend;
         this.serverConfiguration = serverConfiguration;
+        this.reportName = reportName;
     }
 
     public String getAttachmentsSubfolder() {
@@ -66,6 +68,13 @@ public class Junit4ReportConfig {
         return serverConfiguration;
     }
 
+    /**
+     * @return the name of the report file, without its extension, or null for a name made of the current time
+     */
+    public String getReportName() {
+        return reportName;
+    }
+
     public static class Builder {
         private boolean addAttachments = false;
         private boolean addLinksToStepFrontend = true;
@@ -73,6 +82,7 @@ public class Junit4ReportConfig {
         private String attachmentRootFolder;
         private AttachmentStorage attachmentStorage;
         private Configuration serverConfiguration;
+        private String reportName;
 
         public Builder setAttachmentSubfolder(String attachmentSubfolder) {
             this.attachmentSubfolder = attachmentSubfolder;
@@ -104,10 +114,15 @@ public class Junit4ReportConfig {
             return this;
         }
 
+        public Builder setReportName(String reportName) {
+            this.reportName = reportName;
+            return this;
+        }
+
         public Junit4ReportConfig createConfig() {
             return new Junit4ReportConfig(
                 attachmentSubfolder, attachmentRootFolder, attachmentStorage,
-                addAttachments, addLinksToStepFrontend, serverConfiguration
+                addAttachments, addLinksToStepFrontend, serverConfiguration, reportName
             );
         }
 

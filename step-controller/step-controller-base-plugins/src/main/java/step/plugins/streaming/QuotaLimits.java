@@ -20,6 +20,11 @@ public class QuotaLimits {
         }
     }
 
+    /**
+     * No quota, which the variables of an execution cannot override
+     */
+    public static final QuotaLimits UNLIMITED = new QuotaLimits(null, null, null, false);
+
     public final Long maxBytesPerResource;
     public final Long maxBytesPerExecution;
     // note: Integer is more than enough for the domain here, but since almost all calculations use longs,

@@ -1,12 +1,23 @@
 package step.cli.parameters;
 
 import step.cli.ExecuteAutomationPackageTool;
+import step.cli.StepCliExecutionException;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
 public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
+
+    @Override
+    public void validate() throws StepCliExecutionException {
+        super.validate();
+        // The report nodes of a remote execution are only fetched once it has ended
+        if (reports != null && reports.stream().anyMatch(r -> r.getReportType() == ExecuteAutomationPackageTool.ReportType.live)) {
+            throw new StepCliExecutionException("The " + ExecuteAutomationPackageTool.ReportType.live + " report is only supported for local executions");
+        }
+    }
+
     private String userId;
     private Map<String, String> executionParameters;
     private Integer executionResultTimeoutS;

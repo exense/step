@@ -19,6 +19,7 @@
 package step.automation.packages;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -44,9 +45,9 @@ public final class ApFileNames {
     /**
      * Names Windows refuses whatever the extension.
      */
-    private static final Set<String> RESERVED_NAMES = Set.of("CON", "PRN", "AUX", "NUL",
-        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9");
+    private static final Set<String> RESERVED_NAMES = Set.of("CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$",
+        "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³",
+        "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹", "LPT²", "LPT³");
 
     private static final int MAX_NAME_LENGTH = 100;
 
@@ -81,10 +82,21 @@ public final class ApFileNames {
             throw new IllegalArgumentException("Unable to derive a file name from the name '" + name
                 + "': nothing usable in a file name is left of it");
         }
-        if (RESERVED_NAMES.contains(sanitized.toUpperCase(Locale.ROOT))) {
+        if (isReservedOnWindows(sanitized)) {
             return "_" + sanitized;
         }
         return sanitized;
+    }
+
+    /**
+     * @param fileName a file name, with or without extension
+     * @return whether the filename uses a Windows reserved name, as {@code CON} or {@code nul.txt}..
+     */
+    public static boolean isReservedOnWindows(String fileName) {
+        Objects.requireNonNull(fileName);
+        int extensionIndex = fileName.indexOf('.');
+        String baseName = extensionIndex >= 0 ? fileName.substring(0, extensionIndex) : fileName;
+        return RESERVED_NAMES.contains(baseName.toUpperCase(Locale.ROOT));
     }
 
     private static String trim(String value) {

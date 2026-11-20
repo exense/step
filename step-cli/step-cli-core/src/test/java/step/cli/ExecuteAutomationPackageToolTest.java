@@ -78,10 +78,13 @@ public class ExecuteAutomationPackageToolTest {
 
         assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
 
-        File[] storedReports = tempReportFolder.listFiles((dir, name) -> name.matches(".*-aggregated.txt"));
-        Assert.assertNotNull(storedReports);
-        Assert.assertEquals(1, storedReports.length);
-        Assert.assertEquals("Echo: 1x: PASSED > Hello\n", new String(Files.readAllBytes(storedReports[0].toPath())));
+        // In the folder of the run, named after the execution
+        File[] runFolders = tempReportFolder.listFiles();
+        Assert.assertNotNull(runFolders);
+        Assert.assertEquals(1, runFolders.length);
+        Assert.assertTrue(runFolders[0].getName(), runFolders[0].getName().matches("\\d{8}-\\d{6}-\\d{6}"));
+        Assert.assertEquals("Echo: 1x: PASSED > Hello\n",
+            Files.readString(runFolders[0].toPath().resolve("My_execution-aggregated.txt")));
     }
 
     private static List<String> getExecuteAutomationPackageResult(List<Execution> executions) {
