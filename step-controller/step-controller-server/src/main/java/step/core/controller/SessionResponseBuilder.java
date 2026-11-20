@@ -1,5 +1,6 @@
 package step.core.controller;
 
+import step.core.access.User;
 import step.framework.server.Session;
 
 import java.util.ArrayList;
@@ -10,13 +11,13 @@ import java.util.function.Function;
 
 public class SessionResponseBuilder {
 
-    private final List<Function<Session, Map<String, Object>>> hooks = new ArrayList<>();
+    private final List<Function<Session<User>, Map<String, Object>>> hooks = new ArrayList<>();
 
-    public boolean registerHook(Function<Session, Map<String, Object>> sessionMapFunction) {
+    public boolean registerHook(Function<Session<User>, Map<String, Object>> sessionMapFunction) {
         return hooks.add(sessionMapFunction);
     }
 
-    public Map<String, Object> build(Session session) {
+    public Map<String, Object> build(Session<User> session) {
         Map<String, Object> result = new HashMap<>();
         hooks.forEach(h -> {
             Map<String, Object> hookProperties = h.apply(session);
