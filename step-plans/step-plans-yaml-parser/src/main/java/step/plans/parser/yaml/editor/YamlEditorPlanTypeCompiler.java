@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.plans.parser.yaml.editor;
 
-import org.everit.json.schema.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.handlers.JsonSchemaValidationException;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
@@ -34,21 +34,17 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.stream.Collectors;
 
 class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
 
     private static final Logger log = LoggerFactory.getLogger(YamlEditorPlanTypeCompiler.class);
 
     private final YamlPlanReader reader;
-    private final LineNumberByJsonPointerResolver lineNumberResolver;
 
     public YamlEditorPlanTypeCompiler() {
         // TODO: think if we need to configure the actual plan version here (now the default YamlPlanVersions.ACTUAL_VERSION is always used)
         // the reader has 'validateWithJsonSchema'=true
         reader = new YamlPlanReader(null, true, null);
-        lineNumberResolver = new LineNumberByJsonPointerResolver();
     }
 
     @Override
@@ -62,54 +58,22 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
         try (InputStream is = new ByteArrayInputStream(source.getBytes())) {
             parsedPlan = reader.readYamlPlan(is);
         } catch (YamlPlanValidationException e) {
+
             PlanCompilerException planCompilerException = new PlanCompilerException();
 
-            // if the reason is validation exception (source doesn't match json schema) we try to resolve the source line
-            if (e.getCause() != null && e.getCause() instanceof ValidationException) {
-                ValidationException detailedValidationException = (ValidationException) e.getCause();
-                List<ValidationException> causingExceptions = detailedValidationException.getCausingExceptions();
-                if (causingExceptions != null && !causingExceptions.isEmpty()) {
-                    // sometimes the validator provides the causing exceptions, in this case we can collect several error messages with source lines
-                    List<LineNumberByJsonPointerResolver.JsonPointerSourceLine> allPointerSourceLines =
-                        lineNumberResolver.findLineNumbers(
-                            causingExceptions.stream().map(ValidationException::getPointerToViolation).filter(p -> p != null && !p.isEmpty()).collect(Collectors.toList()), source
-                        );
-
-                    for (ValidationException causingException : causingExceptions) {
-                        YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError();
-                        compilationError.setMessage(causingException.getErrorMessage());
-                        String pointerToViolation = causingException.getPointerToViolation();
-                        if (pointerToViolation != null && !pointerToViolation.isEmpty()) {
-                            LineNumberByJsonPointerResolver.JsonPointerSourceLine foundLine = allPointerSourceLines.stream().filter(ap -> ap.getJsonPointer().equals(pointerToViolation)).findFirst().orElse(null);
-                            if (foundLine != null) {
-                                compilationError.setLine(foundLine.getSourceLine());
-                            } else {
-                                // reference to the first line if the real error line is not resolved
-                                compilationError.setLine(1);
-                            }
-                        }
-                        planCompilerException.addError(compilationError);
-                    }
-                } else {
-                    // validator didn't provide the causing errors - in this case we take the main error message only
-                    YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError();
-                    compilationError.setMessage(detailedValidationException.getMessage());
-                    String pointerToViolation = detailedValidationException.getPointerToViolation();
-                    if (pointerToViolation != null && !pointerToViolation.isEmpty()) {
-                        compilationError.setLine(lineNumberResolver.findLineNumbers(List.of(pointerToViolation), source).get(0).getSourceLine());
-                    }
-                    planCompilerException.addError(compilationError);
-                }
+            if (e.getCause() instanceof JsonSchemaValidationException validationException) {
+                validationException.getValidationErrors().forEach(error -> {
+                    planCompilerException.addError(new YamlEditorPlanCompilationError(error.lineNumber(), error.message()));
+                });
             } else {
                 // non-validation exception
-                YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError();
-                compilationError.setMessage(e.getMessage());
+                YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError(e.getMessage());
                 planCompilerException.addError(compilationError);
             }
             throw planCompilerException;
         } catch (Exception e) {
             PlanCompilerException planCompilerException = new PlanCompilerException();
-            YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError();
+            YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError(e.getMessage());
             compilationError.setMessage(e.getMessage());
             planCompilerException.addError(compilationError);
             throw planCompilerException;
@@ -144,6 +108,15 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
     static class YamlEditorPlanCompilationError extends PlanCompilationError {
 
         private int line;
+
+        YamlEditorPlanCompilationError(int line, String message) {
+            this.line = line;
+            this.setMessage(message);
+        }
+
+        YamlEditorPlanCompilationError(String message) {
+            this.setMessage(message);
+        }
 
         public int getLine() {
             return line;

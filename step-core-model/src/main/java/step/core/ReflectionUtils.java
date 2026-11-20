@@ -21,9 +21,7 @@ package step.core;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ReflectionUtils {
@@ -36,14 +34,11 @@ public class ReflectionUtils {
     public static List<Field> getAllFieldsInHierarchy(Class<?> clazz, Class<?> untilParentClassIs) {
         List<Field> allFieldsInHierarchy = new ArrayList<>();
         Class<?> currentClass = clazz;
-        while (currentClass != null) {
-            allFieldsInHierarchy.addAll(Stream.of(currentClass.getDeclaredFields()).filter(f -> !f.isSynthetic() && !Modifier.isStatic(f.getModifiers())).collect(Collectors.toList()));
+        do {
+            allFieldsInHierarchy.addAll(Stream.of(currentClass.getDeclaredFields()).filter(f -> !f.isSynthetic() && !Modifier.isStatic(f.getModifiers())).toList().reversed());
             currentClass = currentClass.getSuperclass();
-            if (currentClass != null && currentClass.equals(untilParentClassIs)) {
-                currentClass = null;
-            }
-        }
-        Collections.reverse(allFieldsInHierarchy);
-        return allFieldsInHierarchy;
+        } while (currentClass != null && !currentClass.equals(untilParentClassIs));
+
+        return allFieldsInHierarchy.reversed();
     }
 }

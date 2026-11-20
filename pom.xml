@@ -41,8 +41,8 @@
     <!-- compiler settings -->
     <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
-    <step-grid.version>3.1.0</step-grid.version>
-    <step-framework.version>3.1.0</step-framework.version>
+    <step-grid.version>0.0.0-SED-5000-SNAPSHOT</step-grid.version>
+    <step-framework.version>0.0.0-SED-5000-SNAPSHOT</step-framework.version>
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.8</dep.groovy.version>
     <dep.apache-jmeter.version>5.6.3</dep.apache-jmeter.version>
@@ -295,12 +295,6 @@
         <groupId>com.github.javaparser</groupId>
         <artifactId>javaparser-core</artifactId>
         <version>3.28.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.everit.json</groupId>
-        <artifactId>org.everit.json.schema</artifactId>
-        <version>1.5.1</version>
       </dependency>
 
       <!-- plexus stuff is mostly referred to by maven classes -->

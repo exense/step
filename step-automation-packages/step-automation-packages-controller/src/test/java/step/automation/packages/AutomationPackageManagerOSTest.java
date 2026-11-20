@@ -58,13 +58,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -111,6 +105,11 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
 
     // 3 parameters from one fragment and 1 from another
     public static final int PARAMETERS_COUNT = 4;
+
+    public AutomationPackageManagerOSTest() {
+        // networknt error messages are localized. Fix it to English for consistent assertions across developer machines
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     @Test
     public void testCrud() throws IOException {
@@ -375,8 +374,9 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, "invalid-call-plan.zip")).build();
             AutomationPackageManagerException ex = Assert.assertThrows(AutomationPackageManagerException.class, () -> manager.createOrUpdateAutomationPackage(parameters));
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Unable to update the automation package from file 'invalid-call-plan.zip'. " +
-                "Caused by: Unable to read the plan 'Call MyJavaPlan': The callPlan must define either 'plan' or 'planId'."));
+            // TODO: SED-5000 we need to review if this more generic error message is a valid solution to SED-5028
+            assertEquals("Unable to update the automation package from file 'invalid-call-plan.zip'. Caused by: Unable to read the automation package yaml. Caused by: YAML Plan Validation Errors occurred in apResource:automation-package.yml:\n" +
+                "Line 9, Column 15: property 'selectionAttributes' is not defined in the schema and the schema does not allow additional properties", ex.getMessage());
         }
     }
 

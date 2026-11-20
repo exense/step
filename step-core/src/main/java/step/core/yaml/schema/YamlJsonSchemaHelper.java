@@ -24,13 +24,22 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.ReflectionUtils;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.YamlFields;
-import step.handlers.javahandler.jsonschema.*;
+import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.JsonInputConverter;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class YamlJsonSchemaHelper {
 
@@ -45,7 +54,7 @@ public class YamlJsonSchemaHelper {
     public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
     public static final String PLAN_DEF = "PlanDef";
     public static final String COMPOSITE_PLAN_DEF = "CompositePlanDef";
-    public static final String DEFS_PREFIX = "#/$defs/";
+    public static final String DEFS_PREFIX = "#/definitions/";
     private final JsonProvider jsonProvider;
 
     public YamlJsonSchemaHelper(JsonProvider jsonProvider) {
@@ -84,7 +93,8 @@ public class YamlJsonSchemaHelper {
         JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder();
 
         List<String> requiredProperties = new ArrayList<>();
-        extractPropertiesFromClass(jsonSchemaCreator, clazz, propertiesBuilder, requiredProperties, null);
+        List<Field> allFieldsInHierarchy = orderFieldsByPriority(ReflectionUtils.getAllFieldsInHierarchy(clazz, null));
+        extractPropertiesFromClass(jsonSchemaCreator, clazz, propertiesBuilder, requiredProperties, allFieldsInHierarchy);
 
         res.add("properties", propertiesBuilder);
         if (!additionalProperties) {
@@ -99,11 +109,8 @@ public class YamlJsonSchemaHelper {
      */
     public void extractPropertiesFromClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz,
                                            JsonObjectBuilder output, List<String> requiredPropertiesOutput,
-                                           Class<?> untilParentClassIs) throws JsonSchemaPreparationException {
+                                           List<Field> allFieldsInHierarchy) throws JsonSchemaPreparationException {
         log.info("Preparing json schema for class {}...", clazz);
-
-        // analyze the class hierarchy
-        List<Field> allFieldsInHierarchy = ReflectionUtils.getAllFieldsInHierarchy(clazz, untilParentClassIs);
 
         // for each field we want either build the json schema via reflection
         // or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
@@ -146,7 +153,7 @@ public class YamlJsonSchemaHelper {
      *             "type": "object"
      *           },
      *           {
-     *             "$ref": "#/$defs/DynamicExpressionDef"
+     *             "$ref": "#/definitions/DynamicExpressionDef"
      *           }
      *         ]
      *       }
@@ -283,6 +290,8 @@ public class YamlJsonSchemaHelper {
         schemaBuilder.add(yamlName, propertiesBuilder);
         res.add("properties", schemaBuilder);
         res.add("additionalProperties", false);
+
+        res.add("required", jsonProvider.createArrayBuilder().add(yamlName));
         return res;
     }
 
@@ -307,5 +316,25 @@ public class YamlJsonSchemaHelper {
         result.add(new EnumFieldProcessor());
 
         return result;
+    }
+
+
+    public static List<Field> orderFieldsByPriority(List<Field> allFieldsInHierarchy) {
+        Map<YamlFieldPriority, List<Field>> grouped = new java.util.EnumMap<>(YamlFieldPriority.class);
+        for (YamlFieldPriority priority : YamlFieldPriority.values()) {
+            grouped.put(priority, new ArrayList<>());
+        }
+
+        for (Field field : allFieldsInHierarchy) {
+            YamlFieldOrder order = field.getAnnotation(YamlFieldOrder.class);
+            YamlFieldPriority fieldPriority = order == null ? YamlFieldPriority.ARTEFACT_SPECIFIC : order.value();
+            grouped.get(fieldPriority).add(field);
+        }
+
+        allFieldsInHierarchy = new ArrayList<>();
+        for (YamlFieldPriority priority : YamlFieldPriority.values()) {
+            allFieldsInHierarchy.addAll(grouped.get(priority));
+        }
+        return allFieldsInHierarchy;
     }
 }

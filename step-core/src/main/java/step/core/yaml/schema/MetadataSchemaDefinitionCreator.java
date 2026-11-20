@@ -28,14 +28,14 @@ import step.core.yaml.YamlMetadata;
  * <pre>{@code
  * "MetadataDef": {
  *   "type": "object",
- *   "patternProperties": { "<key pattern>": { "$ref": "#/$defs/MetadataValueDef" } },
+ *   "patternProperties": { "<key pattern>": { "$ref": "#/definitions/MetadataValueDef" } },
  *   "additionalProperties": false
  * },
  * "MetadataValueDef": {
  *   "type": [ "object", "array", "string", "number", "boolean", "null" ],
- *   "patternProperties": { "<key pattern>": { "$ref": "#/$defs/MetadataValueDef" } },
+ *   "patternProperties": { "<key pattern>": { "$ref": "#/definitions/MetadataValueDef" } },
  *   "additionalProperties": false,
- *   "items": { "$ref": "#/$defs/MetadataValueDef" }
+ *   "items": { "$ref": "#/definitions/MetadataValueDef" }
  * }
  * }</pre>
  * The keys are validated with "patternProperties" and "additionalProperties" rather than with the "propertyNames"

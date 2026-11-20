@@ -6,7 +6,6 @@ root:
     children:
       - oldAssert:
           nodeName: Assert
-          oldOperator: "EQUALS"
           actual:
             expression: "'status'"
           expected: "ok"

@@ -19,11 +19,18 @@
 package step.plans.parser.yaml.deserializers;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
-import org.everit.json.schema.ValidationException;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.networknt.schema.serialization.node.LocationJsonNodeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.handlers.JsonSchemaValidationException;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
@@ -62,7 +69,13 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> i
 
     @Override
     public YamlPlan deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        JsonNode planJsonNode = p.readValueAsTree();
+
+        JsonNodeFactory locationAwareFactory = new LocationJsonNodeFactory(p);
+
+        ObjectReader reader = yamlMapper.reader(locationAwareFactory);
+        JsonNode planJsonNode = reader.readTree(p);
+        JsonNode originalPlanJsonNode = planJsonNode;
+
 
         if (currentVersion != null) {
             Document yamlPlanDocument = p.getCodec().treeToValue(planJsonNode, Document.class);
@@ -106,9 +119,9 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> i
 
         if (jsonSchema != null) {
             try {
-                JsonSchemaValidator.validate(jsonSchema, planJsonNode.toString());
-            } catch (ValidationException vex) {
-                throw new YamlPlanValidationException(String.join(", ", vex.getAllMessages()), vex);
+                JsonSchemaValidator.validate(jsonSchema, planJsonNode, originalPlanJsonNode);
+            } catch (JsonSchemaValidationException vex) {
+                throw new YamlPlanValidationException(vex);
             } catch (Exception ex) {
                 throw new YamlPlanValidationException(ex.getMessage(), ex);
             }

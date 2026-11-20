@@ -1,7 +1,7 @@
 name: "test check artefact"
 root:
   sequence:
-    name: Sequence
+    nodeName: Sequence
     children:
       - check:
           nodeName: Check

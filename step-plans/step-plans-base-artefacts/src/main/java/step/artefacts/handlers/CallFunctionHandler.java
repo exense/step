@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import com.networknt.schema.InputFormat;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
@@ -28,7 +29,6 @@ import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
-import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.attachments.SkippedAttachmentMeta;
@@ -36,6 +36,7 @@ import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
 import step.constants.LiveReportingConstants;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.SequentialArtefactScheduler;
@@ -78,10 +79,20 @@ import step.grid.tokenpool.Interest;
 import step.livereporting.LiveReportingContext;
 import step.livereporting.LiveReportingPlugin;
 import step.plugins.functions.types.CompositeFunction;
-import step.streaming.common.*;
+import step.streaming.common.StreamingResourceMetadata;
+import step.streaming.common.StreamingResourceStatus;
+import step.streaming.common.StreamingResourceUploadContext;
+import step.streaming.common.StreamingResourceUploadContextListener;
+import step.streaming.common.StreamingResourceUploadContexts;
 
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
@@ -472,7 +483,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
     private void validateInput(FunctionInput<JsonObject> input, Function function) {
         if (context.getConfiguration().getPropertyAsBoolean("enforceschemas", false)) {
-            JsonSchemaValidator.validate(function.getSchema().toString(), input.getPayload().toString());
+            JsonSchemaValidator.validate(function.getSchema().toString(), input.getPayload().toString(), InputFormat.JSON);
         }
     }
 

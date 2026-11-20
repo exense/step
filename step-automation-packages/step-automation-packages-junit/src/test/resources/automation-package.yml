@@ -66,7 +66,8 @@ plans:
         nodeName: "Plan2"
         children:
           - echo:
-              expression: "input.getString(\"inputtest\")"
+              text:
+                expression: "input.getString(\"inputtest\")"
 keywords:
   - JMeter:
       name: "JMeterAutomation"
@@ -94,4 +95,3 @@ keywords:
 parameters:
   - key: "myParam"
     value: "myParamValue"
-      

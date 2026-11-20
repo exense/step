@@ -12,7 +12,7 @@ plans:
   - name: "Test excel plan"
     root:
       sequence:
-        name: Sequence
+        nodeName: Sequence
         children:
           - forEach:
               description: "test excel"
@@ -27,7 +27,7 @@ plans:
   - name: "Test excel plan in before section"
     root:
       sequence:
-        name: Sequence
+        nodeName: Sequence
         before:
           steps:
             - dataSet:

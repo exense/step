@@ -1,7 +1,7 @@
 name: "test plan"
 root:
   sequence:
-    name: Sequence
+    nodeName: Sequence
     children:
       - dataSet:
           description: "test excel"

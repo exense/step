@@ -114,9 +114,11 @@
       <groupId>com.jayway.jsonpath</groupId>
       <artifactId>json-path</artifactId>
     </dependency>
+
+    <!-- Source: https://mvnrepository.com/artifact/com.networknt/json-schema-validator -->
     <dependency>
-      <groupId>org.everit.json</groupId>
-      <artifactId>org.everit.json.schema</artifactId>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
     </dependency>
 
     <!-- Test dependencies -->
@@ -148,6 +150,12 @@
       <artifactId>xmlunit-assertj3</artifactId>
       <version>2.11.0</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.java-json-tools</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>2.2.14</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 
