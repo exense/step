@@ -153,7 +153,9 @@ public class MavenArtifactClient {
             }
         }
 
-        Map<String, Exception> accessFailures = new LinkedHashMap<>();
+        // Exceptions don't override equals(), so this set only drops the same instance reported twice
+        Set<Exception> accessFailures = new LinkedHashSet<>();
+        Set<String> accessFailureMessages = new LinkedHashSet<>();
         Set<String> notFoundMessages = new LinkedHashSet<>();
         for (Exception failure : failures) {
             if (!isFromRemoteRepository(failure)) {
@@ -162,7 +164,8 @@ public class MavenArtifactClient {
             if (failure instanceof MetadataNotFoundException || failure instanceof ArtifactNotFoundException) {
                 notFoundMessages.add(failure.getMessage());
             } else {
-                accessFailures.putIfAbsent(failure.getMessage(), failure);
+                accessFailures.add(failure);
+                accessFailureMessages.add(failure.getMessage());
             }
         }
 
@@ -172,22 +175,22 @@ public class MavenArtifactClient {
 
         StringBuilder message = new StringBuilder("Failed to resolve artifact ").append(artifact)
             .append(". Some remote repositories could not be accessed, please check the repositories configured in the Maven settings.xml: ")
-            .append(String.join("; ", accessFailures.keySet()));
+            .append(String.join("; ", accessFailureMessages));
         if (!notFoundMessages.isEmpty()) {
             message.append(". Other repositories reported: ").append(String.join("; ", notFoundMessages));
         }
 
-        Iterator<Exception> accessFailureIterator = accessFailures.values().iterator();
+        Iterator<Exception> accessFailureIterator = accessFailures.iterator();
         ArtifactResolutionException reportedException = new ArtifactResolutionException(e.getResults(), message.toString(), accessFailureIterator.next());
         accessFailureIterator.forEachRemaining(reportedException::addSuppressed);
         return reportedException;
     }
 
     private static boolean isFromRemoteRepository(Exception failure) {
-        if (failure instanceof MetadataTransferException) {
-            return ((MetadataTransferException) failure).getRepository() != null;
-        } else if (failure instanceof ArtifactTransferException) {
-            return ((ArtifactTransferException) failure).getRepository() != null;
+        if (failure instanceof MetadataTransferException metadataTransferException) {
+            return metadataTransferException.getRepository() != null;
+        } else if (failure instanceof ArtifactTransferException artifactTransferException) {
+            return artifactTransferException.getRepository() != null;
         } else {
             return false;
         }
