@@ -245,3 +245,21 @@ exports.LongRunningLoggingKW = async (input, output, session) => {
     await new Promise(r => setTimeout(r, input['intervalMs'] ?? 50))
   }
 }
+
+// --- call deadline ($keywordDeadline) ---
+
+// Works until shortly before the call deadline, then stops on its own and reports what it did
+exports.StopBeforeDeadlineKW = async (input, output, session, properties) => {
+  const deadline = Number(properties['$keywordDeadline'])
+  const marginMs = input['marginMs'] ?? 300
+  let iterations = 0
+  while (Date.now() < deadline - marginMs) {
+    await new Promise(r => setTimeout(r, 20))
+    iterations++
+  }
+  output.add('stoppedBeforeDeadline', true).add('iterations', iterations)
+}
+
+exports.HangKW = async () => {
+  await new Promise(r => setTimeout(r, 60000))
+}
