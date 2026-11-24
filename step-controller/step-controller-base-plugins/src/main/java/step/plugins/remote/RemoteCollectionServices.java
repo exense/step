@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import step.client.collections.remote.CountRequest;
 import step.client.collections.remote.CountResponse;
 import step.client.collections.remote.FindRequest;
+import step.core.accessors.CachedAccessor;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
@@ -32,6 +33,7 @@ import step.core.collections.Filter;
 import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
 import step.core.deployment.Unfiltered;
+import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 
 @Singleton
@@ -128,6 +130,7 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
     public void delete(@PathParam("id") String collectionId, Filter filter) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         collectionDriver.remove(filter);
+        reloadCacheIfCachedAccessor(collectionId);
     }
 
     @POST
@@ -140,8 +143,10 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
         Class<?> entityClass = entityManager.resolveClass(collectionId);
         Object value = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entity, entityClass);
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityClass);
+        T savedEntity = collectionDriver.save((T) value);
+        reloadCacheIfCachedAccessor(collectionId);
         //method cannot return a generic (T) due to serialization
-        return Response.status(200).entity(collectionDriver.save((T) value)).build();
+        return Response.status(200).entity(savedEntity).build();
     }
 
     @POST
@@ -155,6 +160,18 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
         CollectionType collectionType = DefaultJacksonMapperProvider.getObjectMapper().getTypeFactory().constructCollectionType(List.class, entityClass);
         Object o = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entities, collectionType);
         collectionDriver.save((List) o);
+        reloadCacheIfCachedAccessor(collectionId);
+    }
+
+    /**
+     * The entities are written directly in the collection: the accessors keeping them in a cache are reloaded, so that
+     * they see the changes
+     */
+    private void reloadCacheIfCachedAccessor(String collectionId) {
+        Entity<?, ?> entity = entityManager.getEntityByName(collectionId);
+        if (entity != null && entity.getAccessor() instanceof CachedAccessor<?> cachedAccessor) {
+            cachedAccessor.reloadCache();
+        }
     }
 
 }
