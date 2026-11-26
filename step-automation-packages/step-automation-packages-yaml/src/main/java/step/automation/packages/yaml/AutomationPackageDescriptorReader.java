@@ -192,9 +192,8 @@ public class AutomationPackageDescriptorReader {
             InjectableValues.Std injectableValues = new InjectableValues.Std();
             injections.forEach(injectableValues::addValue);
 
-            yamlObjectMapper.setInjectableValues(injectableValues);
-
-            T res = yamlObjectMapper.reader()
+            // the mapper is shared by concurrent reads: the values are given to the reader of this read only
+            T res = yamlObjectMapper.reader(injectableValues)
                 .withAttributes(injections)
                 .readValue(parser, targetClass);
 
