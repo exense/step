@@ -18,8 +18,10 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import ch.exense.commons.test.categories.PerformanceTest;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
@@ -54,7 +56,7 @@ public class AutomationPackageDescriptorReaderConcurrencyTest {
     private static final int THREADS = 8;
 
     @Test
-    @Ignore
+    @Category(PerformanceTest.class)
     public void concurrentFirstReads() throws Exception {
         byte[] descriptor = Files.readAllBytes(Path.of("src/test/resources/step/automation/packages/yaml/descriptors/completeDescriptor.yml"));
         ExecutorService executor = Executors.newFixedThreadPool(THREADS);
@@ -83,6 +85,7 @@ public class AutomationPackageDescriptorReaderConcurrencyTest {
             }
         } finally {
             executor.shutdownNow();
+            executor.awaitTermination(5, TimeUnit.SECONDS);
         }
         failures.forEach(Throwable::printStackTrace);
         assertEquals("Failed concurrent reads (first: " + (failures.isEmpty() ? "-" : failures.get(0)) + ")",
