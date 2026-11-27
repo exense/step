@@ -27,12 +27,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.core.GlobalContext;
-import step.core.artefacts.AbstractArtefact;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -83,14 +81,19 @@ public class CompositeFunctionServices extends AbstractStepServices {
         Plan plan = composite.getPlan();
         PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
         Plan clonePlan = planType.clonePlan(plan, true);
-        assignNewId(clonePlan.getRoot());
+        clonePlan.getRoot().deepAssignNewIds();
         //enrich the new plan
         getObjectEnricher().accept(clonePlan);
         planAccessor.save(clonePlan);
         return clonePlan;
     }
 
-    @Operation(description = "Returns the plan referenced by the given artifact within the given composite.")
+    /**
+     * @deprecated use the lookupCallPlan or lookupCallPlanWithBindings operations of the plan services, which
+     * resolve the CallPlan as sent by the client instead of looking it up in the persisted composite
+     */
+    @Deprecated
+    @Operation(description = "Returns the plan referenced by the given artifact within the given composite. Deprecated: use lookupCallPlan or lookupCallPlanWithBindings of the plans API instead.")
     @GET
     @Path("/{id}/artefacts/{artefactid}/lookup/plan")
     @Produces(MediaType.APPLICATION_JSON)
@@ -113,10 +116,5 @@ public class CompositeFunctionServices extends AbstractStepServices {
         } catch (RuntimeException e) {
         }
         return result;
-    }
-
-    private void assignNewId(AbstractArtefact artefact) {
-        artefact.setId(new ObjectId());
-        artefact.getChildren().forEach(this::assignNewId);
     }
 }

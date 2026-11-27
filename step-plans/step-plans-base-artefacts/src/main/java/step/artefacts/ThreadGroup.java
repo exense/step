@@ -24,7 +24,11 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityConstants;
+import step.core.entities.EntityReference;
 import step.core.yaml.YamlModel;
+
+import java.util.List;
 
 @YamlModel(model = YamlThreadGroup.class, name = "threadGroup")
 @Artefact(validAsRoot = true)
@@ -134,6 +138,7 @@ public class ThreadGroup extends AbstractArtefact {
         this.userItem = userItem;
     }
 
+    @EntityReference(type = EntityConstants.recursive)
     public ChildrenBlock getBeforeThread() {
         return beforeThread;
     }
@@ -142,11 +147,19 @@ public class ThreadGroup extends AbstractArtefact {
         this.beforeThread = beforeThread;
     }
 
+    @EntityReference(type = EntityConstants.recursive)
     public ChildrenBlock getAfterThread() {
         return afterThread;
     }
 
     public void setAfterThread(ChildrenBlock afterThread) {
         this.afterThread = afterThread;
+    }
+
+    @Override
+    protected void collectMainChildren(List<AbstractArtefact> result) {
+        addSteps(result, getBeforeThread());
+        super.collectMainChildren(result);
+        addSteps(result, getAfterThread());
     }
 }
