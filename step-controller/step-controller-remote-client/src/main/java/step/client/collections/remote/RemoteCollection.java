@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
 
 import step.client.AbstractRemoteClient;
+import step.client.ControllerClientException;
 import step.commons.iterators.SkipLimitIterator;
 import step.core.collections.*;
 import step.core.collections.Collection;
@@ -110,7 +111,13 @@ public class RemoteCollection<T> implements Collection<T> {
     public long remove(Filter filter) {
         Entity<Filter> entity = Entity.entity(filter, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/remove");
-        return client.executeRequest(() -> builder.post(entity, CountResponse.class)).getCount();
+        CountResponse response = client.executeRequest(() -> builder.post(entity, CountResponse.class));
+        if (response != null && response.getCount() != null) {
+            return response.getCount();
+        } else {
+            throw new ControllerClientException("The controller returned no count of removed entities for collection '" +
+                collectionName + "'. The controller version is probably older than the client version.");
+        }
     }
 
     @Override
