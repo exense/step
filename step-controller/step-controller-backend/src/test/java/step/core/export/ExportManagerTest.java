@@ -23,9 +23,11 @@ import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.CallFunction;
+import step.artefacts.CallPlan;
 import step.artefacts.ForEachBlock;
 import step.artefacts.Sequence;
 import step.artefacts.TestSet;
+import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
@@ -40,6 +42,7 @@ import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -83,6 +86,7 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static step.planbuilder.BaseArtefacts.callPlan;
@@ -614,7 +618,42 @@ public class ExportManagerTest {
         testExportPlansRecursively(true, false, true);
     }
 
+    @Test
+    public void testExportPlanRecursivelyWithReferencesInBefore() throws Exception {
+        testExportPlansRecursively(false, true, false, ReferencesSlot.BEFORE);
+        testExportPlansRecursively(false, false, false, ReferencesSlot.BEFORE);
+    }
+
+    @Test
+    public void testExportPlanRecursivelyWithReferencesInAfter() throws Exception {
+        testExportPlansRecursively(false, true, false, ReferencesSlot.AFTER);
+        testExportPlansRecursively(false, false, false, ReferencesSlot.AFTER);
+    }
+
+    @Test
+    public void testExportPlanRecursivelyWithReferencesInBeforeThread() throws Exception {
+        testExportPlansRecursively(false, true, false, ReferencesSlot.BEFORE_THREAD);
+        testExportPlansRecursively(false, false, false, ReferencesSlot.BEFORE_THREAD);
+    }
+
+    @Test
+    public void testExportPlanRecursivelyWithReferencesInAfterThread() throws Exception {
+        testExportPlansRecursively(false, true, false, ReferencesSlot.AFTER_THREAD);
+        testExportPlansRecursively(false, false, false, ReferencesSlot.AFTER_THREAD);
+    }
+
+    /**
+     * The children slot holding the CallPlan and the CallFunction of the exported plan
+     */
+    private enum ReferencesSlot {
+        CHILDREN, BEFORE, AFTER, BEFORE_THREAD, AFTER_THREAD
+    }
+
     private void testExportPlansRecursively(boolean plansOnly, boolean overwrite, boolean missingEntities) throws Exception {
+        testExportPlansRecursively(plansOnly, overwrite, missingEntities, ReferencesSlot.CHILDREN);
+    }
+
+    private void testExportPlansRecursively(boolean plansOnly, boolean overwrite, boolean missingEntities, ReferencesSlot referencesSlot) throws Exception {
         Sequence rootSequence = sequence();
         Plan plan = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
         if (missingEntities) { //force id for error message assertion
@@ -625,12 +664,22 @@ public class ExportManagerTest {
         String functionName = missingEntities ? "434f33f6-cdc5-4b1e-83c2-04c5f163f1b5" : UUID.randomUUID().toString();
         function.addAttribute(AbstractOrganizableObject.NAME, functionName);
         functionAccessor.save(function);
-        Sequence sequence = sequence();
-        sequence.addChild(callPlan(plan.getId().toString()));
 
+        ChildrenBlock references = new ChildrenBlock();
+        references.addStep(callPlan(plan.getId().toString()));
         CallFunction callFunction = FunctionArtefacts.keyword(functionName);
-        sequence.addChild(callFunction);
-        Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence).endBlock().build();
+        references.addStep(callFunction);
+        AbstractArtefact container = referencesSlot == ReferencesSlot.BEFORE_THREAD || referencesSlot == ReferencesSlot.AFTER_THREAD
+            ? new ThreadGroup() : sequence();
+        switch (referencesSlot) {
+            case CHILDREN -> container.setChildren(references.getSteps());
+            case BEFORE -> container.setBefore(references);
+            case AFTER -> container.setAfter(references);
+            case BEFORE_THREAD -> ((ThreadGroup) container).setBeforeThread(references);
+            case AFTER_THREAD -> ((ThreadGroup) container).setAfterThread(references);
+        }
+        // a root of its own: sharing the root of the called plan would add the references to the called plan too
+        Plan plan2 = PlanBuilder.create().startBlock(sequence()).add(container).endBlock().build();
         planAccessor.save(plan2);
 
         if (missingEntities) {
@@ -685,10 +734,29 @@ public class ExportManagerTest {
                 assertNull(actualPlan);
                 assertNull(actualPlan2);
                 assertNull(actualFunction);
+                if (!missingEntities) {
+                    // the CallPlan of the imported plan refers to the new id of the imported called plan
+                    List<Plan> importedPlans = planAccessor.stream().collect(Collectors.toList());
+                    Plan importedPlan2 = importedPlans.stream()
+                        .filter(p -> !collectCallPlans(p.getRoot()).isEmpty()).findFirst().orElseThrow();
+                    Plan importedPlan = importedPlans.stream().filter(p -> p != importedPlan2).findFirst().orElseThrow();
+                    assertEquals(importedPlan.getId().toString(), collectCallPlans(importedPlan2.getRoot()).get(0).getPlanId());
+                }
             }
         } finally {
+            planAccessor.getAll().forEachRemaining(p -> planAccessor.remove(p.getId()));
+            functionAccessor.getAll().forEachRemaining(p -> functionAccessor.remove(p.getId()));
             testExportFile.delete();
         }
+    }
+
+    private static List<CallPlan> collectCallPlans(AbstractArtefact artefact) {
+        List<CallPlan> callPlans = new ArrayList<>();
+        if (artefact instanceof CallPlan) {
+            callPlans.add((CallPlan) artefact);
+        }
+        artefact.allChildren().forEach(child -> callPlans.addAll(collectCallPlans(child)));
+        return callPlans;
     }
 
     @Test

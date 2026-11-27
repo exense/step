@@ -212,18 +212,55 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
         this.useDynamicName = useDynamicName;
     }
 
+    /**
+     * Returns the direct children of all the children slots of this artefact, in execution order: the steps of
+     * the before block, the main children and the steps of the after block. Artefacts defining additional
+     * {@link ChildrenBlock} add them by overriding {@link #collectMainChildren(List)}.
+     * <p>
+     * Use this method, and not {@link #getChildren()}, to walk the whole artefact tree.
+     *
+     * @return a new list holding the direct children of all slots
+     */
+    public List<AbstractArtefact> allChildren() {
+        List<AbstractArtefact> result = new ArrayList<>();
+        addSteps(result, getBefore());
+        collectMainChildren(result);
+        addSteps(result, getAfter());
+        return result;
+    }
+
+    /**
+     * Adds the children executed between the before and the after blocks. These are the main children,
+     * plus the artefacts of any additional {@link ChildrenBlock} the artefact defines.
+     *
+     * @param result the list to add the children to
+     */
+    protected void collectMainChildren(List<AbstractArtefact> result) {
+        List<AbstractArtefact> children = getChildren();
+        if (children != null) {
+            result.addAll(children);
+        }
+    }
+
+    protected static void addSteps(List<AbstractArtefact> result, ChildrenBlock block) {
+        if (block != null && block.getSteps() != null) {
+            result.addAll(block.getSteps());
+        }
+    }
+
     public void deepCleanupAllCustomAttributes() {
         if (getCustomAttributes() != null) {
             getCustomAttributes().clear();
         }
+        allChildren().forEach(AbstractArtefact::deepCleanupAllCustomAttributes);
+    }
 
-        List<AbstractArtefact> children = getChildren();
-        if (children != null) {
-            for (AbstractArtefact child : children) {
-                // repeat recursively for all children
-                child.deepCleanupAllCustomAttributes();
-            }
-        }
+    /**
+     * Assigns a new id to this artefact and to all its descendants, as done when cloning a plan or an artefact
+     */
+    public void deepAssignNewIds() {
+        setId(new ObjectId());
+        allChildren().forEach(AbstractArtefact::deepAssignNewIds);
     }
 
     public DynamicValue<Boolean> getInstrumentNode() {

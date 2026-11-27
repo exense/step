@@ -20,7 +20,6 @@ package step.automation.packages;
 
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -69,7 +67,7 @@ class ResourceReferences {
 
     /**
      * Applies {@code mapping} to every declared resource reference of the artefact tree rooted at
-     * {@code root}, children and before/after blocks included.
+     * {@code root}, the artefacts of all children slots included (see {@link AbstractArtefact#allChildren()}).
      * <p>
      * A {@code resource:<id>} reference is left alone - it is already absolute - as is a dynamic value,
      * which has no path to rewrite.
@@ -84,17 +82,7 @@ class ResourceReferences {
             return;
         }
         applyRecursively(artefact, mapping);
-        applyToSteps(artefact.getChildren(), mapping);
-        Optional.ofNullable(artefact.getBefore()).map(ChildrenBlock::getSteps)
-            .ifPresent(steps -> applyToSteps(steps, mapping));
-        Optional.ofNullable(artefact.getAfter()).map(ChildrenBlock::getSteps)
-            .ifPresent(steps -> applyToSteps(steps, mapping));
-    }
-
-    private static void applyToSteps(List<AbstractArtefact> steps, UnaryOperator<String> mapping) {
-        if (steps != null) {
-            steps.forEach(step -> applyToArtefact(step, mapping));
-        }
+        artefact.allChildren().forEach(child -> applyToArtefact(child, mapping));
     }
 
     /**

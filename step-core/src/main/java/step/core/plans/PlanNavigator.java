@@ -37,7 +37,7 @@ public class PlanNavigator {
         if (a.getId().toString().equals(id)) {
             return a;
         } else {
-            for (AbstractArtefact child : a.getChildren()) {
+            for (AbstractArtefact child : a.allChildren()) {
                 AbstractArtefact result = findArtefactByIdRecursive(id, child);
                 if (result != null) {
                     return result;

@@ -28,7 +28,6 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.CallFunction;
@@ -182,7 +181,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
         @SuppressWarnings("unchecked")
         PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
         Plan clonePlan = planType.clonePlan(plan, true);
-        assignNewId(clonePlan.getRoot());
+        clonePlan.getRoot().deepAssignNewIds();
         return clonePlan;
     }
 
@@ -209,7 +208,12 @@ public class PlanServices extends AbstractEntityServices<Plan> {
         }
     }
 
-    @Operation(description = "Returns the plan referenced by the given artifact within the given plan.")
+    /**
+     * @deprecated use {@link #lookupCallPlan(CallPlan)} or {@link #lookupCallPlanWithBindings(LookupCallPlanRequest)},
+     * which resolve the CallPlan as sent by the client instead of looking it up in the persisted plan
+     */
+    @Deprecated
+    @Operation(description = "Returns the plan referenced by the given artifact within the given plan. Deprecated: use lookupCallPlan or lookupCallPlanWithBindings instead.")
     @GET
     @Path("/{id}/artefacts/{artefactid}/lookup/plan")
     @Produces(MediaType.APPLICATION_JSON)
@@ -307,7 +311,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-write")
     public AbstractArtefact cloneArtefact(AbstractArtefact artefact) {
-        assignNewId(artefact);
+        artefact.deepAssignNewIds();
         return artefact;
     }
 
@@ -374,11 +378,6 @@ public class PlanServices extends AbstractEntityServices<Plan> {
         String mimeType = "text/plain; charset=utf-8";
         return Response.ok(fileStream, mimeType).build();
 
-    }
-
-    private void assignNewId(AbstractArtefact artefact) {
-        artefact.setId(new ObjectId());
-        artefact.getChildren().forEach(this::assignNewId);
     }
 
 }
