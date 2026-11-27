@@ -100,8 +100,8 @@ public class DynamicallyDelegatingCollection<T> implements Collection<T> {
     }
 
     @Override
-    public void remove(Filter filter) {
-        current().remove(filter);
+    public long remove(Filter filter) {
+        return current().remove(filter);
     }
 
     @Override
