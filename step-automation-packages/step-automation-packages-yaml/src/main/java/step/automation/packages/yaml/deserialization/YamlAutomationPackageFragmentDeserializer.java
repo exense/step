@@ -19,10 +19,7 @@
 package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.yaml.PatchingContext;
@@ -33,22 +30,17 @@ import java.io.IOException;
 @StepYamlDeserializerAddOn(targetClasses = {AutomationPackageFragmentYamlImpl.class})
 public class YamlAutomationPackageFragmentDeserializer extends AbstractYamlAutomationPackageFragmentDeserializer {
 
-    private final BeanDeserializer delegate;
-
     public YamlAutomationPackageFragmentDeserializer(BeanDeserializer deserializer) {
         super(deserializer);
-        delegate = deserializer;
+    }
+
+    @Override
+    protected YamlAutomationPackageFragmentDeserializer withDelegate(BeanDeserializer contextualDelegate) {
+        return new YamlAutomationPackageFragmentDeserializer(contextualDelegate);
     }
 
     @Override
     public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         return deserialize(p, ctxt, new AutomationPackageFragmentYamlImpl((PatchingContext) ctxt.getAttribute(PatchingContext.class)));
-    }
-
-    @Override
-    public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
-        BeanDeserializer resolved = (BeanDeserializer) delegate.createContextual(ctxt, property);
-        resolved.resolve(ctxt);
-        return new YamlAutomationPackageFragmentDeserializer(resolved);
     }
 }
