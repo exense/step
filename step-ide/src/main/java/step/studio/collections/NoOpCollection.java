@@ -56,8 +56,8 @@ public class NoOpCollection<T> extends AbstractCollection<T> implements Collecti
     }
 
     @Override
-    public void remove(Filter filter) {
-
+    public long remove(Filter filter) {
+        return 0;
     }
 
     @Override

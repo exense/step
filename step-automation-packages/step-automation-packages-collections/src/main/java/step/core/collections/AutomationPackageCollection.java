@@ -57,11 +57,11 @@ public class AutomationPackageCollection<BO extends AbstractOrganizableObject, T
     }
 
     @Override
-    public void remove(Filter filter) {
+    public long remove(Filter filter) {
         List<BO> objects = find(filter, null, null, null, 0).collect(Collectors.toList());
         // checked for all of them first: none is removed if any is read-only
         objects.forEach(AutomationPackageYamlFragmentManager::requireEditable);
         objects.forEach(fragmentManager::remove);
-        super.remove(filter);
+        return super.remove(filter);
     }
 }

@@ -125,12 +125,14 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
 
     @POST
     @Path("/{id}/remove")
+    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "collection-delete")
-    public void delete(@PathParam("id") String collectionId, Filter filter) {
+    public CountResponse delete(@PathParam("id") String collectionId, Filter filter) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
-        collectionDriver.remove(filter);
+        long removed = collectionDriver.remove(filter);
         reloadCacheIfCachedAccessor(collectionId);
+        return new CountResponse(removed);
     }
 
     @POST

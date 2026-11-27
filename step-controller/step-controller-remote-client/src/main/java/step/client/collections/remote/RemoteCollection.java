@@ -107,10 +107,10 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    public void remove(Filter filter) {
+    public long remove(Filter filter) {
         Entity<Filter> entity = Entity.entity(filter, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/remove");
-        client.executeRequest(() -> builder.post(entity));
+        return client.executeRequest(() -> builder.post(entity, CountResponse.class)).getCount();
     }
 
     @Override
