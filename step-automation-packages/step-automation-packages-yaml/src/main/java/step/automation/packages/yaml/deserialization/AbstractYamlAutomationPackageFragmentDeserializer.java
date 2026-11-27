@@ -19,8 +19,10 @@
 package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
@@ -31,15 +33,35 @@ import step.core.yaml.deserialization.PatchableYamlList;
 
 import java.io.IOException;
 
+/**
+ * Wraps the bean deserializer Jackson built for a fragment class. The wrapper shares the property map of that
+ * delegate, and Jackson caches the wrapper in the object mapper, so concurrent reads share both.
+ * <p>
+ * The delegate is therefore resolved in {@link #resolve}, which Jackson calls exactly once, under its cache lock,
+ * when it creates the wrapper. {@link #createContextual} only contextualizes it: resolving there would modify the
+ * shared property map on each read, and concurrent reads would fail on it.
+ */
 public abstract class AbstractYamlAutomationPackageFragmentDeserializer extends BeanDeserializer implements ContextualDeserializer, ResolvableDeserializer {
 
+    protected final BeanDeserializer delegate;
 
     public AbstractYamlAutomationPackageFragmentDeserializer(BeanDeserializer deserializer) {
         super(deserializer);
+        delegate = deserializer;
     }
+
+    /**
+     * @return a deserializer of the same type, wrapping the given contextualized delegate
+     */
+    protected abstract AbstractYamlAutomationPackageFragmentDeserializer withDelegate(BeanDeserializer contextualDelegate);
 
     @Override
     public abstract Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException;
+
+    @Override
+    public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
+        return withDelegate((BeanDeserializer) delegate.createContextual(ctxt, property));
+    }
 
     @Override
     protected void handleUnknownVanilla(JsonParser p, DeserializationContext ctxt, Object intoValue, String propName) throws IOException {
@@ -59,9 +81,7 @@ public abstract class AbstractYamlAutomationPackageFragmentDeserializer extends 
 
     @Override
     public void resolve(DeserializationContext ctxt) throws JsonMappingException {
-        if (_delegateDeserializer instanceof ResolvableDeserializer) {
-            ((ResolvableDeserializer) _delegateDeserializer).resolve(ctxt);
-        }
+        delegate.resolve(ctxt);
     }
 
 }
